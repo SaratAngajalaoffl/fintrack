@@ -25,17 +25,19 @@ This project may use a newer Next.js than older training data. Prefer **local** 
 
 ## Repository layout
 
-| Path              | Purpose                                                                                               |
-| ----------------- | ----------------------------------------------------------------------------------------------------- |
-| `src/app/`        | App Router: `layout.tsx`, `page.tsx`, routes, route groups, layouts.                                  |
-| `src/`            | Shared React components, hooks, `lib/` (server/client helpers), future feature folders.               |
-| `public/brand/`   | Logos: round / long / short assets (favicon, header, future use). No secrets.                         |
-| `docs/`           | Contributor docs (`CONTRIBUTING.md`) and [docs index](docs/README.md).                                |
-| `migrations/`     | Ordered `*.sql` files; applied idempotently via `schema_migrations`.                                  |
-| `deploy/docker/`  | Dockerfiles (`Dockerfile.dev`, `Dockerfile.test`, `Dockerfile.prod`) and `scripts/run-migrations.sh`. |
-| `deploy/compose/` | `docker-compose.dev.yml`, `docker-compose.test.yml`, `docker-compose.prod.yml`.                       |
+| Path                 | Purpose                                                                                                                                                                                         |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/app/`           | App Router: `layout.tsx`, `page.tsx`, routes, route groups, layouts.                                                                                                                            |
+| `src/components/ui/` | **Shared UI kit** — buttons, fields, dialogs, menus, cards, etc. Import from `@/components/ui` (see `index.ts`). **Do not** recreate primitives; extend these components when building screens. |
+| `src/utils/`         | `tailwind-utils.ts` (`cn()` for Tailwind class merging). `formatting/` for shared formatters: `date-formatting.ts`, `number-formatting.ts`, `string-formatting.ts`.                             |
+| `src/`               | Feature components, hooks, and other shared code outside `ui/`.                                                                                                                                 |
+| `public/brand/`      | Logos: round / long / short assets (favicon, header, future use). No secrets.                                                                                                                   |
+| `docs/`              | Contributor docs (`CONTRIBUTING.md`) and [docs index](docs/README.md).                                                                                                                          |
+| `migrations/`        | Ordered `*.sql` files; applied idempotently via `schema_migrations`.                                                                                                                            |
+| `deploy/docker/`     | Dockerfiles (`Dockerfile.dev`, `Dockerfile.test`, `Dockerfile.prod`) and `scripts/run-migrations.sh`.                                                                                           |
+| `deploy/compose/`    | `docker-compose.dev.yml`, `docker-compose.test.yml`, `docker-compose.prod.yml`.                                                                                                                 |
 
-Add feature modules under `src/` with clear boundaries (e.g. `src/components/`, `src/lib/db/`, `src/app/(dashboard)/`) as the app grows.
+Add feature modules under `src/` with clear boundaries (e.g. `src/components/`, `src/utils/formatting/`, `src/app/(dashboard)/`) as the app grows.
 
 ## Commands
 
@@ -55,10 +57,12 @@ Remove generated artifacts when you need a clean slate: delete the `.next` direc
 
 ## UI and theming rules
 
-1. **Do not** hardcode one-off hex colors for core UI unless the task requires it. Use Mocha tokens (`text-text`, `bg-surface-0`, `border-border`, …) or roles (`primary`, `secondary`, `foreground`, `muted`).
-2. **Tailwind v4:** Add new CSS variables under `:root` and map them in `@theme inline` in `globals.css`.
-3. **Theme:** The app is **Catppuccin Mocha** (dark). `html` uses **crust** as the outer shell; `body` uses **base** as the main background. A light theme (e.g. Latte) can be added later by extending `:root` or a class on `<html>`.
-4. **Logos:** Round mark `public/brand/round_logo.png` (favicon via `metadata.icons`, in-app branding). Horizontal mark `public/brand/long_logo.png` in `SiteHeader`. `short_logo.png` is reserved — do not remove.
+1. **Reuse `src/components/ui`:** Build screens from the existing kit (`Button`, `ButtonWithTooltip`, `Dialog`, `Field`, `TextField`, `NumericField`, `CurrencyField`, `TextareaField`, `SelectField`, `MultiSelectField`, `RadioField`, `DropdownMenu` / `Menu`, `Card`, `Tooltip`, …). Import from `@/components/ui` or `@/components/ui/<name>`. Only add a new primitive in `ui/` when something is genuinely missing; do not duplicate buttons, inputs, or modals ad hoc in feature folders.
+2. **Styling:** Do not hardcode one-off hex colors for core UI unless the task requires it. Use Mocha tokens (`text-text`, `bg-surface-0`, `border-border`, …) or roles (`primary`, `secondary`, `foreground`, `muted`). Use `cn()` from `@/utils/tailwind-utils` to merge Tailwind classes.
+3. **Tailwind v4:** Add new CSS variables under `:root` and map them in `@theme inline` in `globals.css`.
+4. **Theme:** The app is **Catppuccin Mocha** (dark). `html` uses **crust** as the outer shell; `body` uses **base** as the main background. A light theme (e.g. Latte) can be added later by extending `:root` or a class on `<html>`.
+5. **Logos:** Round / long / short brand assets under `public/brand/`. Do not remove without replacing usages.
+6. **Forms:** Prefer `*Field` components for labeled controls with errors; use `inputClassName` when styling the inner control and `className` on the field for the outer wrapper. `TooltipProvider` wraps the app in `layout.tsx` for `ButtonWithTooltip` / `Tooltip`.
 
 ### Catppuccin Mocha reference (implemented)
 

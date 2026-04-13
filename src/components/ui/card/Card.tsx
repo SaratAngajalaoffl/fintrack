@@ -1,0 +1,18 @@
+import * as React from "react";
+
+import { cn } from "@/utils/tailwind-utils";
+
+function Card({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="card"
+      className={cn(
+        "rounded-xl border border-border bg-muted text-foreground shadow-sm",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+export { Card };
