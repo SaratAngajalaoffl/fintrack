@@ -39,6 +39,8 @@
   --accent: var(--mantle);
   --accent-foreground: var(--text);
   --border: var(--surface-1);
+  /* shadcn/ui — border for inputs (outline buttons, inputs) */
+  --input: var(--surface-1);
   --ring: var(--red);
   --destructive: #eba0ac;
   --destructive-foreground: var(--base);
@@ -83,6 +85,7 @@
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-border: var(--border);
+  --color-input: var(--input);
   --color-ring: var(--ring);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
