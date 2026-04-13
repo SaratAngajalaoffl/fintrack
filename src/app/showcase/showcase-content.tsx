@@ -50,7 +50,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui";
-import { cn } from "@/utils/tailwind-utils";
+import { cn } from "@/lib/utils";
 
 type AccountOption = {
   value: string;

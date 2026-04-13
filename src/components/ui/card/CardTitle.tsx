@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { cn } from "@/utils/tailwind-utils";
+import { cn } from "@/lib/utils";
 
 function CardTitle({ className, ...props }: React.ComponentProps<"h3">) {
   return (

@@ -3,7 +3,7 @@
 import * as React from "react";
 
 import { Label } from "@/components/ui/inputs/label";
-import { cn } from "@/utils/tailwind-utils";
+import { cn } from "@/lib/utils";
 
 import { RadioGroup } from "./RadioGroup";
 import { RadioGroupItem } from "./RadioGroupItem";

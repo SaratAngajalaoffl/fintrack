@@ -1,12 +1,16 @@
 import Image from "next/image";
 import Link from "next/link";
 
+import { LogoutButton } from "@/components/auth/logout-button";
 import { Button } from "@/components/ui";
+import { getSession } from "@/lib/auth/session";
 
-export function SiteHeader() {
+export async function SiteHeader() {
+  const session = await getSession();
+
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border/30 bg-transparent backdrop-blur-md">
-      <div className="flex h-14 w-full items-center justify-between gap-4 px-(--page-padding-x)">
+      <div className="flex h-14 w-full items-center justify-between gap-4 p-(--page-padding-x)">
         <Link
           href="/"
           className="flex min-w-0 shrink-0 items-center rounded-md focus-visible:outline focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
@@ -24,12 +28,23 @@ export function SiteHeader() {
           className="flex shrink-0 items-center gap-1 sm:gap-2"
           aria-label="Account"
         >
-          <Button variant="ghost" size="sm" asChild>
-            <Link href="/login">Log in</Link>
-          </Button>
-          <Button size="sm" asChild>
-            <Link href="/signup">Sign up</Link>
-          </Button>
+          {session ? (
+            <>
+              <Button variant="ghost" size="sm" asChild>
+                <Link href="/dashboard">Dashboard</Link>
+              </Button>
+              <LogoutButton />
+            </>
+          ) : (
+            <>
+              <Button variant="ghost" size="sm" asChild>
+                <Link href="/login">Log in</Link>
+              </Button>
+              <Button size="sm" asChild>
+                <Link href="/signup">Sign up</Link>
+              </Button>
+            </>
+          )}
         </nav>
       </div>
     </header>

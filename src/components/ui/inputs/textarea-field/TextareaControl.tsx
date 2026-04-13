@@ -3,7 +3,7 @@
 import * as React from "react";
 
 import { useFieldInputAriaProps } from "@/components/ui/inputs/field";
-import { cn } from "@/utils/tailwind-utils";
+import { cn } from "@/lib/utils";
 
 export const textareaClassName =
   "flex min-h-[80px] w-full rounded-lg border border-border bg-muted px-3 py-2 text-sm text-foreground shadow-sm placeholder:text-subtext-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50";

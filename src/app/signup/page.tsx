@@ -1,22 +1,24 @@
 import Link from "next/link";
 
+import { AuthPageLayout } from "@/components/auth/auth-page-layout";
+import { SignupForm } from "@/components/auth/signup-form";
 import { Button } from "@/components/ui";
+
+export const metadata = {
+  title: "Sign up — Fintrack",
+};
 
 export default function SignupPage() {
   return (
-    <div className="flex flex-1 flex-col items-center justify-center bg-background px-[var(--page-padding-x)] py-16">
-      <div className="w-full max-w-md space-y-6 text-center">
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-          Sign up
-        </h1>
-        <p className="text-subtext-1">
-          Account creation is not wired up yet. This route is a placeholder for
-          the landing page CTA.
-        </p>
-        <Button variant="outline" asChild>
-          <Link href="/">Back to home</Link>
-        </Button>
+    <AuthPageLayout>
+      <div className="space-y-6">
+        <SignupForm />
+        <div className="flex justify-center">
+          <Button variant="ghost" size="sm" asChild>
+            <Link href="/">Back to home</Link>
+          </Button>
+        </div>
       </div>
-    </div>
+    </AuthPageLayout>
   );
 }

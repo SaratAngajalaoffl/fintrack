@@ -13,28 +13,34 @@ export type TextFieldProps = Omit<
     id?: string;
   };
 
-export function TextField({
-  label,
-  description,
-  error,
-  required,
-  className,
-  id: idProp,
-  ...controlProps
-}: TextFieldProps) {
-  const uid = React.useId();
-  const id = idProp ?? uid;
+export const TextField = React.forwardRef<HTMLInputElement, TextFieldProps>(
+  function TextField(
+    {
+      label,
+      description,
+      error,
+      required,
+      className,
+      id: idProp,
+      ...controlProps
+    },
+    ref,
+  ) {
+    const uid = React.useId();
+    const id = idProp ?? uid;
 
-  return (
-    <Field
-      label={label}
-      description={description}
-      error={error}
-      htmlFor={id}
-      required={required}
-      className={className}
-    >
-      <TextFieldControl id={id} {...controlProps} />
-    </Field>
-  );
-}
+    return (
+      <Field
+        label={label}
+        description={description}
+        error={error}
+        htmlFor={id}
+        required={required}
+        className={className}
+      >
+        <TextFieldControl id={id} ref={ref} {...controlProps} />
+      </Field>
+    );
+  },
+);
+TextField.displayName = "TextField";

@@ -103,3 +103,25 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans);
 }
+
+/* Auth cards — soft entrance (matches landing hero energy without mouse hook). */
+@keyframes auth-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.auth-panel-in {
+  animation: auth-panel-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-panel-in {
+    animation: none;
+  }
+}

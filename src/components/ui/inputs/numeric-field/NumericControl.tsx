@@ -4,7 +4,7 @@ import * as React from "react";
 
 import { Input, inputClassName } from "@/components/ui/inputs/input";
 import { useFieldInputAriaProps } from "@/components/ui/inputs/field";
-import { cn } from "@/utils/tailwind-utils";
+import { cn } from "@/lib/utils";
 
 export type NumericControlProps = Omit<
   React.ComponentProps<typeof Input>,

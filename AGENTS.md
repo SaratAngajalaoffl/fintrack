@@ -35,35 +35,34 @@ The App Router treats modules as **Server Components** unless the file starts wi
 
 ### shadcn/ui and Radix
 
-The project follows **[shadcn/ui](https://ui.shadcn.com)** conventions: `components.json` at the repo root, **`cn()` implemented in `src/utils/tailwind-utils.ts`** and **re-exported from `src/lib/utils.ts`** for the shadcn import path, plus composable components under `src/components/ui/`.
+The project follows **[shadcn/ui](https://ui.shadcn.com)** conventions: `components.json` at the repo root, **`cn()` in `src/lib/utils.ts`** (`clsx` + `tailwind-merge`, matches the CLI alias), plus composable components under `src/components/ui/`.
 
 **Important:** Official shadcn registry components are **implemented with [Radix UI](https://www.radix-ui.com) primitives** (e.g. `@radix-ui/react-dialog`, `@radix-ui/react-select`) plus Tailwind. Those **`@radix-ui/react-*` packages are required dependencies** — they are not optional add-ons. You **cannot** remove Radix from `package.json` and keep stock shadcn components; there is no supported “Radix-free” shadcn build.
 
 - **Prefer** adding or updating UI via the CLI: `npx shadcn@latest add <component>` (or `add --all` after backing up), rather than hand-rolling new Radix wrappers.
-- **`cn`** lives in **`@/utils/tailwind-utils`**; **`@/lib/utils`** re-exports it so shadcn CLI output can keep `import { cn } from "@/lib/utils"`. Either import path is fine.
+- Import **`cn`** from **`@/lib/utils`** (same path the shadcn CLI uses via `components.json` aliases).
 - If you **must** avoid Radix entirely, you would need a **different** stack (e.g. [React Aria](https://react-spectrum.adobe.com/react-aria/), native `<dialog>`, custom controls) — **not** the default shadcn registry — and expect a full rewrite of interactive primitives.
 
 ## Repository layout
 
-| Path                    | Purpose                                                                                                                                                                                       |
-| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `src/app/`              | App Router: `layout.tsx`, `page.tsx`, routes, route groups, layouts.                                                                                                                          |
-| `src/components/ui/`    | **Shared UI kit** — organized by kind (see [UI component structure](#ui-component-structure)). Public API: `@/components/ui` (`index.ts`). **Do not** recreate primitives in feature folders. |
-| `src/components/icons/` | **Inline SVG icon components** — `@/components/icons` (`index.ts`). Not under `ui/`; see [Icons](#icons).                                                                                     |
-| `src/components/hooks/` | **Shared React hooks** — `@/components/hooks` (see [Hooks](#hooks)). One hook per file (`use-*.ts`), re-exported from `index.ts` when useful.                                                 |
-| `src/app/showcase/`     | **UI showcase** — `/showcase` previews primitives and variants; update when adding or changing shared UI.                                                                                     |
-| `src/lib/`              | **`utils.ts`** — re-exports **`cn`** from `@/utils/tailwind-utils` (shadcn default import path).                                                                                              |
-| `components.json`       | **shadcn/ui** CLI config (registry style, aliases, `globals.css` path). Run `npx shadcn@latest add <component>` to add or refresh components.                                                 |
-| `src/utils/`            | **`tailwind-utils.ts`** — canonical **`cn()`** (`clsx` + `tailwind-merge`). `formatting/` for shared formatters: `date-formatting.ts`, `number-formatting.ts`, `string-formatting.ts`.        |
-| `src/`                  | Feature components and other shared code outside `ui/`. **Reusable hooks** live in `src/components/hooks/` (not loose files under `src/hooks/` unless justified).                             |
-| `public/brand/`         | **Brand marks** — round / long / short logos (favicon, header). Not for generic UI icons; see [Icons](#icons).                                                                                |
-| `public/icons/`         | **Static icon assets** — `.svg`, `.png`, and similar files served as `/icons/…` (see [Icons](#icons)).                                                                                        |
-| `docs/`                 | Contributor docs (`CONTRIBUTING.md`) and [docs index](docs/README.md).                                                                                                                        |
-| `migrations/`           | Ordered `*.sql` files; applied idempotently via `schema_migrations`.                                                                                                                          |
-| `deploy/docker/`        | Dockerfiles (`Dockerfile.dev`, `Dockerfile.test`, `Dockerfile.prod`) and `scripts/run-migrations.sh`.                                                                                         |
-| `deploy/compose/`       | `docker-compose.dev.yml`, `docker-compose.test.yml`, `docker-compose.prod.yml`.                                                                                                               |
+| Path                    | Purpose                                                                                                                                                                                                                |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/app/`              | App Router: `layout.tsx`, `page.tsx`, routes, route groups, layouts.                                                                                                                                                   |
+| `src/components/ui/`    | **Shared UI kit** — organized by kind (see [UI component structure](#ui-component-structure)). Public API: `@/components/ui` (`index.ts`). **Do not** recreate primitives in feature folders.                          |
+| `src/components/icons/` | **Inline SVG icon components** — `@/components/icons` (`index.ts`). Not under `ui/`; see [Icons](#icons).                                                                                                              |
+| `src/components/hooks/` | **Shared React hooks** — `@/components/hooks` (see [Hooks](#hooks)). One hook per file (`use-*.ts`), re-exported from `index.ts` when useful.                                                                          |
+| `src/app/showcase/`     | **UI showcase** — `/showcase` previews primitives and variants; update when adding or changing shared UI.                                                                                                              |
+| `src/lib/`              | **`utils.ts`** — **`cn()`** for Tailwind class merging. **`formatting/`** — shared formatters (`date-formatting.ts`, `number-formatting.ts`, `string-formatting.ts`). Auth, DB, and other app libraries live here too. |
+| `components.json`       | **shadcn/ui** CLI config (registry style, aliases, `globals.css` path). Run `npx shadcn@latest add <component>` to add or refresh components.                                                                          |
+| `src/`                  | Feature components and other shared code outside `ui/`. **Reusable hooks** live in `src/components/hooks/` (not loose files under `src/hooks/` unless justified).                                                      |
+| `public/brand/`         | **Brand marks** — round / long / short logos (favicon, header). Not for generic UI icons; see [Icons](#icons).                                                                                                         |
+| `public/icons/`         | **Static icon assets** — `.svg`, `.png`, and similar files served as `/icons/…` (see [Icons](#icons)).                                                                                                                 |
+| `docs/`                 | Contributor docs (`CONTRIBUTING.md`) and [docs index](docs/README.md).                                                                                                                                                 |
+| `migrations/`           | Ordered `*.sql` files; applied idempotently via `schema_migrations`.                                                                                                                                                   |
+| `deploy/docker/`        | Dockerfiles (`Dockerfile.dev`, `Dockerfile.test`, `Dockerfile.prod`) and `scripts/run-migrations.sh`.                                                                                                                  |
+| `deploy/compose/`       | `docker-compose.dev.yml`, `docker-compose.test.yml`, `docker-compose.prod.yml`.                                                                                                                                        |
 
-Add feature modules under `src/` with clear boundaries (e.g. `src/components/`, `src/utils/formatting/`, `src/app/(dashboard)/`) as the app grows.
+Add feature modules under `src/` with clear boundaries (e.g. `src/components/`, `src/lib/formatting/`, `src/app/(dashboard)/`) as the app grows.
 
 ### Hooks
 
@@ -89,7 +88,7 @@ Inline SVG **icon components** live in **`src/components/icons/`** (not under `u
 
 **Barrel:** `src/components/ui/index.ts` re-exports the public API. **Import from `@/components/ui`** for app code unless you need a deep path for internal reuse.
 
-**Conventions:** Use `cn()` from **`@/utils/tailwind-utils`** or **`@/lib/utils`** (same function). Match naming and imports in sibling files; add `"use client"` only where the UI primitive requires it (see [React Server Components](#react-server-components-default)). See [shadcn/ui and Radix](#shadcnui-and-radix). After adding or changing a primitive, **extend the showcase** (below).
+**Conventions:** Use `cn()` from **`@/lib/utils`**. Match naming and imports in sibling files; add `"use client"` only where the UI primitive requires it (see [React Server Components](#react-server-components-default)). See [shadcn/ui and Radix](#shadcnui-and-radix). After adding or changing a primitive, **extend the showcase** (below).
 
 ### Icons
 
@@ -131,7 +130,7 @@ Remove generated artifacts when you need a clean slate: delete the `.next` direc
 ## UI and theming rules
 
 1. **Reuse `src/components/ui`:** Build screens from the existing kit (`Button`, `ButtonWithTooltip`, `Dialog`, `Field`, `TextField`, `NumericField`, `CurrencyField`, `TextareaField`, `SelectField`, `MultiSelectField`, `RadioField`, `DropdownMenu` / `Menu`, `Card`, `Tooltip`, …). Import from `@/components/ui` (see [UI component structure](#ui-component-structure)). Only add a new primitive in `ui/` when something is genuinely missing; do not duplicate buttons, inputs, or modals ad hoc in feature folders. **New or changed primitives:** update the [showcase page](#showcase-page).
-2. **Styling:** Do not hardcode one-off hex colors for core UI unless the task requires it. Use Mocha tokens (`text-text`, `bg-surface-0`, `border-border`, …) or roles (`primary`, `secondary`, `foreground`, `muted`). Use `cn()` from `@/utils/tailwind-utils` or `@/lib/utils` to merge Tailwind classes.
+2. **Styling:** Do not hardcode one-off hex colors for core UI unless the task requires it. Use Mocha tokens (`text-text`, `bg-surface-0`, `border-border`, …) or roles (`primary`, `secondary`, `foreground`, `muted`). Use `cn()` from `@/lib/utils` to merge Tailwind classes.
 3. **Tailwind v4:** Add new CSS variables under `:root` and map them in `@theme inline` in `globals.css`.
 4. **Theme:** The app is **Catppuccin Mocha** (dark). `html` uses **crust** as the outer shell; `body` uses **base** as the main background. A light theme (e.g. Latte) can be added later by extending `:root` or a class on `<html>`.
 5. **Logos:** Round / long / short brand assets under `public/brand/`. Do not remove without replacing usages.

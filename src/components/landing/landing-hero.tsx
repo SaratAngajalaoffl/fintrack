@@ -5,7 +5,12 @@ import { Button } from "@/components/ui";
 
 import { LandingHeroBackground } from "./landing-hero-background";
 
-export function LandingHero() {
+export type LandingHeroProps = {
+  /** When true, primary CTA goes to the protected dashboard instead of sign up. */
+  isAuthenticated?: boolean;
+};
+
+export function LandingHero({ isAuthenticated = false }: LandingHeroProps) {
   return (
     <div className="relative flex min-h-[calc(100dvh-3.5rem)] flex-1 flex-col overflow-hidden">
       <LandingHeroBackground />
@@ -28,17 +33,25 @@ export function LandingHero() {
             calm workspace — so you always know where you stand.
           </p>
           <div className="mt-10 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-center sm:gap-4">
-            <Button className="min-w-[160px]" size="lg" asChild>
-              <Link href="/signup">Sign up</Link>
-            </Button>
-            <Button
-              className="min-w-[160px]"
-              size="lg"
-              variant="outline"
-              asChild
-            >
-              <Link href="/login">Log in</Link>
-            </Button>
+            {isAuthenticated ? (
+              <Button className="min-w-[160px]" size="lg" asChild>
+                <Link href="/dashboard">Go to dashboard</Link>
+              </Button>
+            ) : (
+              <>
+                <Button className="min-w-[160px]" size="lg" asChild>
+                  <Link href="/signup">Sign up</Link>
+                </Button>
+                <Button
+                  className="min-w-[160px]"
+                  size="lg"
+                  variant="outline"
+                  asChild
+                >
+                  <Link href="/login">Log in</Link>
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </main>

@@ -10,7 +10,7 @@ import {
   type FieldProps,
 } from "@/components/ui/inputs/field";
 import { Check } from "@/components/icons";
-import { cn } from "@/utils/tailwind-utils";
+import { cn } from "@/lib/utils";
 
 import type { MultiSelectFieldProps } from "./types";
 
