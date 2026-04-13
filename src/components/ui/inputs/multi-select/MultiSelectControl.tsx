@@ -9,7 +9,7 @@ import {
   useFieldInputAriaProps,
   type FieldProps,
 } from "@/components/ui/inputs/field";
-import { Check } from "@/components/ui/icons";
+import { Check } from "@/components/icons";
 import { cn } from "@/utils/tailwind-utils";
 
 import type { MultiSelectFieldProps } from "./types";

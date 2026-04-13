@@ -25,18 +25,20 @@ This project may use a newer Next.js than older training data. Prefer **local** 
 
 ## Repository layout
 
-| Path                 | Purpose                                                                                                                                                                                       |
-| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `src/app/`           | App Router: `layout.tsx`, `page.tsx`, routes, route groups, layouts.                                                                                                                          |
-| `src/components/ui/` | **Shared UI kit** — organized by kind (see [UI component structure](#ui-component-structure)). Public API: `@/components/ui` (`index.ts`). **Do not** recreate primitives in feature folders. |
-| `src/app/showcase/`  | **UI showcase** — `/showcase` previews primitives and variants; update when adding or changing shared UI.                                                                                     |
-| `src/utils/`         | `tailwind-utils.ts` (`cn()` for Tailwind class merging). `formatting/` for shared formatters: `date-formatting.ts`, `number-formatting.ts`, `string-formatting.ts`.                           |
-| `src/`               | Feature components, hooks, and other shared code outside `ui/`.                                                                                                                               |
-| `public/brand/`      | Logos: round / long / short assets (favicon, header, future use). No secrets.                                                                                                                 |
-| `docs/`              | Contributor docs (`CONTRIBUTING.md`) and [docs index](docs/README.md).                                                                                                                        |
-| `migrations/`        | Ordered `*.sql` files; applied idempotently via `schema_migrations`.                                                                                                                          |
-| `deploy/docker/`     | Dockerfiles (`Dockerfile.dev`, `Dockerfile.test`, `Dockerfile.prod`) and `scripts/run-migrations.sh`.                                                                                         |
-| `deploy/compose/`    | `docker-compose.dev.yml`, `docker-compose.test.yml`, `docker-compose.prod.yml`.                                                                                                               |
+| Path                    | Purpose                                                                                                                                                                                       |
+| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/app/`              | App Router: `layout.tsx`, `page.tsx`, routes, route groups, layouts.                                                                                                                          |
+| `src/components/ui/`    | **Shared UI kit** — organized by kind (see [UI component structure](#ui-component-structure)). Public API: `@/components/ui` (`index.ts`). **Do not** recreate primitives in feature folders. |
+| `src/components/icons/` | **Inline SVG icon components** — `@/components/icons` (`index.ts`). Not under `ui/`; see [Icons](#icons).                                                                                     |
+| `src/app/showcase/`     | **UI showcase** — `/showcase` previews primitives and variants; update when adding or changing shared UI.                                                                                     |
+| `src/utils/`            | `tailwind-utils.ts` (`cn()` for Tailwind class merging). `formatting/` for shared formatters: `date-formatting.ts`, `number-formatting.ts`, `string-formatting.ts`.                           |
+| `src/`                  | Feature components, hooks, and other shared code outside `ui/`.                                                                                                                               |
+| `public/brand/`         | **Brand marks** — round / long / short logos (favicon, header). Not for generic UI icons; see [Icons](#icons).                                                                                |
+| `public/icons/`         | **Static icon assets** — `.svg`, `.png`, and similar files served as `/icons/…` (see [Icons](#icons)).                                                                                        |
+| `docs/`                 | Contributor docs (`CONTRIBUTING.md`) and [docs index](docs/README.md).                                                                                                                        |
+| `migrations/`           | Ordered `*.sql` files; applied idempotently via `schema_migrations`.                                                                                                                          |
+| `deploy/docker/`        | Dockerfiles (`Dockerfile.dev`, `Dockerfile.test`, `Dockerfile.prod`) and `scripts/run-migrations.sh`.                                                                                         |
+| `deploy/compose/`       | `docker-compose.dev.yml`, `docker-compose.test.yml`, `docker-compose.prod.yml`.                                                                                                               |
 
 Add feature modules under `src/` with clear boundaries (e.g. `src/components/`, `src/utils/formatting/`, `src/app/(dashboard)/`) as the app grows.
 
@@ -49,12 +51,24 @@ Shared primitives live under `src/components/ui/`. **One main component per file
 | Form controls     | `inputs/<name>/`                                  | e.g. `inputs/field/`, `inputs/input/`, `inputs/label/`, `inputs/text-field/`, `inputs/select/`. Split `FooField` and `FooControl` into separate files when both exist. |
 | Buttons           | `buttons/button/`, `buttons/button-with-tooltip/` | `Button` and `buttonVariants` live in `buttons/button/`.                                                                                                               |
 | Layout / overlays | `card/`, `dialog/`, `dropdown-menu/`, `tooltip/`  | One file per exported part (`DialogContent.tsx`, `CardHeader.tsx`, …).                                                                                                 |
-| Icons             | `icons/`                                          | One icon per file (`ChevronDown.tsx`, `Check.tsx`) plus `index.ts`.                                                                                                    |
 | Shared types      | Next to the feature                               | e.g. `inputs/multi-select/types.ts` to avoid circular imports between sibling modules.                                                                                 |
+
+Inline SVG **icon components** live in **`src/components/icons/`** (not under `ui/`); see [Icons](#icons).
 
 **Barrel:** `src/components/ui/index.ts` re-exports the public API. **Import from `@/components/ui`** for app code unless you need a deep path for internal reuse.
 
 **Conventions:** Use `cn()` from `@/utils/tailwind-utils`. Match naming, imports, and `"use client"` usage in sibling files. After adding or changing a primitive, **extend the showcase** (below).
+
+### Icons
+
+All icon assets follow one of two locations; do not leave ad hoc icon files under unrelated `public/` paths.
+
+| Kind                                          | Location                    | Use when                                                                                                                                                                                                                      |
+| --------------------------------------------- | --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Static files** (`.svg`, `.png`, `.webp`, …) | **`public/icons/`**         | You reference a file by URL: `next/image`, `<img src="/icons/name.svg">`, CSS `url()`, or metadata. Subfolders are allowed (e.g. `public/icons/categories/groceries.png`).                                                    |
+| **React components** (inline SVG)             | **`src/components/icons/`** | Shared across the app (e.g. selects, multi-select). One component per file (`PascalCase.tsx`), export from `index.ts`, import via **`@/components/icons`**. Prefer `currentColor` for stroke/fill so icons follow text color. |
+
+**Brand logos** stay in **`public/brand/`** only — not under `public/icons/`.
 
 ### Showcase page
 
@@ -90,6 +104,7 @@ Remove generated artifacts when you need a clean slate: delete the `.next` direc
 4. **Theme:** The app is **Catppuccin Mocha** (dark). `html` uses **crust** as the outer shell; `body` uses **base** as the main background. A light theme (e.g. Latte) can be added later by extending `:root` or a class on `<html>`.
 5. **Logos:** Round / long / short brand assets under `public/brand/`. Do not remove without replacing usages.
 6. **Forms:** Prefer `*Field` components for labeled controls with errors; use `inputClassName` when styling the inner control and `className` on the field for the outer wrapper. `TooltipProvider` wraps the app in `layout.tsx` for `ButtonWithTooltip` / `Tooltip`.
+7. **Icons:** Put static `.svg` / `.png` (and similar) under **`public/icons/`**; put shared inline-SVG React icons under **`src/components/icons/`**. See [Icons](#icons).
 
 ### Catppuccin Mocha reference (implemented)
 

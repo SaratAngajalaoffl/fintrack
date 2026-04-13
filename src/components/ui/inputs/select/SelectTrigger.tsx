@@ -3,7 +3,7 @@
 import * as React from "react";
 import * as SelectPrimitive from "@radix-ui/react-select";
 
-import { ChevronDown } from "@/components/ui/icons";
+import { ChevronDown } from "@/components/icons";
 import { cn } from "@/utils/tailwind-utils";
 
 const SelectTrigger = React.forwardRef<
