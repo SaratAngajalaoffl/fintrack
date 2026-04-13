@@ -1,0 +1,55 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-fintrack}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-fintrack}
+      POSTGRES_DB: ${POSTGRES_DB:-fintrack}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data_dev:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  migrate:
+    image: postgres:16-alpine
+    volumes:
+      - ../../migrations:/migrations:ro
+      - ../docker/scripts/run-migrations.sh:/run-migrations.sh:ro
+    environment:
+      PGHOST: postgres
+      PGUSER: ${POSTGRES_USER:-fintrack}
+      PGPASSWORD: ${POSTGRES_PASSWORD:-fintrack}
+      PGDATABASE: ${POSTGRES_DB:-fintrack}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    entrypoint: ["/bin/sh", "/run-migrations.sh"]
+
+  web:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile.dev
+    restart: unless-stopped
+    ports:
+      - "${WEB_PORT:-3000}:3000"
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-fintrack}:${POSTGRES_PASSWORD:-fintrack}@postgres:5432/${POSTGRES_DB:-fintrack}
+      NODE_ENV: development
+    volumes:
+      - ../..:/app
+      - web_node_modules:/app/node_modules
+      - web_next:/app/.next
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+volumes:
+  postgres_data_dev:
+  web_node_modules:
+  web_next:

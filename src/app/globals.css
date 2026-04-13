@@ -1,26 +1,87 @@
 @import "tailwindcss";
 
+/*
+  Catppuccin Mocha — semantic + palette tokens.
+  Primary: red; secondary: mauve. See AGENTS.md.
+*/
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: dark;
+
+  /* —— Catppuccin Mocha (named) —— */
+  --text: #cdd6f4;
+  --subtext-1: #bac2de;
+  --subtext-0: #a6adc8;
+  --overlay-2: #9399b2;
+  --overlay-1: #7f849c;
+  --overlay-0: #6c7086;
+  --surface-2: #585b70;
+  --surface-1: #45475a;
+  --surface-0: #313244;
+  --base: #1e1e2e;
+  --mantle: #181825;
+  --crust: #11111b;
+  --red: #f38ba8;
+  --mauve: #cba6f7;
+
+  /* —— App semantics (map to Mocha) —— */
+  --background: var(--base);
+  --foreground: var(--text);
+  --muted: var(--surface-0);
+  --muted-foreground: var(--subtext-1);
+  --primary: var(--red);
+  --primary-foreground: var(--base);
+  --secondary: var(--mauve);
+  --secondary-foreground: var(--base);
+  --accent: var(--mantle);
+  --accent-foreground: var(--text);
+  --border: var(--surface-1);
+  --ring: var(--red);
+  --destructive: #eba0ac;
+  --destructive-foreground: var(--base);
 }
 
 @theme inline {
+  /* Palette (use as-is) */
+  --color-text: var(--text);
+  --color-subtext-1: var(--subtext-1);
+  --color-subtext-0: var(--subtext-0);
+  --color-overlay-2: var(--overlay-2);
+  --color-overlay-1: var(--overlay-1);
+  --color-overlay-0: var(--overlay-0);
+  --color-surface-2: var(--surface-2);
+  --color-surface-1: var(--surface-1);
+  --color-surface-0: var(--surface-0);
+  --color-base: var(--base);
+  --color-mantle: var(--mantle);
+  --color-crust: var(--crust);
+
+  /* Roles */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-border: var(--border);
+  --color-ring: var(--ring);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+
+  --font-sans: var(--font-montserrat), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-montserrat), ui-sans-serif, system-ui, sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  background-color: var(--crust);
 }
 
 body {
-  background: var(--background);
+  background-color: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
 }
