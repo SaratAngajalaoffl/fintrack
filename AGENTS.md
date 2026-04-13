@@ -25,14 +25,15 @@ This project may use a newer Next.js than older training data. Prefer **local** 
 
 ## Repository layout
 
-| Path              | Purpose                                                                                                             |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------- |
-| `src/app/`        | App Router: `layout.tsx`, `page.tsx`, routes, route groups, layouts.                                                |
-| `src/`            | Shared React components, hooks, `lib/` (server/client helpers), future feature folders.                             |
-| `public/brand/`   | Logos: `round_logo.png` (favicon / app imagery), `long_logo.png` (header), `short_logo.png` (reserved). No secrets. |
-| `migrations/`     | Ordered `*.sql` files; applied idempotently via `schema_migrations`.                                                |
-| `deploy/docker/`  | Dockerfiles (`Dockerfile.dev`, `Dockerfile.test`, `Dockerfile.prod`) and `scripts/run-migrations.sh`.               |
-| `deploy/compose/` | `docker-compose.dev.yml`, `docker-compose.test.yml`, `docker-compose.prod.yml`.                                     |
+| Path              | Purpose                                                                                               |
+| ----------------- | ----------------------------------------------------------------------------------------------------- |
+| `src/app/`        | App Router: `layout.tsx`, `page.tsx`, routes, route groups, layouts.                                  |
+| `src/`            | Shared React components, hooks, `lib/` (server/client helpers), future feature folders.               |
+| `public/brand/`   | Logos: round / long / short assets (favicon, header, future use). No secrets.                         |
+| `docs/`           | Contributor docs (`CONTRIBUTING.md`) and [docs index](docs/README.md).                                |
+| `migrations/`     | Ordered `*.sql` files; applied idempotently via `schema_migrations`.                                  |
+| `deploy/docker/`  | Dockerfiles (`Dockerfile.dev`, `Dockerfile.test`, `Dockerfile.prod`) and `scripts/run-migrations.sh`. |
+| `deploy/compose/` | `docker-compose.dev.yml`, `docker-compose.test.yml`, `docker-compose.prod.yml`.                       |
 
 Add feature modules under `src/` with clear boundaries (e.g. `src/components/`, `src/lib/db/`, `src/app/(dashboard)/`) as the app grows.
 
