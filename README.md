@@ -1,9 +1,9 @@
 <p align="center">
-  <img src="public/brand/round_logo.svg" width="96" height="96" alt="Fintrack logo" />
+  <img src="public/brand/round_logo.png" width="96" height="96" alt="Fintrack logo" />
 </p>
 
 <h1 align="center">
-  <img src="public/brand/long_logo.svg" alt="Fintrack" width="360" />
+  <img src="public/brand/long_logo.png" alt="Fintrack" width="360" />
 </h1>
 
 <p align="center">
