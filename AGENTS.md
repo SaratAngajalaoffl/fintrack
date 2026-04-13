@@ -23,6 +23,16 @@ This document orients coding agents and contributors to how Fintrack is organize
 
 This project may use a newer Next.js than older training data. Prefer **local** sources: `node_modules/next` types, `next.config.ts`, and official docs for the installed version. If something looks deprecated, verify before relying on it.
 
+## React Server Components (default)
+
+The App Router treats modules as **Server Components** unless the file starts with **`"use client"`**.
+
+1. **Prefer server for app code:** `page.tsx`, `layout.tsx`, and feature UI should be Server Components when possible. They can `import` client components as children; the server file itself stays a server module.
+2. **Add `"use client"` only when needed:** `useState`, `useEffect`, other hooks, browser APIs (`window`, `document`, `matchMedia`, …), or event handlers that must attach in that module, or libraries that only run on the client (e.g. many Radix primitives).
+3. **Shrink the client boundary:** If only part of a screen is interactive, move that part into a small client file (e.g. `feature-interactive.tsx`) and keep the route or parent as a server component that composes it.
+4. **UI kit:** Files under `src/components/ui/` often use `"use client"` because of Radix/hooks — that is expected. Do not add `"use client"` to a file **only** because it imports `@/components/ui`; the importer can remain a server component.
+5. **Data:** Prefer fetching and secrets on the server (Server Components, Route Handlers, server actions) unless the data must live in the browser.
+
 ## Repository layout
 
 | Path                    | Purpose                                                                                                                                                                                       |
@@ -30,9 +40,10 @@ This project may use a newer Next.js than older training data. Prefer **local** 
 | `src/app/`              | App Router: `layout.tsx`, `page.tsx`, routes, route groups, layouts.                                                                                                                          |
 | `src/components/ui/`    | **Shared UI kit** — organized by kind (see [UI component structure](#ui-component-structure)). Public API: `@/components/ui` (`index.ts`). **Do not** recreate primitives in feature folders. |
 | `src/components/icons/` | **Inline SVG icon components** — `@/components/icons` (`index.ts`). Not under `ui/`; see [Icons](#icons).                                                                                     |
+| `src/components/hooks/` | **Shared React hooks** — `@/components/hooks` (see [Hooks](#hooks)). One hook per file (`use-*.ts`), re-exported from `index.ts` when useful.                                                 |
 | `src/app/showcase/`     | **UI showcase** — `/showcase` previews primitives and variants; update when adding or changing shared UI.                                                                                     |
 | `src/utils/`            | `tailwind-utils.ts` (`cn()` for Tailwind class merging). `formatting/` for shared formatters: `date-formatting.ts`, `number-formatting.ts`, `string-formatting.ts`.                           |
-| `src/`                  | Feature components, hooks, and other shared code outside `ui/`.                                                                                                                               |
+| `src/`                  | Feature components and other shared code outside `ui/`. **Reusable hooks** live in `src/components/hooks/` (not loose files under `src/hooks/` unless justified).                             |
 | `public/brand/`         | **Brand marks** — round / long / short logos (favicon, header). Not for generic UI icons; see [Icons](#icons).                                                                                |
 | `public/icons/`         | **Static icon assets** — `.svg`, `.png`, and similar files served as `/icons/…` (see [Icons](#icons)).                                                                                        |
 | `docs/`                 | Contributor docs (`CONTRIBUTING.md`) and [docs index](docs/README.md).                                                                                                                        |
@@ -41,6 +52,15 @@ This project may use a newer Next.js than older training data. Prefer **local** 
 | `deploy/compose/`       | `docker-compose.dev.yml`, `docker-compose.test.yml`, `docker-compose.prod.yml`.                                                                                                               |
 
 Add feature modules under `src/` with clear boundaries (e.g. `src/components/`, `src/utils/formatting/`, `src/app/(dashboard)/`) as the app grows.
+
+### Hooks
+
+**Location:** `src/components/hooks/`.
+
+- Add **shared** custom hooks here (used in more than one place or clearly library-level). Name files **`use-kebab-case.ts`** (e.g. `use-mouse-reactive-gradient.ts`) and export the hook as a named function **`useThing`**.
+- **Barrel:** `src/components/hooks/index.ts` re-exports hooks so consumers can import from **`@/components/hooks`** or **`@/components/hooks/use-something`**.
+- Hooks that are **only** used by a single feature may stay next to that feature until reuse is needed; prefer moving them into `components/hooks/` when they stabilize or are shared.
+- Hooks that use browser-only APIs (`window`, `document`, `matchMedia`, etc.) are only safe from **client** components; do not call them from Server Components.
 
 ## UI component structure
 
@@ -57,7 +77,7 @@ Inline SVG **icon components** live in **`src/components/icons/`** (not under `u
 
 **Barrel:** `src/components/ui/index.ts` re-exports the public API. **Import from `@/components/ui`** for app code unless you need a deep path for internal reuse.
 
-**Conventions:** Use `cn()` from `@/utils/tailwind-utils`. Match naming, imports, and `"use client"` usage in sibling files. After adding or changing a primitive, **extend the showcase** (below).
+**Conventions:** Use `cn()` from `@/utils/tailwind-utils`. Match naming and imports in sibling files; add `"use client"` only where the UI primitive requires it (see [React Server Components](#react-server-components-default)). After adding or changing a primitive, **extend the showcase** (below).
 
 ### Icons
 
@@ -72,10 +92,10 @@ All icon assets follow one of two locations; do not leave ad hoc icon files unde
 
 ### Showcase page
 
-The route **`/showcase`** (`src/app/showcase/page.tsx`, metadata in `layout.tsx`) is the living catalog of UI primitives. When you **add a new component**, **new variants**, or **meaningful behavior** to `src/components/ui/`:
+The route **`/showcase`** uses a **server** `page.tsx` that renders the client module **`showcase-content.tsx`** (metadata stays in `layout.tsx`). When you **add a new component**, **new variants**, or **meaningful behavior** to `src/components/ui/`:
 
-1. Add or update a **section** in `src/app/showcase/page.tsx` that demonstrates the component (and variants, if any).
-2. Keep demos **interactive** where state matters (dialogs, selects, menus); the page is a client component.
+1. Add or update a **section** in **`src/app/showcase/showcase-content.tsx`** that demonstrates the component (and variants, if any).
+2. Keep demos **interactive** where state matters (dialogs, selects, menus); that file remains a client component.
 3. Prefer **realistic copy** (labels, placeholders) so spacing and typography stay honest.
 
 Do not leave the showcase stale after user-visible kit changes.
@@ -105,6 +125,7 @@ Remove generated artifacts when you need a clean slate: delete the `.next` direc
 5. **Logos:** Round / long / short brand assets under `public/brand/`. Do not remove without replacing usages.
 6. **Forms:** Prefer `*Field` components for labeled controls with errors; use `inputClassName` when styling the inner control and `className` on the field for the outer wrapper. `TooltipProvider` wraps the app in `layout.tsx` for `ButtonWithTooltip` / `Tooltip`.
 7. **Icons:** Put static `.svg` / `.png` (and similar) under **`public/icons/`**; put shared inline-SVG React icons under **`src/components/icons/`**. See [Icons](#icons).
+8. **Server vs client:** Prefer Server Components for routes and non-interactive UI; keep client boundaries small. See [React Server Components](#react-server-components-default).
 
 ### Catppuccin Mocha reference (implemented)
 
