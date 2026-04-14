@@ -62,17 +62,17 @@ export function DashboardNavLinkList({
       aria-label="Dashboard sections"
       className={cn("flex flex-1 flex-col", className)}
     >
-      <ul className="flex flex-col gap-0.5">
+      <ul className="flex flex-col gap-1">
         {DASHBOARD_NAV_ITEMS.map((section) => {
           const SectionIcon = section.icon;
           const isExpanded = expandedSections[section.label] ?? false;
 
           return (
-            <li key={section.label} className="rounded-lg px-1 py-1">
+            <li key={section.label} className="rounded-lg px-1 py-1.5">
               <button
                 type="button"
                 onClick={() => toggleSection(section.label)}
-                className="mb-1 flex w-full items-center gap-2 rounded-md px-2 py-1 text-left text-xs font-semibold tracking-wide text-subtext-0 uppercase transition-colors hover:bg-surface-0/70 hover:text-foreground"
+                className="mb-1.5 flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs font-semibold tracking-wide text-subtext-0 uppercase transition-colors hover:bg-surface-0/70 hover:text-foreground"
                 aria-expanded={isExpanded}
               >
                 <SectionIcon className="size-3.5 shrink-0" aria-hidden />
@@ -85,9 +85,7 @@ export function DashboardNavLinkList({
                   aria-hidden
                 />
               </button>
-              <ul
-                className={cn("space-y-0.5", isExpanded ? "block" : "hidden")}
-              >
+              <ul className={cn("space-y-1", isExpanded ? "block" : "hidden")}>
                 {section.items.map((item) => {
                   const isActive =
                     pathname === item.href ||
@@ -98,7 +96,7 @@ export function DashboardNavLinkList({
                         href={item.href}
                         onClick={onNavigate}
                         className={cn(
-                          "ml-2 flex items-center rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
+                          "ml-2 flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                           isActive
                             ? "bg-surface-1 text-foreground"
                             : "text-subtext-1 hover:bg-surface-0/80 hover:text-foreground",
