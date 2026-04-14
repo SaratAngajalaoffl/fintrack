@@ -20,25 +20,24 @@ services:
 
   api:
     build:
-      context: ../..
-      dockerfile: deploy/docker/Dockerfile.api
+      context: ../api
+      dockerfile: ../api/deploy/Dockerfile
     restart: unless-stopped
     ports:
       - "${API_PORT:-8000}:8000"
+    env_file:
+      - ../api/.env
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-fintrack}:${POSTGRES_PASSWORD:-fintrack}@postgres:5432/${POSTGRES_DB:-fintrack}
       PORT: "8000"
     volumes:
-      - ../../api/migrations:/migrations:ro
+      - ../api/migrations:/migrations:ro
     depends_on:
       postgres:
         condition: service_healthy
     healthcheck:
       test:
-        [
-          "CMD-SHELL",
-          "wget -q -O- http://127.0.0.1:${PORT}/health | grep -q ok",
-        ]
+        ["CMD-SHELL", "wget -q -O- http://127.0.0.1:8000/health | grep -q ok"]
       interval: 5s
       timeout: 5s
       retries: 8
@@ -46,16 +45,18 @@ services:
 
   web:
     build:
-      context: ../..
-      dockerfile: deploy/docker/Dockerfile.dev
+      context: ../web
+      dockerfile: ../web/deploy/Dockerfile.dev
     restart: unless-stopped
     ports:
       - "${WEB_PORT:-3000}:3000"
+    env_file:
+      - ../web/.env
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-fintrack}:${POSTGRES_PASSWORD:-fintrack}@postgres:5432/${POSTGRES_DB:-fintrack}
       NODE_ENV: development
     volumes:
-      - ../..:/app
+      - ../web:/app/web
       - web_node_modules:/app/web/node_modules
       - web_next:/app/web/.next
     depends_on:

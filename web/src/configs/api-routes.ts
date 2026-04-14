@@ -106,9 +106,9 @@ function resolveApiPath<T extends ApiRouteKey>(
  * - **Browser:** `NEXT_PUBLIC_API_ORIGIN` only (baked into the client bundle).
  * - **Server:** prefers `API_ORIGIN`, then `NEXT_PUBLIC_API_ORIGIN` (e.g. Docker SSR can call `http://api:8080`).
  *
- * When this returns `""`, `getApiRoute()` produces same-origin paths like `/api/auth/login`. Pair with
- * **`next.config.ts` rewrites** (when `NEXT_PUBLIC_API_ORIGIN` is unset) so the browser stays on the Next
- * origin and session cookies remain visible to **`middleware.ts`**.
+ * When this returns `""`, `getApiRoute()` produces same-origin paths like `/api/auth/login`. For split
+ * stacks (Next + Go on different origins), set **`NEXT_PUBLIC_API_ORIGIN`** (and **`API_ORIGIN`** for
+ * server/middleware) so **`middleware.ts`** and **`getSession()`** can reach **`GET /api/auth/me`** on the API.
  *
  * When set to an absolute URL (e.g. `http://127.0.0.1:8080`), rewrites are disabled — enable CORS on the API
  * (`CORS_ALLOWED_ORIGINS`) for credentialed `fetch`.

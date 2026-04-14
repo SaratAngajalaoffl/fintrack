@@ -1,13 +1,14 @@
+# Development Next.js (`npm run dev`); compose bind-mounts the app tree over /app/web.
 FROM node:22-alpine
 
 RUN apk add --no-cache libc6-compat
 
 WORKDIR /app/web
 
-COPY web/package.json web/package-lock.json* ./
+COPY package.json package-lock.json* ./
 RUN npm ci
 
-COPY web/ .
+COPY . .
 
 ENV NODE_ENV=development
 ENV NEXT_TELEMETRY_DISABLED=1

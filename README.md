@@ -25,7 +25,7 @@ Fintrack is under active development. The goal is a responsive app for balances,
 - **Frontend:** [Next.js](https://nextjs.org/) (App Router) in **`web/`**, React, TypeScript, Tailwind CSS
 - **API (growing):** [Go](https://go.dev/) in **`api/`** — see [api/README.md](api/README.md)
 - **Database:** [PostgreSQL](https://www.postgresql.org/) with SQL migrations in **`api/migrations/`**
-- **Deployment:** Docker images and Compose files in **`deploy/`** for dev, test, and production-style runs
+- **Deployment:** Dockerfiles under **`api/deploy/`** and **`web/deploy/`**; Compose stacks in **`deploy/`** for dev, test, and production-style runs
 
 This repository is a **simple monorepo** (no npm workspaces): install Node dependencies inside **`web/`** and run Go commands inside **`api/`**.
 
@@ -61,18 +61,24 @@ This repository is a **simple monorepo** (no npm workspaces): install Node depen
 
 3. **Environment**
 
-   Copy the example env file at the **repository root** (used by Docker Compose):
+   Copy the per-app examples and adjust values:
 
    ```bash
-   cp .env.example .env
+   cp api/.env.example api/.env
+   cp web/.env.example web/.env.local
    ```
 
-   For Next.js running **on your host** (not in Docker), create **`web/.env`** with the same values you need (at minimum `DATABASE_URL` and `JWT_SECRET` where applicable — see `.env.example` comments). Next.js loads env files from **`web/`** when you run scripts there.
+   Set **`JWT_SECRET`** (≥16 characters) only in **`api/.env`** — the Go API signs session cookies. In **`web/.env.local`**, set **`NEXT_PUBLIC_API_ORIGIN`** (and optional **`API_ORIGIN`**) so Next can call the API for **`GET /api/auth/me`** (middleware and server components). See **`api/.env.example`** and **`web/.env.example`** for **`DATABASE_URL`**, **`CORS_ALLOWED_ORIGINS`**, and optional variables.
 
-   Example for local Postgres:
+   **Docker Compose:** when you run Compose from the **repository root**, you can add a **root** `.env` (not committed) with **`POSTGRES_*`** and port overrides — or export those variables. Example:
 
    ```bash
-   DATABASE_URL=postgresql://USER:PASSWORD@localhost:5432/DATABASE
+   POSTGRES_USER=fintrack
+   POSTGRES_PASSWORD=fintrack
+   POSTGRES_DB=fintrack
+   POSTGRES_PORT=5432
+   WEB_PORT=3000
+   API_PORT=8000
    ```
 
 4. **Database:** Ensure PostgreSQL is running and migrations have been applied (see [Database migrations](#database-migrations)).
@@ -86,7 +92,7 @@ This repository is a **simple monorepo** (no npm workspaces): install Node depen
 
 6. Open [http://localhost:3000](http://localhost:3000).
 
-**Go API** (auth + migrations + health): from **`api/`**, set **`DATABASE_URL`**, **`JWT_SECRET`** (same string as **`web/.env.local`** / middleware, ≥16 chars), then:
+**Go API** (auth + migrations + health): from **`api/`**, set **`DATABASE_URL`** and **`JWT_SECRET`** (≥16 chars), then:
 
 ```bash
 cd api
@@ -99,21 +105,17 @@ go run ./cmd/api
 
 ## Run with Docker Compose (Postgres + Go API + Next.js)
 
-This starts **Postgres**, the **Go API** (which applies **`api/migrations/`** SQL on startup, then serves **`GET /health`** on port **8080** by default), and the Next.js app from **`web/`**, using the **development** compose file.
+This starts **Postgres**, the **Go API** (which applies **`api/migrations/`** SQL on startup, then serves **`GET /health`** on port **8000** by default in this file), and the Next.js app from **`web/`**, using the **development** compose file.
 
-1. Copy and adjust environment variables at the **repository root** (optional; defaults work for local tries):
-
-   ```bash
-   cp .env.example .env
-   ```
+1. Copy **`api/.env.example`** → **`api/.env`** and **`web/.env.example`** → **`web/.env`** (set **`JWT_SECRET`** in **`api/.env`** only; align **`NEXT_PUBLIC_API_ORIGIN`** / **`API_ORIGIN`** with how Next reaches the API). Optionally create a **root** `.env` with **`POSTGRES_*`** / **`WEB_PORT`** / **`API_PORT`** for Compose interpolation (defaults work for local tries).
 
 2. From the **repository root**, run:
 
    ```bash
-   docker compose -f deploy/compose/docker-compose.dev.yml up --build
+   docker compose -f deploy/docker-compose.dev.yml up --build
    ```
 
-3. **Web:** [http://localhost:3000](http://localhost:3000) (or `WEB_PORT`). **API:** [http://localhost:8080/health](http://localhost:8080/health) (or `API_PORT`).
+3. **Web:** [http://localhost:3000](http://localhost:3000) (or `WEB_PORT`). **API:** [http://localhost:8000/health](http://localhost:8000/health) (or `API_PORT`; production-style compose uses **8080**).
 
 `DATABASE_URL` is set for **`api`** and **`web`** inside Compose; defaults are usually fine for local use.
 
@@ -121,23 +123,23 @@ This starts **Postgres**, the **Go API** (which applies **`api/migrations/`** SQ
 
 | File                                     | Purpose                                         |
 | ---------------------------------------- | ----------------------------------------------- |
-| `deploy/compose/docker-compose.dev.yml`  | Development: hot reload, source bind-mount      |
-| `deploy/compose/docker-compose.test.yml` | Lint + production build after migrations        |
-| `deploy/compose/docker-compose.prod.yml` | Production-style image (`output: "standalone"`) |
+| `deploy/docker-compose.dev.yml`  | Development: hot reload, source bind-mount      |
+| `deploy/docker-compose.test.yml` | Lint + production build after migrations        |
+| `deploy/docker-compose.prod.yml` | Production-style image (`output: "standalone"`) |
 
 Examples:
 
 ```bash
 # Production-style build and run
-docker compose -f deploy/compose/docker-compose.prod.yml up --build -d
+docker compose -f deploy/docker-compose.prod.yml up --build -d
 
 # CI-style checks (lint + build) with Postgres + migrations
-docker compose -f deploy/compose/docker-compose.test.yml up --build
+docker compose -f deploy/docker-compose.test.yml up --build
 ```
 
 ## Database migrations
 
-SQL files live in **`api/migrations/`**. The **Go API** applies pending files on startup (filenames recorded in **`schema_migrations`**, same rules as before). **`deploy/docker/scripts/run-migrations.sh`** is still available if you need to run SQL manually (optional **`MIGRATIONS_PATH`**, default **`/migrations`** in containers).
+SQL files live in **`api/migrations/`**. The **Go API** applies pending files on startup (filenames recorded in **`schema_migrations`**, same rules as before). Run **`go run ./cmd/api`** from **`api/`** so migrations resolve to **`api/migrations/`**; Docker images mount or copy SQL into **`/migrations`**.
 
 If you run Postgres yourself, apply the same files in order with `psql` or your preferred migration workflow. **Seeding** is not run by the API — use your own scripts (see **`data/`**).
 

@@ -1,29 +1,30 @@
-import { jwtVerify } from "jose";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
+import { getAuthMeUrl } from "@/lib/auth/auth-me-url";
 import { SESSION_COOKIE } from "@/lib/auth/constants";
 import { isAuthPagePath, isProtectedPath } from "@/lib/auth/routes";
 
-function getSecret(): Uint8Array | null {
-  const s = process.env.JWT_SECRET;
-  if (!s || s.length < 16) return null;
-  return new TextEncoder().encode(s);
+async function hasValidSession(request: NextRequest): Promise<boolean> {
+  const cookie = request.headers.get("cookie") ?? "";
+  if (!cookie.includes(`${SESSION_COOKIE}=`)) {
+    return false;
+  }
+  const url = getAuthMeUrl(request.url);
+  try {
+    const res = await fetch(url, {
+      headers: { cookie },
+      cache: "no-store",
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
 }
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const secret = getSecret();
-  const token = request.cookies.get(SESSION_COOKIE)?.value;
-  let sessionValid = false;
-  if (token && secret) {
-    try {
-      await jwtVerify(token, secret);
-      sessionValid = true;
-    } catch {
-      sessionValid = false;
-    }
-  }
+  const sessionValid = await hasValidSession(request);
 
   if (isProtectedPath(pathname) && !sessionValid) {
     const url = request.nextUrl.clone();

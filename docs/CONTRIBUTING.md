@@ -22,7 +22,7 @@ Thank you for your interest in Fintrack. This project is open source and welcome
 
    Optional — enable **pre-commit** (Prettier + ESLint via **`lint-staged`**): **`git config core.hooksPath .githooks`** once per clone. Hooks are checked in under **`.githooks/`** (no Husky).
 
-3. **Environment:** Copy **`.env.example`** at the repository root to **`.env`** for Docker Compose. For Next.js on your machine, also create **`web/.env`** with the variables you need (see the root [README](../README.md)).
+3. **Environment:** Copy **`api/.env.example`** → **`api/.env`** and **`web/.env.example`** → **`web/.env.local`** (or **`web/.env`**). For Docker Compose, optionally add a **root** `.env` with **`POSTGRES_*`** and ports (see the [README](../README.md)).
 4. **Run** the app from **`web/`** (`npm run dev`); see the README for Docker and the optional Go API in **`api/`**.
 
 After changes, run formatting and lint locally (the same checks run on commit via git hooks):

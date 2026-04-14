@@ -1,15 +1,14 @@
-name: fintrack
+name: fintrack-test
 
 services:
   postgres:
     image: postgres:16-alpine
-    restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-fintrack}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-fintrack}
       POSTGRES_DB: ${POSTGRES_DB:-fintrack}
     volumes:
-      - postgres_data_prod:/var/lib/postgresql/data
+      - postgres_data_test:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 5s
@@ -18,16 +17,12 @@ services:
 
   api:
     build:
-      context: ../..
-      dockerfile: deploy/docker/Dockerfile.api
-    restart: unless-stopped
-    ports:
-      - "${API_PORT:-8080}:8080"
+      context: ../api
+      dockerfile: ../api/deploy/Dockerfile
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-fintrack}:${POSTGRES_PASSWORD:-fintrack}@postgres:5432/${POSTGRES_DB:-fintrack}
       PORT: "8080"
       JWT_SECRET: ${JWT_SECRET}
-      NODE_ENV: production
     depends_on:
       postgres:
         condition: service_healthy
@@ -38,22 +33,16 @@ services:
       retries: 8
       start_period: 20s
 
-  web:
+  test:
     build:
-      context: ../..
-      dockerfile: deploy/docker/Dockerfile.prod
-    restart: unless-stopped
-    ports:
-      - "${WEB_PORT:-3000}:3000"
+      context: ../web
+      dockerfile: ../web/deploy/Dockerfile.test
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-fintrack}:${POSTGRES_PASSWORD:-fintrack}@postgres:5432/${POSTGRES_DB:-fintrack}
-      NODE_ENV: production
       API_ORIGIN: http://api:8080
-      NEXT_PUBLIC_API_ORIGIN: ${NEXT_PUBLIC_API_ORIGIN:-}
-      JWT_SECRET: ${JWT_SECRET}
     depends_on:
       api:
         condition: service_healthy
 
 volumes:
-  postgres_data_prod:
+  postgres_data_test:

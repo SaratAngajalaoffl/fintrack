@@ -22,7 +22,7 @@ This document orients coding agents and contributors to how Fintrack is organize
 - **Routes:** `/dashboard/bank-accounts/my-bank-accounts` (**My Bank Accounts**) and `/dashboard/bank-accounts/statements` (**Bank Statements**). Keep `/dashboard/bank-accounts` as a redirect-only compatibility route.
 - **Code:** Domain types, URL state parsing, and mock rows live under **`web/src/lib/bank-accounts/`**. Composed screen UI lives under **`web/src/components/ui/bank-accounts/`**. Shared primitives for this area: **`ChipComponent`** (`web/src/components/ui/common/chip/`) and **`TableComponent`** (`web/src/components/ui/common/table-component/`) — export from `@/components/ui`.
 - **API:** **`GET`/`POST /api/bank-accounts`**, **`GET`/`PATCH`/`DELETE /api/bank-accounts/:id`** — implemented in **`api/`**; **`getApiRoute()`** + optional **`NEXT_PUBLIC_API_ORIGIN`** (see **`web/src/configs/api-routes.ts`**). Client helpers: **`web/src/services/bank-accounts/bank-accounts-api.ts`**.
-- **Persistence:** Core account settings live in `bank_accounts`; virtual buckets are normalized in `bank_account_buckets`; preferred categories are normalized in `bank_account_preferred_categories` (migration `012_bank_account_preferred_category_links.sql`). Planned/implemented fields are documented in **[docs/data-model.md](docs/data-model.md)**. Update that file when migrations or API shapes change.
+- **Persistence:** Core account settings live in `bank_accounts`; preferred categories are normalized in `bank_account_preferred_categories` (migration `012_bank_account_preferred_category_links.sql`). Planned/implemented fields are documented in **[docs/data-model.md](docs/data-model.md)**. Update that file when migrations or API shapes change.
 
 ### Domain: credit cards
 
@@ -53,20 +53,20 @@ This document orients coding agents and contributors to how Fintrack is organize
 - **Transactions:** `/dashboard/transactions/internal` (Internal), `/dashboard/transactions/credits` (Credits), `/dashboard/transactions/debits` (Debits).
 - **Organisation:** `/dashboard/organisation/expense-categories` (Expense Categories), `/dashboard/organisation/fund-buckets` (Fund Buckets), `/dashboard/organisation/expense-groups` (Expense Groups).
 
-## Monorepo migration (Go API + Next.js)
+## Go API + Next.js
 
-HTTP APIs for app domains are implemented in the **Go** service (**`api/`**). **`getApiRoute()`** in **`web/src/configs/api-routes.ts`** resolves API URLs using **`NEXT_PUBLIC_API_ORIGIN`** (browser) and **`API_ORIGIN`** (server-side) when set (see **`web/.env.example`**).
+HTTP APIs for app domains are implemented in the **Go** service (**`api/`**). **`getApiRoute()`** in **`web/src/configs/api-routes.ts`** resolves API URLs using **`NEXT_PUBLIC_API_ORIGIN`** (browser) and **`API_ORIGIN`** (server-side / middleware) when set (see **`web/.env.example`**). Session JWTs are signed and verified only in **`api/`**; Next **`middleware.ts`** and **`getSession()`** call **`GET /api/auth/me`** instead of verifying JWTs locally.
 
-**Route paths** stay aligned with **`web/src/configs/api-routes.ts`**. Details and history: **[docs/monorepo-migration.md](docs/monorepo-migration.md)**.
+**Route paths** stay aligned with **`web/src/configs/api-routes.ts`**.
 
 ## Tech stack
 
 - **Framework:** Next.js (App Router), React, TypeScript.
-- **API:** Go service in **`api/`** — app HTTP lives here (auth, bank accounts, credit cards, expense categories, fund buckets). Use **`getApiRoute()`** for endpoint resolution. There are **no** Next Route Handlers under **`web/src/app/api/`** for these domains; see [Monorepo migration](#monorepo-migration-go-api--nextjs).
+- **API:** Go service in **`api/`** — app HTTP lives here (auth, bank accounts, credit cards, expense categories, fund buckets). Use **`getApiRoute()`** for endpoint resolution. There are **no** Next Route Handlers under **`web/src/app/api/`** for these domains; see [Go API + Next.js](#go-api--nextjs).
 - **Styling:** Tailwind CSS v4. Theme tokens live in `web/src/app/globals.css` (`@import "tailwindcss"` + `@theme inline`). **Catppuccin Mocha** is the app palette: **red** (`#f38ba8`) as `primary`, **mauve** (`#cba6f7`) as `secondary`. Named Mocha colors are exposed as Tailwind colors: `text-text`, `text-subtext-1`, `text-subtext-0`, `bg-overlay-*`, `bg-surface-*`, `bg-base`, `bg-mantle`, `bg-crust`, etc. Prefer semantic roles where they fit: `bg-background`, `text-foreground`, `text-primary`, `bg-secondary`, `border-border`.
 - **Client data layer:** `@tanstack/react-query` powers browser-side API calls (mutations/queries) behind a small `ReactQueryProvider` client boundary in root layout. Keep routes and non-interactive UI as Server Components.
 - **Fonts:** **Montserrat** via `next/font/google` in `web/src/app/layout.tsx` (`--font-montserrat`), applied to both `--font-sans` and `--font-mono` in `@theme inline` so UI and numeric lines share one family.
-- **Database:** PostgreSQL. SQL migrations live in **`api/migrations/`**. The **Go API** (`api/cmd/api`) applies them **on startup** (same **`schema_migrations`** filenames as before). Docker Compose starts **`postgres` → `api` → `web`** (or **`test`**). The script **`deploy/docker/scripts/run-migrations.sh`** remains for manual use; seeding is **not** part of the API (use your own scripts / `data/`).
+- **Database:** PostgreSQL. SQL migrations live in **`api/migrations/`**. The **Go API** (`api/cmd/api`) applies them **on startup** (same **`schema_migrations`** filenames as before). Docker Compose starts **`postgres` → `api` → `web`** (or **`test`**). Seeding is **not** part of the API (use your own scripts / `data/`).
 
 ## Next.js version note
 
@@ -99,7 +99,7 @@ The repo is a **two-root** layout (no npm workspaces): **`web/`** (Next.js) and 
 | Path                    | Purpose                                                                                                                                                                                                                                                                                      |
 | ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `.githooks/`            | **Native Git hooks** (e.g. `pre-commit` → `lint-staged` in **`web/`**). Enable per clone: **`git config core.hooksPath .githooks`**.                                                                                                                                                         |
-| `api/`                  | **Go HTTP API** — `api/go.mod`, **`api/cmd/api/`**, ordered SQL in **`api/migrations/`** (applied on startup).                                                                                                                                                                               |
+| `api/`                  | **Go HTTP API** — `api/go.mod`, **`api/cmd/api/`**, ordered SQL in **`api/migrations/`** (applied on startup). Image: **`api/deploy/Dockerfile`**.                                                                                          |
 | `web/package.json`      | Next.js app metadata and scripts — use **`cd web`**, then **`npm install`**, **`npm run dev`**, etc.                                                                                                                                                                                          |
 | `web/components.json`   | **shadcn/ui** CLI config (registry style, aliases, `globals.css` path). Run the CLI from **`web/`**.                                                                                                                                                                                         |
 | `web/src/app/`              | App Router: `layout.tsx`, `page.tsx`, routes, route groups, layouts.                                                                                                                                                                                                                         |
@@ -112,9 +112,9 @@ The repo is a **two-root** layout (no npm workspaces): **`web/`** (Next.js) and 
 | `web/src/lib/`              | **`utils.ts`** — **`cn()`** for Tailwind class merging. **`formatting/`** — shared formatters (`date-formatting.ts`, `number-formatting.ts`, `string-formatting.ts`). **`bank-accounts/`** — types, list URL state, mocks until APIs exist. Auth, DB, and other app libraries live here too. |
 | `web/public/brand/`         | **Brand marks** — round / long / short logos (favicon, header). Not for generic UI icons; see [Icons](#icons).                                                                                                                                                                               |
 | `web/public/icons/`         | **Static icon assets** — `.svg`, `.png`, and similar files served as `/icons/…` (see [Icons](#icons)).                                                                                                                                                                                       |
-| `docs/`                 | Contributor docs (`CONTRIBUTING.md`), [docs index](docs/README.md), and [monorepo migration](docs/monorepo-migration.md) (Go API + Next.js plan).                                                                                                                                             |
-| `deploy/docker/`        | Dockerfiles (`Dockerfile.dev`, `Dockerfile.test`, `Dockerfile.prod`) and `scripts/run-migrations.sh`.                                                                                                                                                                                        |
-| `deploy/compose/`       | `docker-compose.dev.yml`, `docker-compose.test.yml`, `docker-compose.prod.yml`.                                                                                                                                                                                                              |
+| `docs/`                 | Contributor docs (`CONTRIBUTING.md`) and [docs index](docs/README.md).                                                                                                                                             |
+| `web/deploy/`           | Next.js Dockerfiles (`Dockerfile.dev`, `Dockerfile.test`, `Dockerfile.prod`).                                                                                                                                                                                                |
+| `deploy/`               | Compose stacks (`docker-compose.dev.yml`, `docker-compose.test.yml`, `docker-compose.prod.yml`).                                                                                                                                                           |
 
 Add feature modules under `web/src/` with clear boundaries (e.g. `web/src/lib/formatting/`, `web/src/app/(dashboard)/`, composed UI under `web/src/components/ui/forms/` / `common/` / `landing/` / `layout/`) as the app grows.
 
@@ -131,7 +131,7 @@ Add feature modules under `web/src/` with clear boundaries (e.g. `web/src/lib/fo
 
 ## UI component structure
 
-Everything under `web/src/components/` is organized as **`hooks/`**, **`icons/`**, and **`ui/`**. Do **not** add a top-level `web/src/components/auth/` (or similar domain folders): authentication **routes** live under `web/src/app/`, **HTTP API** is migrating to **Go** (see [monorepo migration](docs/monorepo-migration.md)); meanwhile **`web/src/app/api/`** remains operational, and **shared auth-related UI** belongs under the `ui/` subtrees below.
+Everything under `web/src/components/` is organized as **`hooks/`**, **`icons/`**, and **`ui/`**. Do **not** add a top-level `web/src/components/auth/` (or similar domain folders): authentication **routes** live under `web/src/app/`, **app HTTP** for migrated domains is in **`api/`** (see [Go API + Next.js](#go-api--nextjs)); **`web/src/app/api/`** may still hold other Route Handlers, and **shared auth-related UI** belongs under the `ui/` subtrees below.
 
 ### UI kit (primitives)
 
@@ -194,9 +194,9 @@ Commands below assume a POSIX shell. **Node** commands run from **`web/`**; **Go
 | Lint               | `cd web && npm run lint`                                               |
 | Test (placeholder) | `cd web && npm run test` (currently lint; extend with a real runner when needed) |
 | Production build   | `cd web && npm run build` then `cd web && npm run start`                |
-| Docker dev         | `docker compose -f deploy/compose/docker-compose.dev.yml up --build`   |
+| Docker dev         | From repo root: `docker compose -f deploy/docker-compose.dev.yml up --build` |
 
-Environment: for local runs, copy **`.env.example`** at the repo root to **`.env`** and/or add **`web/.env`** for Next (see root README). Compose sets `DATABASE_URL` for the `web` service in Docker.
+Environment: copy **`api/.env.example`** → **`api/.env`** and **`web/.env.example`** → **`web/.env.local`** (or **`web/.env`**). For Docker Compose from the repo root, optionally add a root **`.env`** with **`POSTGRES_*`** / ports; Compose sets `DATABASE_URL` for the `api` and `web` services (see root README).
 
 ### Cleaning Next.js output
 
@@ -234,7 +234,8 @@ Remove generated artifacts when you need a clean slate: delete **`web/.next`** (
 
 ## Docker notes
 
-- Compose order: **`postgres`** (healthy) → **`api`** (runs SQL migrations then **`GET /health`**) → **`web`** / **`test`**. See **`deploy/compose/*.yml`** and **`deploy/docker/Dockerfile.api`**.
+- Compose order: **`postgres`** (healthy) → **`api`** (runs SQL migrations then **`GET /health`**) → **`web`** / **`test`**. See **`deploy/*.yml`** and **`api/deploy/Dockerfile`**.
+- **Build context:** Each service image is built from its app tree only — **`api/`** for the Go API, **`web/`** for Next — no monorepo-root `COPY`. See **`api/.dockerignore`** and **`web/.dockerignore`**. Dev Compose bind-mounts **`web/`** → **`/app/web`** (and **`api/migrations`** on the API container) for hot reload, not for build context.
 - Production Next image uses `output: "standalone"` in **`web/next.config.ts`**.
 
 ## What not to do

@@ -1,15 +1,16 @@
+# Production Next.js image (`output: "standalone"`).
 FROM node:22-alpine AS base
 RUN apk add --no-cache libc6-compat
 
 FROM base AS deps
 WORKDIR /app/web
-COPY web/package.json web/package-lock.json* ./
+COPY package.json package-lock.json* ./
 RUN npm ci
 
 FROM base AS builder
 WORKDIR /app/web
 COPY --from=deps /app/web/node_modules ./node_modules
-COPY web/ .
+COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
 # Baked into **`getApiRoute()`** in the browser. Optional: set at build to your public API base URL (no trailing slash). Empty = production same-origin `/api/...` paths (reverse proxy).
 ARG NEXT_PUBLIC_API_ORIGIN=
