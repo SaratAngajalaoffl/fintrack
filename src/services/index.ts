@@ -13,6 +13,8 @@ export {
 } from "@/services/expense-categories/expense-categories-api";
 export {
   changePasswordRequest,
+  deleteAccountRequest,
+  exportAccountDataRequest,
   forgotPasswordRequest,
   getCurrentUserRequest,
   loginRequest,

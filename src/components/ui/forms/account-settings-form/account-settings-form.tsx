@@ -1,10 +1,15 @@
 "use client";
 
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import * as React from "react";
 import { Controller, useForm } from "react-hook-form";
 
-import { useUserProfile } from "@/components/hooks";
+import {
+  useMutateDeleteAccount,
+  useMutateExportAccountData,
+  useUserProfile,
+} from "@/components/hooks";
 import {
   Button,
   Card,
@@ -17,6 +22,7 @@ import {
   TextField,
 } from "@/components/ui";
 import { toast } from "@/components/ui/common/toast";
+import { getAppRoute } from "@/configs/app-routes";
 import { dicebearThumbsAvatarUrl } from "@/lib/avatars/dicebear-thumbs";
 import {
   SUPPORTED_CURRENCIES,
@@ -38,7 +44,10 @@ function timeOfDayGreeting(): string {
 }
 
 export function AccountSettingsForm() {
+  const router = useRouter();
   const { user, isLoading, updateUserProfile } = useUserProfile();
+  const exportAccountDataMutation = useMutateExportAccountData();
+  const deleteAccountMutation = useMutateDeleteAccount();
   const [submitting, setSubmitting] = React.useState(false);
   const [greeting, setGreeting] = React.useState("Welcome");
 
@@ -82,6 +91,44 @@ export function AccountSettingsForm() {
   React.useEffect(() => {
     setGreeting(timeOfDayGreeting());
   }, []);
+
+  async function exportData() {
+    try {
+      const { blob, filename } = await exportAccountDataMutation.mutateAsync();
+      const downloadUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = downloadUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(downloadUrl);
+      toast.success("Data exported");
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Could not export account data";
+      toast.error(message);
+    }
+  }
+
+  async function deleteAccount() {
+    const confirmed = window.confirm(
+      "Delete your account permanently? This will remove all your data and cannot be undone.",
+    );
+    if (!confirmed) return;
+
+    try {
+      await deleteAccountMutation.mutateAsync();
+      router.push(getAppRoute("home"));
+      router.refresh();
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Could not delete account";
+      toast.error(message);
+    }
+  }
 
   const avatarSeed = user?.email?.trim() || "user";
   const avatarUrl = dicebearThumbsAvatarUrl(avatarSeed, AVATAR_SIZE);
@@ -161,6 +208,47 @@ export function AccountSettingsForm() {
             </Button>
           </CardFooter>
         </form>
+      </Card>
+
+      <Card className="border-border/80 bg-surface-0/85 shadow-lg backdrop-blur-sm">
+        <CardHeader className="space-y-2 border-b border-border/50 pb-6 text-left">
+          <CardTitle className="text-2xl font-semibold tracking-tight">
+            Data controls
+          </CardTitle>
+          <CardDescription className="leading-relaxed text-subtext-1">
+            Export your full account data or permanently delete your account.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="pt-6">
+          <div className="flex flex-wrap gap-3">
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => void exportData()}
+              disabled={
+                exportAccountDataMutation.isPending ||
+                deleteAccountMutation.isPending
+              }
+            >
+              {exportAccountDataMutation.isPending
+                ? "Exporting..."
+                : "Export data"}
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={() => void deleteAccount()}
+              disabled={
+                deleteAccountMutation.isPending ||
+                exportAccountDataMutation.isPending
+              }
+            >
+              {deleteAccountMutation.isPending
+                ? "Deleting..."
+                : "Delete account"}
+            </Button>
+          </div>
+        </CardContent>
       </Card>
     </div>
   );

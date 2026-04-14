@@ -1,7 +1,6 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
-import { icons, type LucideIcon } from "lucide-react";
 import * as React from "react";
 import { Controller, useForm } from "react-hook-form";
 
@@ -15,10 +14,12 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  Field,
   SelectField,
   TextareaField,
   TextField,
 } from "@/components/ui";
+import { Icon, IconPicker, type IconName } from "@/components/ui/icon-picker";
 import { toast } from "@/components/ui/common/toast";
 import {
   CATPPUCCIN_MOCHA_COLOR_OPTIONS,
@@ -26,46 +27,35 @@ import {
 } from "@/lib/expense-categories/types";
 
 const COLOR_VAR_BY_TOKEN: Record<CatppuccinMochaColor, string> = {
-  text: "--text",
-  "subtext-1": "--subtext-1",
-  "subtext-0": "--subtext-0",
-  "overlay-2": "--overlay-2",
-  "overlay-1": "--overlay-1",
-  "overlay-0": "--overlay-0",
-  "surface-2": "--surface-2",
-  "surface-1": "--surface-1",
-  "surface-0": "--surface-0",
-  base: "--base",
-  mantle: "--mantle",
-  crust: "--crust",
-  red: "--red",
-  mauve: "--mauve",
+  rosewater: "#f5e0dc",
+  flamingo: "#f2cdcd",
+  pink: "#f5c2e7",
+  mauve: "#cba6f7",
+  red: "#f38ba8",
+  maroon: "#eba0ac",
+  peach: "#fab387",
+  yellow: "#f9e2af",
+  green: "#a6e3a1",
+  teal: "#94e2d5",
+  sky: "#89dceb",
+  sapphire: "#74c7ec",
+  blue: "#89b4fa",
+  lavender: "#b4befe",
 };
 
 type FormValues = {
   name: string;
   description: string;
-  iconUrl: string;
+  iconUrl: IconName;
   color: CatppuccinMochaColor;
 };
 
-const ICON_NAMES = Object.keys(icons).sort() as Array<keyof typeof icons>;
-const DEFAULT_ICON_NAME = ICON_NAMES.includes("CircleHelp")
-  ? "CircleHelp"
-  : ICON_NAMES[0];
-
-const ICON_OPTIONS: { value: string; label: React.ReactNode }[] =
-  ICON_NAMES.map((iconName) => {
-    const Icon = icons[iconName] as LucideIcon;
-    return {
-      value: iconName,
-      label: (
-        <span className="inline-flex items-center" aria-label={iconName}>
-          <Icon className="size-4" aria-hidden />
-        </span>
-      ),
-    };
-  });
+function formatIconName(name: IconName): string {
+  return name
+    .split("-")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
 
 export function ExpenseCategoryCreateDialog() {
   const queryClient = useQueryClient();
@@ -82,8 +72,8 @@ export function ExpenseCategoryCreateDialog() {
     defaultValues: {
       name: "",
       description: "",
-      iconUrl: DEFAULT_ICON_NAME,
-      color: "surface-0",
+      iconUrl: "circle-help",
+      color: "mauve",
     },
   });
 
@@ -149,14 +139,28 @@ export function ExpenseCategoryCreateDialog() {
               name="iconUrl"
               rules={{ required: "Category icon is required" }}
               render={({ field }) => (
-                <SelectField
+                <Field
                   label="Category icon"
                   required
-                  value={field.value}
-                  onValueChange={field.onChange}
-                  options={ICON_OPTIONS}
                   error={errors.iconUrl?.message}
-                />
+                >
+                  <IconPicker
+                    value={field.value}
+                    onValueChange={field.onChange}
+                    triggerPlaceholder="Select icon"
+                  >
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="h-10 w-full justify-start gap-2"
+                    >
+                      <Icon name={field.value} className="size-4" />
+                      <span className="truncate text-sm">
+                        {formatIconName(field.value)}
+                      </span>
+                    </Button>
+                  </IconPicker>
+                </Field>
               )}
             />
             <Controller
@@ -181,7 +185,7 @@ export function ExpenseCategoryCreateDialog() {
                         <span
                           className="inline-block h-2 w-20 rounded-sm border border-border/60"
                           style={{
-                            backgroundColor: `var(${COLOR_VAR_BY_TOKEN[color]})`,
+                            backgroundColor: COLOR_VAR_BY_TOKEN[color],
                           }}
                           aria-hidden
                         />

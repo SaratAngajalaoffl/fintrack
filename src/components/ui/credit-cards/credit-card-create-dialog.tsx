@@ -4,7 +4,10 @@ import { useQueryClient } from "@tanstack/react-query";
 import * as React from "react";
 import { Controller, useForm } from "react-hook-form";
 
-import { useMutateCreateCreditCard } from "@/components/hooks";
+import {
+  useGetExpenseCategories,
+  useMutateCreateCreditCard,
+} from "@/components/hooks";
 import {
   Button,
   Dialog,
@@ -20,15 +23,6 @@ import {
 } from "@/components/ui";
 import { toast } from "@/components/ui/common/toast";
 
-const CATEGORY_OPTIONS = [
-  { value: "Groceries", label: "Groceries" },
-  { value: "Rent", label: "Rent" },
-  { value: "Travel", label: "Travel" },
-  { value: "Dining", label: "Dining" },
-  { value: "Shopping", label: "Shopping" },
-  { value: "Utilities", label: "Utilities" },
-];
-
 type FormValues = {
   name: string;
   description: string;
@@ -43,6 +37,7 @@ type FormValues = {
 export function CreditCardCreateDialog() {
   const queryClient = useQueryClient();
   const createMutation = useMutateCreateCreditCard();
+  const expenseCategoriesQuery = useGetExpenseCategories();
   const [open, setOpen] = React.useState(false);
 
   const {
@@ -121,6 +116,14 @@ export function CreditCardCreateDialog() {
   }
 
   const submitting = isSubmitting || createMutation.isPending;
+  const preferredCategoryOptions = React.useMemo(
+    () =>
+      (expenseCategoriesQuery.data ?? []).map((category) => ({
+        value: category.name,
+        label: category.name,
+      })),
+    [expenseCategoriesQuery.data],
+  );
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -196,8 +199,18 @@ export function CreditCardCreateDialog() {
                 label="Preferred categories"
                 value={field.value}
                 onValueChange={field.onChange}
-                options={CATEGORY_OPTIONS}
-                placeholder="Select preferred categories"
+                options={preferredCategoryOptions}
+                placeholder={
+                  expenseCategoriesQuery.isLoading
+                    ? "Loading expense categories..."
+                    : preferredCategoryOptions.length > 0
+                      ? "Select preferred categories"
+                      : "No expense categories available"
+                }
+                disabled={
+                  expenseCategoriesQuery.isLoading ||
+                  preferredCategoryOptions.length === 0
+                }
               />
             )}
           />

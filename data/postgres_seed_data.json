@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "exportedAt": "2026-04-14T10:28:52.980Z",
+  "user": {
+    "id": "2728b571-27c3-48d9-84c8-0c34967d9a55",
+    "email": "chandrasarat74@gmail.com",
+    "passwordHash": "$2b$12$8IYbodO9UqXEAgaAweOKm.1p7GkBlk0ka1OFQSEzMXU.zcySwmCC2",
+    "isApproved": true,
+    "createdAt": "2026-04-14 10:07:21.205099+00",
+    "updatedAt": "2026-04-14 10:07:21.205099+00"
+  },
+  "userProfile": {
+    "user_id": "2728b571-27c3-48d9-84c8-0c34967d9a55",
+    "name": "Sarat Chandra Angajala",
+    "preferred_currency": "USD",
+    "created_at": "2026-04-14 10:07:21.205099+00",
+    "updated_at": "2026-04-14 10:07:21.205099+00"
+  },
+  "bankAccounts": [],
+  "bankAccountBuckets": [],
+  "creditCards": [],
+  "expenseCategories": [
+    {
+      "id": "4c57e24b-bf48-49a6-bf8c-59c256b9dae1",
+      "user_id": "2728b571-27c3-48d9-84c8-0c34967d9a55",
+      "name": "Groceries",
+      "description": "Recurring supermarket and quick commerce expenses",
+      "icon_url": "apple",
+      "color": "green",
+      "created_at": "2026-04-14 10:24:45.384498+00",
+      "updated_at": "2026-04-14 10:24:45.384498+00"
+    },
+    {
+      "id": "bb2348ae-4878-48f3-a565-88737fb7ebcd",
+      "user_id": "2728b571-27c3-48d9-84c8-0c34967d9a55",
+      "name": "Travel",
+      "description": "For trips (both work and personal)",
+      "icon_url": "plane-takeoff",
+      "color": "peach",
+      "created_at": "2026-04-14 10:26:49.809097+00",
+      "updated_at": "2026-04-14 10:26:49.809097+00"
+    },
+    {
+      "id": "1b98464f-c58a-481d-9382-d805e2c2786c",
+      "user_id": "2728b571-27c3-48d9-84c8-0c34967d9a55",
+      "name": "Rent",
+      "description": "House Rent",
+      "icon_url": "house",
+      "color": "lavender",
+      "created_at": "2026-04-14 10:27:17.503399+00",
+      "updated_at": "2026-04-14 10:27:17.503399+00"
+    }
+  ]
+}

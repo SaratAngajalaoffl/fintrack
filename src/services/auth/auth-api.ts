@@ -150,3 +150,31 @@ export async function logoutRequest() {
     credentials: "include",
   });
 }
+
+export async function exportAccountDataRequest() {
+  const res = await fetch(getApiRoute("authAccountData"), {
+    method: "GET",
+    credentials: "include",
+  });
+  if (!res.ok) {
+    const body = await readJson<ApiErrorBody>(res);
+    throw new Error(body.error ?? "Could not export account data");
+  }
+  const blob = await res.blob();
+  const filename =
+    res.headers.get("Content-Disposition")?.match(/filename="([^"]+)"/)?.[1] ??
+    `fintrack-export-${new Date().toISOString().slice(0, 10)}.json`;
+  return { blob, filename };
+}
+
+export async function deleteAccountRequest() {
+  const res = await fetch(getApiRoute("authAccountData"), {
+    method: "DELETE",
+    credentials: "include",
+  });
+  const body = await readJson<ApiErrorBody>(res);
+  if (!res.ok) {
+    throw new Error(body.error ?? "Could not delete account");
+  }
+  return body;
+}

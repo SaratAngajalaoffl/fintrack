@@ -1,10 +1,4 @@
-export type CreditCardCategory =
-  | "Groceries"
-  | "Rent"
-  | "Travel"
-  | "Dining"
-  | "Shopping"
-  | "Utilities";
+export type CreditCardCategory = string;
 
 export type CreditCardBillInfo = {
   cycleLabel: string;

@@ -5,6 +5,8 @@ export { useMutateResetPassword } from "@/components/hooks/queries/use-mutate-re
 export { useMutateChangePassword } from "@/components/hooks/queries/use-mutate-change-password";
 export { useMutateRequestChangePasswordOtp } from "@/components/hooks/queries/use-mutate-request-change-password-otp";
 export { useMutateLogout } from "@/components/hooks/queries/use-mutate-logout";
+export { useMutateDeleteAccount } from "@/components/hooks/queries/use-mutate-delete-account";
+export { useMutateExportAccountData } from "@/components/hooks/queries/use-mutate-export-account-data";
 export { useGetBankAccounts } from "@/components/hooks/queries/use-get-bank-accounts";
 export { useGetCreditCards } from "@/components/hooks/queries/use-get-credit-cards";
 export { useMutateCreateCreditCard } from "@/components/hooks/queries/use-mutate-create-credit-card";

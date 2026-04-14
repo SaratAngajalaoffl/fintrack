@@ -1,18 +1,9 @@
 import type {
-  CreditCardCategory,
   CreditCardsListState,
   CreditCardRow,
 } from "@/lib/credit-cards/types";
 
 const PATH = "/dashboard/credit-cards";
-const ALLOWED_CATEGORIES: CreditCardCategory[] = [
-  "Groceries",
-  "Rent",
-  "Travel",
-  "Dining",
-  "Shopping",
-  "Utilities",
-];
 
 function first(value: string | string[] | undefined): string | undefined {
   if (Array.isArray(value)) return value[0];
@@ -24,11 +15,7 @@ export function parseCreditCardsListState(
 ): CreditCardsListState {
   const q = first(raw.q)?.trim() ?? "";
   const categoryRaw = first(raw.category)?.trim();
-  const category =
-    categoryRaw &&
-    ALLOWED_CATEGORIES.includes(categoryRaw as CreditCardCategory)
-      ? (categoryRaw as CreditCardCategory)
-      : "all";
+  const category = categoryRaw && categoryRaw.length > 0 ? categoryRaw : "all";
   const sort = first(raw.sort)?.trim() || "name";
   return { q, category, sort };
 }

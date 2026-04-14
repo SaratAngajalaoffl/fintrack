@@ -11,6 +11,9 @@ const apiRoutes = {
   authMe: {
     path: "/api/auth/me",
   },
+  authAccountData: {
+    path: "/api/auth/account-data",
+  },
   authForgotPassword: {
     path: "/api/auth/forgot-password",
   },

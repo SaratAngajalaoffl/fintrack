@@ -1,17 +1,19 @@
-import { ArrowDownUp, Search, icons, type LucideIcon } from "lucide-react";
+import { ArrowDownUp, Search } from "lucide-react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui";
-import { ChipComponent } from "@/components/ui/common/chip";
+import { Icon, type IconName } from "@/components/ui/icon-picker";
 import {
   TableComponent,
   type TableToolbarChip,
 } from "@/components/ui/common/table-component";
 import { expenseCategoriesListHref } from "@/lib/expense-categories/list-state";
 import type {
+  CatppuccinMochaColor,
   ExpenseCategoriesListState,
   ExpenseCategoryRow,
 } from "@/lib/expense-categories/types";
+import { ChipComponent } from "@/components/ui/common/chip";
 
 const INPUT_CLASS =
   "h-8 w-full min-w-[12rem] max-w-xs rounded-lg border border-border bg-muted px-2.5 py-1.5 text-sm text-foreground shadow-sm placeholder:text-subtext-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:max-w-[16rem]";
@@ -21,6 +23,23 @@ const ICON_BTN =
 
 const CLEAR_LINK =
   "rounded-md p-0.5 text-subtext-0 underline-offset-2 hover:text-foreground hover:underline";
+
+const COLOR_HEX_BY_TOKEN: Record<CatppuccinMochaColor, string> = {
+  rosewater: "#f5e0dc",
+  flamingo: "#f2cdcd",
+  pink: "#f5c2e7",
+  mauve: "#cba6f7",
+  red: "#f38ba8",
+  maroon: "#eba0ac",
+  peach: "#fab387",
+  yellow: "#f9e2af",
+  green: "#a6e3a1",
+  teal: "#94e2d5",
+  sky: "#89dceb",
+  sapphire: "#74c7ec",
+  blue: "#89b4fa",
+  lavender: "#b4befe",
+};
 
 function sortDescription(sort: string): string {
   switch (sort) {
@@ -215,18 +234,19 @@ export function ExpenseCategoriesTablePanel({
                   {row.description}
                 </td>
                 <td className="max-w-xs px-4 py-3 text-subtext-1">
-                  {(() => {
-                    const Icon = icons[row.iconUrl as keyof typeof icons] as
-                      | LucideIcon
-                      | undefined;
-                    if (!Icon) {
-                      return <span className="text-subtext-0">Unknown</span>;
-                    }
-                    return <Icon className="size-4" aria-hidden />;
-                  })()}
+                  <Icon name={row.iconUrl as IconName} className="size-4" />
                 </td>
                 <td className="whitespace-nowrap px-4 py-3">
-                  <ChipComponent variant="filled">{row.color}</ChipComponent>
+                  <span
+                    className="inline-flex items-center"
+                    aria-label={row.color}
+                  >
+                    <span
+                      className="inline-block h-2 w-20 rounded-sm border border-border/60"
+                      style={{ backgroundColor: COLOR_HEX_BY_TOKEN[row.color] }}
+                      aria-hidden
+                    />
+                  </span>
                 </td>
                 <td className="whitespace-nowrap px-4 py-3 text-right">
                   <div className="flex justify-end gap-1">

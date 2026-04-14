@@ -8,6 +8,8 @@ export {
   useMutateChangePassword,
   useMutateRequestChangePasswordOtp,
   useMutateLogout,
+  useMutateDeleteAccount,
+  useMutateExportAccountData,
   useGetBankAccounts,
   useGetCreditCards,
   useMutateCreateCreditCard,
