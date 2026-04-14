@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Montserrat } from "next/font/google";
 import { SiteHeader } from "@/components/ui/common/header";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import { TooltipProvider } from "@/components/ui/common/tooltip";
 import "./globals.css";
 
 const montserrat = Montserrat({

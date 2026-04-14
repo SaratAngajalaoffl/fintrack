@@ -8,6 +8,10 @@ This project uses a current Next.js release; APIs and conventions may differ fro
 
 This document orients coding agents and contributors to how Fintrack is organized, built, and styled. Read it before adding features or restructuring the repo.
 
+## Agent workflow (Cursor / automation)
+
+- **Do not create git commits** unless the user explicitly asks you to commit. Implement changes and leave them **uncommitted** so the user can review the diff and commit themselves.
+
 ## Product
 
 **Fintrack** is a responsive personal finance web app (Next.js). Core domains will include accounts, transactions, categories, and reporting — implement incrementally; keep changes scoped to the task.
@@ -79,29 +83,28 @@ Everything under `src/components/` is organized as **`hooks/`**, **`icons/`**, a
 
 ### UI kit (primitives)
 
-Shared primitives live under `src/components/ui/`. **One main component per file** (plus small colocated helpers). Group related pieces in a **kebab-case folder** named after the feature (e.g. `multi-select/`, `dialog/`).
+Shared primitives live under `src/components/ui/`. **One main component per file** (plus small colocated helpers). Group related pieces in a **kebab-case folder** named after the feature.
 
-| Area              | Path pattern                                      | Notes                                                                                                                                                                  |
-| ----------------- | ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Form controls     | `inputs/<name>/`                                  | e.g. `inputs/field/`, `inputs/input/`, `inputs/label/`, `inputs/text-field/`, `inputs/select/`. Split `FooField` and `FooControl` into separate files when both exist. |
-| Buttons           | `buttons/button/`, `buttons/button-with-tooltip/` | `Button` and `buttonVariants` live in `buttons/button/`.                                                                                                               |
-| Layout / overlays | `card/`, `dialog/`, `dropdown-menu/`, `tooltip/`  | One file per exported part (`DialogContent.tsx`, `CardHeader.tsx`, …).                                                                                                 |
-| Shared types      | Next to the feature                               | e.g. `inputs/multi-select/types.ts` to avoid circular imports between sibling modules.                                                                                 |
+| Area               | Path pattern                                                                                    | Notes                                                                                                                                                                                                     |
+| ------------------ | ----------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Form controls      | `common/inputs/<name>/`                                                                         | e.g. `common/inputs/field/`, `common/inputs/input/`, `common/inputs/label/`, `common/inputs/text-field/`, `common/inputs/select/`. Split `FooField` and `FooControl` into separate files when both exist. |
+| Buttons & overlays | `common/buttons/`, `common/card/`, `common/dialog/`, `common/dropdown-menu/`, `common/tooltip/` | shadcn-style primitives: `Button`, `Card`, `Dialog`, menus, tooltips. One file per exported part (`DialogContent.tsx`, `CardHeader.tsx`, …).                                                              |
+| Shared types       | Next to the feature                                                                             | e.g. `common/inputs/multi-select/types.ts` to avoid circular imports between sibling modules.                                                                                                             |
 
-**Barrel:** `src/components/ui/index.ts` re-exports **primitives only**. **Import from `@/components/ui`** for `Button`, `Card`, `TextField`, etc.
+**Barrel:** `src/components/ui/index.ts` re-exports **primitives** from `common/` (`inputs/`, `buttons/`, `card/`, `dialog/`, …). **Import from `@/components/ui`** for `Button`, `Card`, `TextField`, etc.
 
 ### Composed app UI (also under `ui/`)
 
 Screens and chrome built **from** the kit (and each other) live in sibling folders under `src/components/ui/`. **One kebab-case folder per component**; add an `index.ts` that re-exports the public symbol so consumers can import `@/components/ui/forms/login-form` (folder path) without repeating the file name.
 
-| Area        | Path pattern     | Purpose                                                                                                                                                                         |
-| ----------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Forms**   | `forms/<name>/`  | Multi-field route forms: login, signup, forgot/reset/change password, etc. Colocate small helpers (e.g. OTP field) under `forms/` as their own folder when shared across forms. |
-| **Common**  | `common/<name>/` | App-wide chrome that is **not** a generic primitive: `common/header/` (`SiteHeader`), `common/user-profile-menu/`, `common/logout-button/`, etc.                                |
-| **Landing** | `landing/`       | Marketing landing sections (hero, backgrounds).                                                                                                                                 |
-| **Layout**  | `layout/`        | Route-level layout wrappers (e.g. `AuthPageLayout` for auth pages).                                                                                                             |
+| Area        | Path pattern     | Purpose                                                                                                                                                                                      |
+| ----------- | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Forms**   | `forms/<name>/`  | Multi-field route forms: login, signup, forgot/reset/change password, etc. Colocate small helpers (e.g. OTP field) under `forms/` as their own folder when shared across forms.              |
+| **Common**  | `common/<name>/` | **Primitives** (see table above): `common/inputs/`, `common/buttons/`, `common/card/`, … **App chrome** in the same tree: `common/header/` (`SiteHeader`), `common/user-profile-menu/`, etc. |
+| **Landing** | `landing/`       | Marketing landing sections (hero, backgrounds).                                                                                                                                              |
+| **Layout**  | `layout/`        | Route-level layout wrappers (e.g. `AuthPageLayout` for auth pages).                                                                                                                          |
 
-**Barrel:** `src/components/ui/common/index.ts` may re-export frequently used chrome. **`forms/index.ts`** re-exports form entry points for convenience; prefer specific paths when only one form is needed.
+**Barrel:** `src/components/ui/common/index.ts` re-exports frequently used **app chrome** (header, profile menu). **`forms/index.ts`** re-exports form entry points for convenience; prefer specific paths when only one form is needed. Prefer **`@/components/ui`** for primitives (`Button`, `Dialog`, …) rather than deep paths into `common/buttons/`, unless you are editing those modules.
 
 Inline SVG **icon components** live in **`src/components/icons/`** (not under `ui/`); see [Icons](#icons).
 
@@ -149,11 +152,12 @@ Remove generated artifacts when you need a clean slate: delete the `.next` direc
 1. **Reuse `src/components/ui`:** Build screens from the existing kit (`Button`, `ButtonWithTooltip`, `Dialog`, `Field`, `TextField`, `NumericField`, `CurrencyField`, `TextareaField`, `SelectField`, `MultiSelectField`, `RadioField`, `DropdownMenu` / `Menu`, `Card`, `Tooltip`, …). Import from `@/components/ui` (see [UI component structure](#ui-component-structure)). Only add a new primitive in `ui/` when something is genuinely missing; do not duplicate buttons, inputs, or modals ad hoc in feature folders. **New or changed primitives:** update the [showcase page](#showcase-page).
 2. **Styling:** Do not hardcode one-off hex colors for core UI unless the task requires it. Use Mocha tokens (`text-text`, `bg-surface-0`, `border-border`, …) or roles (`primary`, `secondary`, `foreground`, `muted`). Use `cn()` from `@/lib/utils` to merge Tailwind classes.
 3. **Tailwind v4:** Add new CSS variables under `:root` and map them in `@theme inline` in `globals.css`.
-4. **Theme:** The app is **Catppuccin Mocha** (dark). `html` uses **crust** as the outer shell; `body` uses **base** as the main background. A light theme (e.g. Latte) can be added later by extending `:root` or a class on `<html>`.
-5. **Logos:** Round / long / short brand assets under `public/brand/`. Do not remove without replacing usages.
-6. **Forms:** Prefer `*Field` components for labeled controls with errors; use `inputClassName` when styling the inner control and `className` on the field for the outer wrapper. `TooltipProvider` wraps the app in `layout.tsx` for `ButtonWithTooltip` / `Tooltip`.
-7. **Icons:** Put static `.svg` / `.png` (and similar) under **`public/icons/`**; put shared inline-SVG React icons under **`src/components/icons/`**. See [Icons](#icons).
-8. **Server vs client:** Prefer Server Components for routes and non-interactive UI; keep client boundaries small. See [React Server Components](#react-server-components-default).
+4. **CSS variables in utilities (canonical classes):** This project uses Tailwind v4’s **parentheses shorthand** for `var(...)`. **Do not** write `px-[var(--page-padding-x)]` or `min-w-[var(--radix-select-trigger-width)]`. **Do** write `px-(--page-padding-x)`, `w-(--radix-popover-trigger-width)`, `min-w-(--radix-select-trigger-width)`, etc. For expressions (e.g. `min()` with several arguments), use the same form: `max-h-(min(24rem,var(--radix-select-content-available-height)))`. Use square-bracket arbitrary values `[...]` only when this syntax cannot express the value. This avoids ESLint **`suggestCanonicalClasses`** noise and matches the [Tailwind v4 arbitrary value](https://tailwindcss.com/docs/adding-custom-styles) conventions.
+5. **Theme:** The app is **Catppuccin Mocha** (dark). `html` uses **crust** as the outer shell; `body` uses **base** as the main background. A light theme (e.g. Latte) can be added later by extending `:root` or a class on `<html>`.
+6. **Logos:** Round / long / short brand assets under `public/brand/`. Do not remove without replacing usages.
+7. **Forms:** Prefer `*Field` components for labeled controls with errors; use `inputClassName` when styling the inner control and `className` on the field for the outer wrapper. `TooltipProvider` wraps the app in `layout.tsx` for `ButtonWithTooltip` / `Tooltip`.
+8. **Icons:** Put static `.svg` / `.png` (and similar) under **`public/icons/`**; put shared inline-SVG React icons under **`src/components/icons/`**. See [Icons](#icons).
+9. **Server vs client:** Prefer Server Components for routes and non-interactive UI; keep client boundaries small. See [React Server Components](#react-server-components-default).
 
 ### Catppuccin Mocha reference (implemented)
 
@@ -181,6 +185,7 @@ Remove generated artifacts when you need a clean slate: delete the `.next` direc
 ## What not to do
 
 - Do not commit secrets or real `.env` files.
+- Do not **`git commit`** on the user’s behalf unless they explicitly ask you to; see [Agent workflow](#agent-workflow-cursor--automation).
 - Do not introduce large refactors unrelated to the task; match existing patterns and file layout.
 - Do not add `src/components/auth/` (or other top-level domain folders next to `hooks/` / `icons/` / `ui/`); place auth-related UI under `src/components/ui/forms/`, `common/`, or `layout/` per [UI component structure](#ui-component-structure).
 - Do not edit `.pen` design files with plain text tools; use the Pencil MCP tooling if those assets exist.

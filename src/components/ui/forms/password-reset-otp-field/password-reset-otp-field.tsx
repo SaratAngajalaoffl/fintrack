@@ -2,8 +2,11 @@
 
 import * as React from "react";
 
-import { Field, useFieldInputAriaProps } from "@/components/ui/inputs/field";
-import { Input, inputClassName } from "@/components/ui/inputs/input";
+import {
+  Field,
+  useFieldInputAriaProps,
+} from "@/components/ui/common/inputs/field";
+import { Input, inputClassName } from "@/components/ui/common/inputs/input";
 import { cn } from "@/lib/utils";
 
 type InnerProps = {

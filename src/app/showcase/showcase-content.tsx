@@ -117,7 +117,7 @@ export function ShowcaseContent() {
 
   return (
     <div className="min-h-full bg-background">
-      <div className="mx-auto max-w-4xl px-[var(--page-padding-x)] py-10">
+      <div className="mx-auto max-w-4xl px-(--page-padding-x) py-10">
         <header className="mb-12 border-b border-border pb-8">
           <p className="text-xs font-medium uppercase tracking-wide text-subtext-0">
             Development

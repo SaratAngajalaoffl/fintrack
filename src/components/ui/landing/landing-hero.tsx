@@ -15,7 +15,7 @@ export function LandingHero({ isAuthenticated = false }: LandingHeroProps) {
     <div className="relative flex min-h-[calc(100dvh-3.5rem)] flex-1 flex-col overflow-hidden">
       <LandingHeroBackground />
 
-      <main className="relative z-10 flex flex-1 flex-col items-center justify-center px-[var(--page-padding-x)] py-14 sm:py-20">
+      <main className="relative z-10 flex flex-1 flex-col items-center justify-center px-(--page-padding-x) py-14 sm:py-20">
         <div className="flex max-w-2xl flex-col items-center text-center">
           <Image
             src="/brand/round_logo.png"

@@ -14,7 +14,7 @@ export default async function ChangePasswordPage() {
   }
 
   return (
-    <div className="flex flex-1 flex-col bg-background px-[var(--page-padding-x)] py-12">
+    <div className="flex flex-1 flex-col bg-background px-(--page-padding-x) py-12">
       <div className="mx-auto w-full max-w-md">
         <ChangePasswordForm />
       </div>
