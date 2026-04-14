@@ -38,6 +38,19 @@ jobs:
       - name: Test script (lint placeholder)
         run: npm run test
 
+      - name: Summarize web checks
+        if: success()
+        run: |
+          {
+            echo "## Web (lint & test)"
+            echo ""
+            echo "| Step | Result |"
+            echo "|------|--------|"
+            echo "| \`npm ci\` | ok |"
+            echo "| ESLint (\`npm run lint\`) | ok |"
+            echo "| \`npm test\` (lint placeholder) | ok |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
   api:
     name: API (lint & test)
     runs-on: ubuntu-latest
@@ -54,4 +67,60 @@ jobs:
           cache-dependency-path: api/go.sum
 
       - name: Go test
-        run: go test ./... -count=1
+        id: go_test
+        run: |
+          go install gotest.tools/gotestsum@v1.12.3
+          "$(go env GOPATH)/bin/gotestsum" \
+            --format standard-verbose \
+            --junitfile junit.xml \
+            -- -count=1 ./...
+
+      - name: Summarize Go tests
+        if: always()
+        run: |
+          echo "## Go API tests" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          if [ ! -f junit.xml ]; then
+            echo "_No JUnit report (tests may have failed before writing junit.xml)._" >> "$GITHUB_STEP_SUMMARY"
+            if [ "${{ steps.go_test.outcome }}" != "success" ]; then
+              echo "Go test step failed — see the **Go test** log." >> "$GITHUB_STEP_SUMMARY"
+            fi
+            exit 0
+          fi
+          python3 <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import xml.etree.ElementTree as ET
+
+          tree = ET.parse("junit.xml")
+          root = tree.getroot()
+
+          def local_tag(tag):
+              return tag.rpartition("}")[-1] if tag else ""
+
+          suites = []
+          if local_tag(root.tag) == "testsuites":
+              suites = [c for c in root if local_tag(c.tag) == "testsuite"]
+          elif local_tag(root.tag) == "testsuite":
+              suites = [root]
+          else:
+              suites = [el for el in root.iter() if local_tag(el.tag) == "testsuite"]
+
+          tests = failures = skipped = errors = 0
+          for ts in suites:
+              tests += int(ts.attrib.get("tests", 0))
+              failures += int(ts.attrib.get("failures", 0))
+              skipped += int(ts.attrib.get("skipped", 0))
+              errors += int(ts.attrib.get("errors", 0))
+
+          passed = max(0, tests - failures - errors - skipped)
+
+          print("| Metric | Count |")
+          print("|--------|-------|")
+          print(f"| Passed | {passed} |")
+          print(f"| Failed | {failures + errors} |")
+          print(f"| Skipped | {skipped} |")
+          print(f"| **Total** | **{tests}** |")
+          PY
+          if [ "${{ steps.go_test.outcome }}" != "success" ]; then
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "Go test step failed — see the **Go test** log for failing packages." >> "$GITHUB_STEP_SUMMARY"
+          fi

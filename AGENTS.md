@@ -198,7 +198,7 @@ Commands below assume a POSIX shell. **Node** commands run from **`web/`**; **Go
 
 | Task               | Command                                                                |
 | ------------------ | ---------------------------------------------------------------------- |
-| CI (GitHub)        | **`.github/workflows/ci.yml`** on push/PR: **`web`** (`npm ci`, ESLint, `npm test`) and **`api`** (`golangci-lint`, `go test ./...`). API tests need Docker (testcontainers). |
+| CI (GitHub)        | **`.github/workflows/ci.yml`** on push/PR: **`web`** (`npm ci`, ESLint, `npm test`) and **`api`** (**gotestsum** + `go test`, JUnit summary on the job **Summary**). API tests need Docker (testcontainers). |
 | Dev — Next (local) | `cd web && npm run dev`                                                |
 | Dev — Go API       | `cd api && go run ./cmd/api`                                           |
 | Test — Go API      | `cd api && make test` (integration tests need **Docker** for Postgres) |
