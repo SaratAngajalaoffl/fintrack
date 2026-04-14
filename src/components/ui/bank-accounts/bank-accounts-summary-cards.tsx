@@ -1,6 +1,9 @@
 import { useUserProfile } from "@/components/hooks";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
-import { formatNumber } from "@/lib/formatting/number-formatting";
+import {
+  formatCurrency,
+  formatNumber,
+} from "@/lib/formatting/number-formatting";
 
 export type BankAccountsSummaryCardsProps = {
   totalAccounts: number;
@@ -14,10 +17,7 @@ export function BankAccountsSummaryCards({
   totalBuckets,
 }: BankAccountsSummaryCardsProps) {
   const { user } = useUserProfile();
-  const balanceLabel = formatNumber(totalBalances, "en-US", {
-    style: "currency",
-    currency: user?.preferredCurrency ?? "USD",
-  });
+  const balanceLabel = formatCurrency(totalBalances, user?.preferredCurrency);
 
   return (
     <div className="grid gap-4 sm:grid-cols-3">

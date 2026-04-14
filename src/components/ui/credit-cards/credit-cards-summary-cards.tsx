@@ -1,6 +1,9 @@
 import { useUserProfile } from "@/components/hooks";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
-import { formatNumber } from "@/lib/formatting/number-formatting";
+import {
+  formatCurrency,
+  formatNumber,
+} from "@/lib/formatting/number-formatting";
 
 type CreditCardsSummaryCardsProps = {
   numberOfCards: number;
@@ -17,12 +20,6 @@ export function CreditCardsSummaryCards({
 }: CreditCardsSummaryCardsProps) {
   const { user } = useUserProfile();
   const preferredCurrency = user?.preferredCurrency ?? "USD";
-
-  const money = (value: number) =>
-    formatNumber(value, "en-US", {
-      style: "currency",
-      currency: preferredCurrency,
-    });
 
   return (
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -46,7 +43,7 @@ export function CreditCardsSummaryCards({
         </CardHeader>
         <CardContent>
           <p className="text-2xl font-semibold tabular-nums tracking-tight text-foreground">
-            {money(totalBalance)}
+            {formatCurrency(totalBalance, preferredCurrency)}
           </p>
         </CardContent>
       </Card>
@@ -58,7 +55,7 @@ export function CreditCardsSummaryCards({
         </CardHeader>
         <CardContent>
           <p className="text-2xl font-semibold tabular-nums tracking-tight text-foreground">
-            {money(totalUsage)}
+            {formatCurrency(totalUsage, preferredCurrency)}
           </p>
         </CardContent>
       </Card>
@@ -70,7 +67,7 @@ export function CreditCardsSummaryCards({
         </CardHeader>
         <CardContent>
           <p className="text-2xl font-semibold tabular-nums tracking-tight text-foreground">
-            {money(totalLocked)}
+            {formatCurrency(totalLocked, preferredCurrency)}
           </p>
         </CardContent>
       </Card>

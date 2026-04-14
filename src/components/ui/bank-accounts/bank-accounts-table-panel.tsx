@@ -35,7 +35,7 @@ import type {
   BankAccountsListState,
 } from "@/lib/bank-accounts/types";
 import { bankAccountsListHref } from "@/lib/bank-accounts/list-state";
-import { formatNumber } from "@/lib/formatting/number-formatting";
+import { formatCurrency } from "@/lib/formatting/number-formatting";
 import { BankAccountsActionMenu } from "@/components/ui/bank-accounts/bank-accounts-action-menu";
 
 const INPUT_CLASS =
@@ -46,13 +46,6 @@ const ICON_BTN =
 
 function accountTypeLabel(type: BankAccountRow["accountType"]): string {
   return type === "savings" ? "Savings" : "Current";
-}
-
-function money(value: number, currency: string) {
-  return formatNumber(value, "en-US", {
-    style: "currency",
-    currency,
-  });
 }
 
 function sortDescription(sort: string): string {
@@ -539,13 +532,13 @@ export function BankAccountsTablePanel({
                   {accountTypeLabel(row.accountType)}
                 </td>
                 <td className="whitespace-nowrap px-4 py-3 text-right tabular-nums">
-                  {money(row.balance, preferredCurrency)}
+                  {formatCurrency(row.balance, preferredCurrency)}
                 </td>
                 <td className="whitespace-nowrap px-4 py-3 text-right tabular-nums">
-                  {money(row.creditsThisMonth, preferredCurrency)}
+                  {formatCurrency(row.creditsThisMonth, preferredCurrency)}
                 </td>
                 <td className="whitespace-nowrap px-4 py-3 text-right tabular-nums">
-                  {money(row.debitsThisMonth, preferredCurrency)}
+                  {formatCurrency(row.debitsThisMonth, preferredCurrency)}
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex max-w-56 flex-wrap gap-1.5">

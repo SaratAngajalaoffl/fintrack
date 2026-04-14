@@ -49,7 +49,10 @@ import type {
   CreditCardRow,
   CreditCardsListState,
 } from "@/lib/credit-cards/types";
-import { formatNumber } from "@/lib/formatting/number-formatting";
+import {
+  formatCurrency,
+  formatNumber,
+} from "@/lib/formatting/number-formatting";
 
 import { CreditCardsActionMenu } from "./credit-cards-action-menu";
 
@@ -61,13 +64,6 @@ const ICON_BTN =
 
 const CLEAR_LINK =
   "rounded-md p-0.5 text-subtext-0 underline-offset-2 hover:text-foreground hover:underline";
-
-function money(value: number, currency: string) {
-  return formatNumber(value, "en-US", {
-    style: "currency",
-    currency,
-  });
-}
 
 function utilizationPercent(row: CreditCardRow): number {
   if (row.maxBalance <= 0) return 0;
@@ -839,13 +835,13 @@ export function CreditCardsTablePanel({
                     {row.description}
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 text-right tabular-nums">
-                    {money(row.maxBalance, preferredCurrency)}
+                    {formatCurrency(row.maxBalance, preferredCurrency)}
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 text-right tabular-nums">
-                    {money(row.usedBalance, preferredCurrency)}
+                    {formatCurrency(row.usedBalance, preferredCurrency)}
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 text-right tabular-nums">
-                    {money(row.lockedBalance, preferredCurrency)}
+                    {formatCurrency(row.lockedBalance, preferredCurrency)}
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 text-right tabular-nums">
                     <span className="inline-flex w-full items-center justify-end gap-1.5">
