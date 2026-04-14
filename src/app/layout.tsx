@@ -4,6 +4,7 @@ import { InteractiveBackground } from "@/components/ui/common/background";
 import { SiteHeader } from "@/components/ui/common/header";
 import { Toaster } from "@/components/ui/common/toast";
 import { TooltipProvider } from "@/components/ui/common/tooltip";
+import { ReactQueryProvider } from "@/services";
 import "sonner/dist/styles.css";
 import "./globals.css";
 
@@ -31,16 +32,18 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${montserrat.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col font-sans">
-        <TooltipProvider>
-          <div className="relative flex min-h-full flex-1 flex-col">
-            <InteractiveBackground />
-            <div className="relative z-10 flex min-h-full flex-1 flex-col">
-              <SiteHeader />
-              <div className="flex flex-1 flex-col">{children}</div>
+        <ReactQueryProvider>
+          <TooltipProvider>
+            <div className="relative flex min-h-full flex-1 flex-col">
+              <InteractiveBackground />
+              <div className="relative z-10 flex min-h-full flex-1 flex-col">
+                <SiteHeader />
+                <div className="flex flex-1 flex-col">{children}</div>
+              </div>
+              <Toaster />
             </div>
-            <Toaster />
-          </div>
-        </TooltipProvider>
+          </TooltipProvider>
+        </ReactQueryProvider>
       </body>
     </html>
   );

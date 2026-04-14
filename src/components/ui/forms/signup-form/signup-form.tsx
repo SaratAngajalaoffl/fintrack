@@ -4,6 +4,7 @@ import Link from "next/link";
 import * as React from "react";
 import { useForm } from "react-hook-form";
 
+import { useMutateSignup } from "@/components/hooks";
 import {
   Button,
   Card,
@@ -23,6 +24,8 @@ type SignupValues = {
 };
 
 export function SignupForm() {
+  const signupMutation = useMutateSignup();
+
   const {
     register,
     handleSubmit,
@@ -35,17 +38,13 @@ export function SignupForm() {
 
   async function onSubmit(data: SignupValues) {
     clearErrors("root");
-    const res = await fetch("/api/auth/signup", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
-    const body = (await res.json().catch(() => ({}))) as {
-      error?: string;
-      message?: string;
-    };
-    if (!res.ok) {
-      toast.error(body.error ?? "Could not create account");
+    let body: { message?: string } | undefined;
+    try {
+      body = await signupMutation.mutateAsync(data);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Could not create account";
+      toast.error(message);
       return;
     }
     reset();
@@ -99,9 +98,11 @@ export function SignupForm() {
           <Button
             type="submit"
             className="w-full sm:w-auto"
-            disabled={isSubmitting}
+            disabled={isSubmitting || signupMutation.isPending}
           >
-            {isSubmitting ? "Creating account…" : "Sign up"}
+            {isSubmitting || signupMutation.isPending
+              ? "Creating account…"
+              : "Sign up"}
           </Button>
           <p className="text-center text-sm text-subtext-1 sm:text-right">
             Already have an account?{" "}

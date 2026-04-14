@@ -45,9 +45,12 @@ export const getApiRoute = <T extends ApiRouteKey>(
   key: T,
   ...args: GetApiRouteArgs<T>
 ): string => {
-  const route = apiRoutes[key];
-  if ("create" in route) {
-    return route.create(args[0] as ApiRouteParams<T>);
+  const route = apiRoutes[key] as {
+    path: string;
+    create?: (params?: unknown) => string;
+  };
+  if (typeof route.create === "function") {
+    return route.create(args[0]);
   }
   return route.path;
 };

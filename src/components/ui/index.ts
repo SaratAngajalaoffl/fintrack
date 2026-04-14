@@ -115,6 +115,10 @@ export {
   TooltipProvider,
 } from "@/components/ui/common/tooltip";
 export {
+  ShimmerComponent,
+  type ShimmerComponentProps,
+} from "@/components/ui/common/shimmer";
+export {
   ChipComponent,
   type ChipComponentProps,
 } from "@/components/ui/common/chip";

@@ -5,6 +5,7 @@ import * as React from "react";
 import { Controller, useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 
+import { useMutateResetPassword } from "@/components/hooks";
 import { PasswordResetOtpField } from "@/components/ui/forms/password-reset-otp-field";
 import {
   Button,
@@ -30,6 +31,7 @@ type ResetValues = {
 
 export function ResetPasswordForm() {
   const router = useRouter();
+  const resetPasswordMutation = useMutateResetPassword();
   const [sessionStatus, setSessionStatus] = React.useState<
     "loading" | "ready" | "missing"
   >("loading");
@@ -82,22 +84,18 @@ export function ResetPasswordForm() {
 
   async function onSubmit(data: ResetValues) {
     clearErrors("root");
-    const res = await fetch("/api/auth/reset-password", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
+    let body: { message?: string } | undefined;
+    try {
+      body = await resetPasswordMutation.mutateAsync({
         email: data.email,
         otp: data.otp,
         otpToken: data.otpToken,
         newPassword: data.newPassword,
-      }),
-    });
-    const body = (await res.json().catch(() => ({}))) as {
-      error?: string;
-      message?: string;
-    };
-    if (!res.ok) {
-      toast.error(body.error ?? "Could not reset password");
+      });
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Could not reset password";
+      toast.error(message);
       return;
     }
     try {
@@ -217,9 +215,11 @@ export function ResetPasswordForm() {
           <Button
             type="submit"
             className="w-full sm:w-auto"
-            disabled={isSubmitting}
+            disabled={isSubmitting || resetPasswordMutation.isPending}
           >
-            {isSubmitting ? "Updating…" : "Update password"}
+            {isSubmitting || resetPasswordMutation.isPending
+              ? "Updating…"
+              : "Update password"}
           </Button>
           <Button variant="ghost" className="w-full sm:w-auto" asChild>
             <Link href={getAppRoute("login")}>Back to log in</Link>

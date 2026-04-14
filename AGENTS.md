@@ -26,6 +26,7 @@ This document orients coding agents and contributors to how Fintrack is organize
 
 - **Framework:** Next.js (App Router), React, TypeScript.
 - **Styling:** Tailwind CSS v4. Theme tokens live in `src/app/globals.css` (`@import "tailwindcss"` + `@theme inline`). **Catppuccin Mocha** is the app palette: **red** (`#f38ba8`) as `primary`, **mauve** (`#cba6f7`) as `secondary`. Named Mocha colors are exposed as Tailwind colors: `text-text`, `text-subtext-1`, `text-subtext-0`, `bg-overlay-*`, `bg-surface-*`, `bg-base`, `bg-mantle`, `bg-crust`, etc. Prefer semantic roles where they fit: `bg-background`, `text-foreground`, `text-primary`, `bg-secondary`, `border-border`.
+- **Client data layer:** `@tanstack/react-query` powers browser-side API calls (mutations/queries) behind a small `ReactQueryProvider` client boundary in root layout. Keep routes and non-interactive UI as Server Components.
 - **Fonts:** **Montserrat** via `next/font/google` in `src/app/layout.tsx` (`--font-montserrat`), applied to both `--font-sans` and `--font-mono` in `@theme inline` so UI and numeric lines share one family.
 - **Database:** PostgreSQL. SQL migrations live in `migrations/` at the repo root. Docker Compose runs a one-shot `migrate` service before `web` / `test`; see `deploy/docker/scripts/run-migrations.sh` and `deploy/compose/*.yml`.
 
@@ -41,7 +42,7 @@ The App Router treats modules as **Server Components** unless the file starts wi
 2. **Add `"use client"` only when needed:** `useState`, `useEffect`, other hooks, browser APIs (`window`, `document`, `matchMedia`, …), or event handlers that must attach in that module, or libraries that only run on the client (e.g. many Radix primitives).
 3. **Shrink the client boundary:** If only part of a screen is interactive, move that part into a small client file (e.g. `feature-interactive.tsx`) and keep the route or parent as a server component that composes it.
 4. **UI kit:** Files under `src/components/ui/` often use `"use client"` because of Radix/hooks — that is expected. Do not add `"use client"` to a file **only** because it imports `@/components/ui`; the importer can remain a server component.
-5. **Data:** Prefer fetching and secrets on the server (Server Components, Route Handlers, server actions) unless the data must live in the browser.
+5. **Data:** Prefer fetching and secrets on the server (Server Components, Route Handlers, server actions) unless the data must live in the browser. For client-side API calls, keep fetch/request functions in `src/services/` and consume them via React Query hooks under `src/components/hooks/queries/`.
 
 ### shadcn/ui and Radix
 
@@ -60,9 +61,10 @@ The project follows **[shadcn/ui](https://ui.shadcn.com)** conventions: `compone
 | `src/app/`              | App Router: `layout.tsx`, `page.tsx`, routes, route groups, layouts.                                                                                                                                                                                                                         |
 | `src/components/ui/`    | **UI kit** (primitives) **plus** composed app UI — see [UI component structure](#ui-component-structure). Primitives: `@/components/ui` (`index.ts`). **Do not** recreate primitives in feature folders.                                                                                     |
 | `src/components/icons/` | **Inline SVG icon components** — `@/components/icons` (`index.ts`). Not under `ui/`; see [Icons](#icons).                                                                                                                                                                                    |
-| `src/components/hooks/` | **Shared React hooks** — `@/components/hooks` (see [Hooks](#hooks)). One hook per file (`use-*.ts`), re-exported from `index.ts` when useful.                                                                                                                                                |
+| `src/components/hooks/` | **Shared React hooks** — `@/components/hooks` (see [Hooks](#hooks)). Query hooks live in `hooks/queries/` (e.g. `use-mutate-login.ts`), re-exported from `index.ts`.                                                                                                                         |
 | `src/app/showcase/`     | **UI showcase** — `/showcase` previews primitives and variants; update when adding or changing shared UI.                                                                                                                                                                                    |
 | `src/configs/`          | **Route registries** — `app-routes.ts` and `api-routes.ts` expose typed route maps plus `getAppRoute()` / `getApiRoute()` helpers; prefer these instead of hardcoded strings.                                                                                                                |
+| `src/services/`         | **Client data services** — React Query provider plus API request helpers (e.g. `services/auth/auth-api.ts`). Components should call query hooks instead of inlining fetch logic.                                                                                                             |
 | `src/lib/`              | **`utils.ts`** — **`cn()`** for Tailwind class merging. **`formatting/`** — shared formatters (`date-formatting.ts`, `number-formatting.ts`, `string-formatting.ts`). **`bank-accounts/`** — types, list URL state, mocks until APIs exist. Auth, DB, and other app libraries live here too. |
 | `components.json`       | **shadcn/ui** CLI config (registry style, aliases, `globals.css` path). Run `npx shadcn@latest add <component>` to add or refresh components.                                                                                                                                                |
 | `src/`                  | App Router routes (`src/app/`), libraries (`src/lib/`), and **`src/components/`** which only contains **`hooks/`**, **`icons/`**, and **`ui/`** — no top-level `auth/` or `landing/` folders; see [UI component structure](#ui-component-structure).                                         |
@@ -81,6 +83,8 @@ Add feature modules under `src/` with clear boundaries (e.g. `src/lib/formatting
 
 - Add **shared** custom hooks here (used in more than one place or clearly library-level). Name files **`use-kebab-case.ts`** (e.g. `use-mouse-reactive-gradient.ts`) and export the hook as a named function **`useThing`**.
 - **Barrel:** `src/components/hooks/index.ts` re-exports hooks so consumers can import from **`@/components/hooks`** or **`@/components/hooks/use-something`**.
+- **Query hooks:** Put React Query hooks in `src/components/hooks/queries/` (e.g. `use-mutate-login.ts`, future `use-get-bank-accounts.ts`). Keep each hook focused on one endpoint or resource behavior.
+- **Service split:** Keep raw request/fetch logic in `src/services/` and call those service functions from query hooks, not directly from UI components.
 - Hooks that are **only** used by a single feature may stay next to that feature until reuse is needed; prefer moving them into `components/hooks/` when they stabilize or are shared.
 - Hooks that use browser-only APIs (`window`, `document`, `matchMedia`, etc.) are only safe from **client** components; do not call them from Server Components.
 

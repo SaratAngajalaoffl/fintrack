@@ -299,9 +299,7 @@ export function BankAccountsTablePanel({
                 key={row.id}
                 className="border-b border-border/40 transition-colors hover:bg-surface-1/40"
               >
-                <td className="max-w-[10rem] px-4 py-3 font-medium">
-                  {row.name}
-                </td>
+                <td className="max-w-40 px-4 py-3 font-medium">{row.name}</td>
                 <td className="max-w-xs px-4 py-3 text-subtext-1">
                   {row.description}
                 </td>
@@ -318,7 +316,7 @@ export function BankAccountsTablePanel({
                   {money(row.debitsThisMonth)}
                 </td>
                 <td className="px-4 py-3">
-                  <div className="flex max-w-[14rem] flex-wrap gap-1.5">
+                  <div className="flex max-w-56 flex-wrap gap-1.5">
                     {row.bucketNames.map((b) => (
                       <ChipComponent
                         key={b}

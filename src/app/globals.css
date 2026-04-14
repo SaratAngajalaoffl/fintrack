@@ -120,8 +120,22 @@ body {
   animation: auth-panel-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+@keyframes shimmer {
+  100% {
+    transform: translateX(200%);
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 1.5s linear infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .auth-panel-in {
+    animation: none;
+  }
+
+  .animate-shimmer {
     animation: none;
   }
 }

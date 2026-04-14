@@ -47,6 +47,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  ShimmerComponent,
   Sheet,
   SheetContent,
   SheetDescription,
@@ -601,6 +602,23 @@ export function ShowcaseContent() {
                 </tbody>
               </table>
             </TableComponent>
+          </Section>
+
+          <Section
+            title="Shimmer"
+            description="Reusable loading placeholder for cards, rows, and text blocks."
+          >
+            <Card>
+              <CardContent className="space-y-3 pt-6">
+                <ShimmerComponent className="h-4 w-40" />
+                <ShimmerComponent className="h-8 w-56" />
+                <div className="grid gap-2 sm:grid-cols-3">
+                  <ShimmerComponent className="h-16 w-full" />
+                  <ShimmerComponent className="h-16 w-full" />
+                  <ShimmerComponent className="h-16 w-full" />
+                </div>
+              </CardContent>
+            </Card>
           </Section>
 
           <Section

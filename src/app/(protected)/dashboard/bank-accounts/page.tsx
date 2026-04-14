@@ -1,19 +1,9 @@
 import Link from "next/link";
 
 import { Button } from "@/components/ui";
-import {
-  BankAccountsSummaryCards,
-  BankAccountsTablePanel,
-} from "@/components/ui/bank-accounts";
+import { BankAccountsDataPanel } from "@/components/ui/bank-accounts";
 import { getAppRoute } from "@/configs/app-routes";
-import {
-  filterAndSortBankAccounts,
-  parseBankAccountsListState,
-} from "@/lib/bank-accounts/list-state";
-import {
-  MOCK_BANK_ACCOUNTS,
-  bankAccountsSummary,
-} from "@/lib/bank-accounts/mock-data";
+import { parseBankAccountsListState } from "@/lib/bank-accounts/list-state";
 
 export const metadata = {
   title: "Bank Accounts — Fintrack",
@@ -26,9 +16,6 @@ type PageProps = {
 export default async function BankAccountsPage({ searchParams }: PageProps) {
   const raw = await searchParams;
   const listState = parseBankAccountsListState(raw);
-  const allAccounts = MOCK_BANK_ACCOUNTS;
-  const summary = bankAccountsSummary(allAccounts);
-  const rows = filterAndSortBankAccounts(allAccounts, listState);
 
   return (
     <div className="flex flex-col gap-8">
@@ -43,13 +30,7 @@ export default async function BankAccountsPage({ searchParams }: PageProps) {
         </Button>
       </div>
 
-      <BankAccountsSummaryCards
-        totalAccounts={summary.totalAccounts}
-        totalBalances={summary.totalBalances}
-        totalBuckets={summary.totalBuckets}
-      />
-
-      <BankAccountsTablePanel listState={listState} rows={rows} />
+      <BankAccountsDataPanel listState={listState} />
     </div>
   );
 }

@@ -4,6 +4,10 @@ import Link from "next/link";
 import * as React from "react";
 import { Controller, useForm } from "react-hook-form";
 
+import {
+  useMutateChangePassword,
+  useMutateRequestChangePasswordOtp,
+} from "@/components/hooks";
 import { PasswordResetOtpField } from "@/components/ui/forms/password-reset-otp-field";
 import {
   Button,
@@ -26,6 +30,8 @@ type FormValues = {
 
 export function ChangePasswordForm() {
   const [otpToken, setOtpToken] = React.useState<string | null>(null);
+  const requestOtpMutation = useMutateRequestChangePasswordOtp();
+  const changePasswordMutation = useMutateChangePassword();
 
   const {
     register,
@@ -39,16 +45,15 @@ export function ChangePasswordForm() {
   });
 
   async function requestCode() {
-    const res = await fetch("/api/auth/change-password/request-otp", {
-      method: "POST",
-      credentials: "include",
-    });
-    const body = (await res.json().catch(() => ({}))) as {
-      error?: string;
-      otpToken?: string;
-    };
-    if (!res.ok) {
-      toast.error(body.error ?? "Could not send verification code");
+    let body: { otpToken?: string } | undefined;
+    try {
+      body = await requestOtpMutation.mutateAsync();
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Could not send verification code";
+      toast.error(message);
       return;
     }
     if (!body.otpToken) {
@@ -67,22 +72,17 @@ export function ChangePasswordForm() {
       toast.error("Send a verification code first.");
       return;
     }
-    const res = await fetch("/api/auth/change-password", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({
+    let body: { message?: string } | undefined;
+    try {
+      body = await changePasswordMutation.mutateAsync({
         otp: data.otp,
         otpToken,
         newPassword: data.newPassword,
-      }),
-    });
-    const body = (await res.json().catch(() => ({}))) as {
-      error?: string;
-      message?: string;
-    };
-    if (!res.ok) {
-      toast.error(body.error ?? "Could not change password");
+      });
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Could not change password";
+      toast.error(message);
       return;
     }
     toast.success(body.message ?? "Password changed.");
@@ -111,8 +111,11 @@ export function ChangePasswordForm() {
                 type="button"
                 className="w-full"
                 onClick={() => void requestCode()}
+                disabled={requestOtpMutation.isPending}
               >
-                Send verification code
+                {requestOtpMutation.isPending
+                  ? "Sending verification code…"
+                  : "Send verification code"}
               </Button>
             </>
           ) : (
@@ -182,10 +185,12 @@ export function ChangePasswordForm() {
             </Button>
             <Button
               type="submit"
-              className="w-full sm:min-w-[10rem] sm:w-auto"
-              disabled={isSubmitting}
+              className="w-full sm:min-w-40 sm:w-auto"
+              disabled={isSubmitting || changePasswordMutation.isPending}
             >
-              {isSubmitting ? "Updating…" : "Update password"}
+              {isSubmitting || changePasswordMutation.isPending
+                ? "Updating…"
+                : "Update password"}
             </Button>
           </CardFooter>
         ) : (

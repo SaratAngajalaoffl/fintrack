@@ -67,9 +67,12 @@ export const getAppRoute = <T extends AppRouteKey>(
   key: T,
   ...args: GetAppRouteArgs<T>
 ): string => {
-  const route = appRoutes[key];
-  if ("create" in route) {
-    return route.create(args[0] as AppRouteParams<T>);
+  const route = appRoutes[key] as {
+    path: string;
+    create?: (params?: unknown) => string;
+  };
+  if (typeof route.create === "function") {
+    return route.create(args[0]);
   }
   return route.path;
 };

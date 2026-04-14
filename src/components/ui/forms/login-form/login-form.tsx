@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 
+import { useMutateLogin } from "@/components/hooks";
 import {
   Button,
   Card,
@@ -24,6 +25,7 @@ type LoginValues = {
 
 export function LoginForm({ redirectTo }: { redirectTo: string }) {
   const router = useRouter();
+  const loginMutation = useMutateLogin();
   const {
     register,
     handleSubmit,
@@ -35,15 +37,12 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
 
   async function onSubmit(data: LoginValues) {
     clearErrors("root");
-    const res = await fetch("/api/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify(data),
-    });
-    const body = (await res.json().catch(() => ({}))) as { error?: string };
-    if (!res.ok) {
-      toast.error(body.error ?? "Could not sign in");
+    try {
+      await loginMutation.mutateAsync(data);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Could not sign in";
+      toast.error(message);
       return;
     }
     router.push(redirectTo);
@@ -87,9 +86,11 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
           <Button
             type="submit"
             className="w-full sm:w-auto"
-            disabled={isSubmitting}
+            disabled={isSubmitting || loginMutation.isPending}
           >
-            {isSubmitting ? "Signing in…" : "Sign in"}
+            {isSubmitting || loginMutation.isPending
+              ? "Signing in…"
+              : "Sign in"}
           </Button>
           <Button variant="ghost" className="w-full sm:w-auto" asChild>
             <Link href={getAppRoute("forgotPassword")}>Forgot password?</Link>

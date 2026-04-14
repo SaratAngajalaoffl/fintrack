@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
+import { useMutateLogout } from "@/components/hooks";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,12 +25,10 @@ type UserProfileMenuProps = {
 export function UserProfileMenu({ email }: UserProfileMenuProps) {
   const router = useRouter();
   const avatarUrl = dicebearThumbsAvatarUrl(email, AVATAR_SIZE);
+  const logoutMutation = useMutateLogout();
 
   async function logout() {
-    await fetch("/api/auth/logout", {
-      method: "POST",
-      credentials: "include",
-    });
+    await logoutMutation.mutateAsync();
     router.push(getAppRoute("home"));
     router.refresh();
   }

@@ -17,7 +17,7 @@ export function Toaster({ className, ...props }: ToasterProps) {
       theme="dark"
       position="bottom-center"
       closeButton
-      className={cn("toaster group z-[100]", className)}
+      className={cn("toaster group z-100", className)}
       toastOptions={{
         classNames: {
           toast: cn(

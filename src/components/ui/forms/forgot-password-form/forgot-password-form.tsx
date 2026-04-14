@@ -5,6 +5,7 @@ import * as React from "react";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 
+import { useMutateForgotPassword } from "@/components/hooks";
 import {
   Button,
   Card,
@@ -25,6 +26,7 @@ type ForgotValues = {
 
 export function ForgotPasswordForm() {
   const router = useRouter();
+  const forgotPasswordMutation = useMutateForgotPassword();
   const {
     register,
     handleSubmit,
@@ -36,19 +38,19 @@ export function ForgotPasswordForm() {
 
   async function onSubmit(data: ForgotValues) {
     clearErrors("root");
-    const res = await fetch("/api/auth/forgot-password", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
-    const body = (await res.json().catch(() => ({}))) as {
-      error?: string;
-      message?: string;
-      otpToken?: string;
-      expiresAt?: string;
-    };
-    if (!res.ok) {
-      toast.error(body.error ?? "Something went wrong");
+    let body:
+      | {
+          message?: string;
+          otpToken?: string;
+          expiresAt?: string;
+        }
+      | undefined;
+    try {
+      body = await forgotPasswordMutation.mutateAsync(data);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Something went wrong";
+      toast.error(message);
       return;
     }
     if (body.otpToken && body.expiresAt) {
@@ -104,9 +106,11 @@ export function ForgotPasswordForm() {
           <Button
             type="submit"
             className="w-full sm:w-auto"
-            disabled={isSubmitting}
+            disabled={isSubmitting || forgotPasswordMutation.isPending}
           >
-            {isSubmitting ? "Sending…" : "Continue"}
+            {isSubmitting || forgotPasswordMutation.isPending
+              ? "Sending…"
+              : "Continue"}
           </Button>
           <Button variant="ghost" className="w-full sm:w-auto" asChild>
             <Link href={getAppRoute("login")}>Back to log in</Link>
