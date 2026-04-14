@@ -15,6 +15,7 @@ import {
   TextField,
 } from "@/components/ui";
 import { toast } from "@/components/ui/common/toast";
+import { getAppRoute } from "@/configs/app-routes";
 
 type SignupValues = {
   email: string;
@@ -105,7 +106,7 @@ export function SignupForm() {
           <p className="text-center text-sm text-subtext-1 sm:text-right">
             Already have an account?{" "}
             <Link
-              href="/login"
+              href={getAppRoute("login")}
               className="font-medium text-primary underline-offset-4 hover:underline"
             >
               Log in

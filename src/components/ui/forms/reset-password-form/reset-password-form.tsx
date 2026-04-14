@@ -17,6 +17,7 @@ import {
   TextField,
 } from "@/components/ui";
 import { toast } from "@/components/ui/common/toast";
+import { getAppRoute } from "@/configs/app-routes";
 import { PASSWORD_RESET_SESSION_KEY } from "@/lib/auth/password-reset-session";
 
 type ResetValues = {
@@ -108,7 +109,7 @@ export function ResetPasswordForm() {
       description: body.message ?? "You can sign in with your new password.",
       action: {
         label: "Go to log in",
-        onClick: () => router.push("/login"),
+        onClick: () => router.push(getAppRoute("login")),
       },
     });
     const current = getValues();
@@ -145,10 +146,10 @@ export function ResetPasswordForm() {
         </CardHeader>
         <CardFooter className="flex flex-col gap-3 sm:flex-row sm:justify-center">
           <Button className="w-full sm:w-auto" asChild>
-            <Link href="/forgot-password">Forgot password</Link>
+            <Link href={getAppRoute("forgotPassword")}>Forgot password</Link>
           </Button>
           <Button variant="ghost" className="w-full sm:w-auto" asChild>
-            <Link href="/login">Back to log in</Link>
+            <Link href={getAppRoute("login")}>Back to log in</Link>
           </Button>
         </CardFooter>
       </Card>
@@ -221,7 +222,7 @@ export function ResetPasswordForm() {
             {isSubmitting ? "Updating…" : "Update password"}
           </Button>
           <Button variant="ghost" className="w-full sm:w-auto" asChild>
-            <Link href="/login">Back to log in</Link>
+            <Link href={getAppRoute("login")}>Back to log in</Link>
           </Button>
         </CardFooter>
       </form>

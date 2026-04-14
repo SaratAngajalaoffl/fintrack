@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { Button } from "@/components/ui";
+import { getAppRoute } from "@/configs/app-routes";
 
 export type LandingHeroProps = {
   /** When true, primary CTA goes to the protected dashboard instead of sign up. */
@@ -31,12 +32,12 @@ export function LandingHero({ isAuthenticated = false }: LandingHeroProps) {
           <div className="mt-10 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-center sm:gap-4">
             {isAuthenticated ? (
               <Button className="min-w-[160px]" size="lg" asChild>
-                <Link href="/dashboard">Go to dashboard</Link>
+                <Link href={getAppRoute("dashboard")}>Go to dashboard</Link>
               </Button>
             ) : (
               <>
                 <Button className="min-w-[160px]" size="lg" asChild>
-                  <Link href="/signup">Sign up</Link>
+                  <Link href={getAppRoute("signup")}>Sign up</Link>
                 </Button>
                 <Button
                   className="min-w-[160px]"
@@ -44,7 +45,7 @@ export function LandingHero({ isAuthenticated = false }: LandingHeroProps) {
                   variant="outline"
                   asChild
                 >
-                  <Link href="/login">Log in</Link>
+                  <Link href={getAppRoute("login")}>Log in</Link>
                 </Button>
               </>
             )}

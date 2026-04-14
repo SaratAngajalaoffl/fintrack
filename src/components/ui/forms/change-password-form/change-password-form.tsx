@@ -16,6 +16,7 @@ import {
   TextField,
 } from "@/components/ui";
 import { toast } from "@/components/ui/common/toast";
+import { getAppRoute } from "@/configs/app-routes";
 
 type FormValues = {
   otp: string;
@@ -177,7 +178,7 @@ export function ChangePasswordForm() {
         {otpToken ? (
           <CardFooter className="flex flex-col-reverse gap-3 border-t border-border/50 bg-muted/20 pt-6 sm:flex-row sm:items-center sm:justify-between">
             <Button variant="ghost" className="w-full sm:w-auto" asChild>
-              <Link href="/dashboard">Back to dashboard</Link>
+              <Link href={getAppRoute("dashboard")}>Back to dashboard</Link>
             </Button>
             <Button
               type="submit"
@@ -194,7 +195,7 @@ export function ChangePasswordForm() {
               className="h-auto justify-start px-0 py-2 text-subtext-1 hover:text-foreground"
               asChild
             >
-              <Link href="/dashboard">Back to dashboard</Link>
+              <Link href={getAppRoute("dashboard")}>Back to dashboard</Link>
             </Button>
           </CardFooter>
         )}

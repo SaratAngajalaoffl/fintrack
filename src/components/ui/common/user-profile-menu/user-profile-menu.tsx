@@ -11,6 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui";
+import { getAppRoute } from "@/configs/app-routes";
 import { dicebearThumbsAvatarUrl } from "@/lib/avatars/dicebear-thumbs";
 import { cn } from "@/lib/utils";
 
@@ -29,7 +30,7 @@ export function UserProfileMenu({ email }: UserProfileMenuProps) {
       method: "POST",
       credentials: "include",
     });
-    router.push("/");
+    router.push(getAppRoute("home"));
     router.refresh();
   }
 
@@ -57,10 +58,12 @@ export function UserProfileMenu({ email }: UserProfileMenuProps) {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-52">
         <DropdownMenuItem asChild>
-          <Link href="/dashboard">My Dashboard</Link>
+          <Link href={getAppRoute("dashboard")}>My Dashboard</Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <Link href="/dashboard/change-password">Change password</Link>
+          <Link href={getAppRoute("dashboardChangePassword")}>
+            Change password
+          </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem

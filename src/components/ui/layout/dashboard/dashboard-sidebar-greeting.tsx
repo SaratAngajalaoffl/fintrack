@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import { getAppRoute } from "@/configs/app-routes";
 import { dicebearThumbsAvatarUrl } from "@/lib/avatars/dicebear-thumbs";
 import { cn } from "@/lib/utils";
 
@@ -38,7 +39,7 @@ export function DashboardSidebarGreeting({
   onNavigate,
 }: DashboardSidebarGreetingProps) {
   const pathname = usePathname();
-  const isOverview = pathname === "/dashboard";
+  const isOverview = pathname === getAppRoute("dashboard");
   const avatarUrl = dicebearThumbsAvatarUrl(
     email.trim() || "user",
     AVATAR_SIZE,
@@ -48,7 +49,7 @@ export function DashboardSidebarGreeting({
   return (
     <div className={cn("border-b border-border/60 pb-3", className)}>
       <Link
-        href="/dashboard"
+        href={getAppRoute("dashboard")}
         onClick={onNavigate}
         className={cn(
           "flex items-center gap-3 rounded-lg px-2 py-1.5 outline-none transition-colors",

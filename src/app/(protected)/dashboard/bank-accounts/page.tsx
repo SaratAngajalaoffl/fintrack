@@ -5,6 +5,7 @@ import {
   BankAccountsSummaryCards,
   BankAccountsTablePanel,
 } from "@/components/ui/bank-accounts";
+import { getAppRoute } from "@/configs/app-routes";
 import {
   filterAndSortBankAccounts,
   parseBankAccountsListState,
@@ -36,7 +37,9 @@ export default async function BankAccountsPage({ searchParams }: PageProps) {
           Bank Accounts
         </h1>
         <Button asChild className="shrink-0">
-          <Link href="/dashboard/bank-accounts/new">Add new account</Link>
+          <Link href={getAppRoute("dashboardBankAccountsNew")}>
+            Add new account
+          </Link>
         </Button>
       </div>
 

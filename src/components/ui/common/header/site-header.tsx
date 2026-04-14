@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Github } from "@/components/icons";
 import { UserProfileMenu } from "@/components/ui/common/user-profile-menu";
 import { Button } from "@/components/ui";
+import { getAppRoute } from "@/configs/app-routes";
 import { getSession } from "@/lib/auth/session";
 import { GITHUB_REPO_URL } from "@/lib/site";
 
@@ -14,7 +15,7 @@ export async function SiteHeader() {
     <header className="sticky top-0 z-40 w-full border-b border-border/30 bg-transparent backdrop-blur-md">
       <div className="flex h-14 w-full items-center justify-between gap-4 p-(--page-padding-x)">
         <Link
-          href="/"
+          href={getAppRoute("home")}
           className="flex min-w-0 shrink-0 items-center rounded-md focus-visible:outline focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
           <Image
@@ -45,10 +46,10 @@ export async function SiteHeader() {
           ) : (
             <>
               <Button variant="ghost" size="sm" asChild>
-                <Link href="/login">Log in</Link>
+                <Link href={getAppRoute("login")}>Log in</Link>
               </Button>
               <Button size="sm" asChild>
-                <Link href="/signup">Sign up</Link>
+                <Link href={getAppRoute("signup")}>Sign up</Link>
               </Button>
             </>
           )}

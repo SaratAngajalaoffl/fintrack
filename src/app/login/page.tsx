@@ -3,6 +3,7 @@ import Link from "next/link";
 import { AuthPageLayout } from "@/components/ui/layout";
 import { LoginForm } from "@/components/ui/forms/login-form";
 import { Button } from "@/components/ui";
+import { getAppRoute } from "@/configs/app-routes";
 import { safeRedirectPath } from "@/lib/safe-redirect";
 
 export const metadata = {
@@ -27,14 +28,14 @@ export default async function LoginPage({ searchParams }: PageProps) {
           <p className="text-sm text-subtext-1">
             Don&apos;t have an account?{" "}
             <Link
-              href="/signup"
+              href={getAppRoute("signup")}
               className="font-medium text-primary underline-offset-4 hover:underline"
             >
               Sign up
             </Link>
           </p>
           <Button variant="ghost" size="sm" asChild>
-            <Link href="/">Back to home</Link>
+            <Link href={getAppRoute("home")}>Back to home</Link>
           </Button>
         </div>
       </div>

@@ -16,6 +16,7 @@ import {
   TextField,
 } from "@/components/ui";
 import { toast } from "@/components/ui/common/toast";
+import { getAppRoute } from "@/configs/app-routes";
 import { PASSWORD_RESET_SESSION_KEY } from "@/lib/auth/password-reset-session";
 
 type ForgotValues = {
@@ -63,7 +64,7 @@ export function ForgotPasswordForm() {
       } catch {
         /* ignore */
       }
-      router.push("/reset-password");
+      router.push(getAppRoute("resetPassword"));
       return;
     }
     toast.info(
@@ -108,7 +109,7 @@ export function ForgotPasswordForm() {
             {isSubmitting ? "Sending…" : "Continue"}
           </Button>
           <Button variant="ghost" className="w-full sm:w-auto" asChild>
-            <Link href="/login">Back to log in</Link>
+            <Link href={getAppRoute("login")}>Back to log in</Link>
           </Button>
         </CardFooter>
       </form>

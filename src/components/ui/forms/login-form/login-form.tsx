@@ -15,6 +15,7 @@ import {
   TextField,
 } from "@/components/ui";
 import { toast } from "@/components/ui/common/toast";
+import { getAppRoute } from "@/configs/app-routes";
 
 type LoginValues = {
   email: string;
@@ -91,7 +92,7 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
             {isSubmitting ? "Signing in…" : "Sign in"}
           </Button>
           <Button variant="ghost" className="w-full sm:w-auto" asChild>
-            <Link href="/forgot-password">Forgot password?</Link>
+            <Link href={getAppRoute("forgotPassword")}>Forgot password?</Link>
           </Button>
         </CardFooter>
       </form>

@@ -4,6 +4,7 @@ import { LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui";
+import { getAppRoute } from "@/configs/app-routes";
 
 export function DashboardSidebarLogout() {
   const router = useRouter();
@@ -13,7 +14,7 @@ export function DashboardSidebarLogout() {
       method: "POST",
       credentials: "include",
     });
-    router.push("/");
+    router.push(getAppRoute("home"));
     router.refresh();
   }
 
