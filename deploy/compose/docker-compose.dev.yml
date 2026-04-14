@@ -24,21 +24,21 @@ services:
       dockerfile: deploy/docker/Dockerfile.api
     restart: unless-stopped
     ports:
-      - "${API_PORT:-8080}:8080"
+      - "${API_PORT:-8000}:8000"
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-fintrack}:${POSTGRES_PASSWORD:-fintrack}@postgres:5432/${POSTGRES_DB:-fintrack}
-      MIGRATIONS_PATH: /migrations
-      PORT: "8080"
-      JWT_SECRET: ${JWT_SECRET}
-      NODE_ENV: development
+      PORT: "8000"
     volumes:
-      - ../../migrations:/migrations:ro
+      - ../../api/migrations:/migrations:ro
     depends_on:
       postgres:
         condition: service_healthy
     healthcheck:
       test:
-        ["CMD-SHELL", "wget -q -O- http://127.0.0.1:8080/health | grep -q ok"]
+        [
+          "CMD-SHELL",
+          "wget -q -O- http://127.0.0.1:${PORT}/health | grep -q ok",
+        ]
       interval: 5s
       timeout: 5s
       retries: 8
@@ -54,8 +54,6 @@ services:
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-fintrack}:${POSTGRES_PASSWORD:-fintrack}@postgres:5432/${POSTGRES_DB:-fintrack}
       NODE_ENV: development
-      API_ORIGIN: http://api:8080
-      JWT_SECRET: ${JWT_SECRET}
     volumes:
       - ../..:/app
       - web_node_modules:/app/web/node_modules

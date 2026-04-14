@@ -18,9 +18,7 @@ RUN apk add --no-cache ca-certificates tzdata wget
 COPY --from=builder /out/fintrack-api /usr/local/bin/fintrack-api
 
 # Bake SQL migrations into the image (compose can still bind-mount over /migrations in dev).
-COPY migrations /migrations
-
-ENV MIGRATIONS_PATH=/migrations
+COPY api/migrations /migrations
 EXPOSE 8080
 
 ENTRYPOINT ["/usr/local/bin/fintrack-api"]

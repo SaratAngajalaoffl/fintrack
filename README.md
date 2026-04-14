@@ -24,7 +24,7 @@ Fintrack is under active development. The goal is a responsive app for balances,
 
 - **Frontend:** [Next.js](https://nextjs.org/) (App Router) in **`web/`**, React, TypeScript, Tailwind CSS
 - **API (growing):** [Go](https://go.dev/) in **`api/`** — see [api/README.md](api/README.md)
-- **Database:** [PostgreSQL](https://www.postgresql.org/) with SQL migrations in **`migrations/`** (repo root)
+- **Database:** [PostgreSQL](https://www.postgresql.org/) with SQL migrations in **`api/migrations/`**
 - **Deployment:** Docker images and Compose files in **`deploy/`** for dev, test, and production-style runs
 
 This repository is a **simple monorepo** (no npm workspaces): install Node dependencies inside **`web/`** and run Go commands inside **`api/`**.
@@ -93,13 +93,13 @@ cd api
 go run ./cmd/api
 ```
 
-In **`web/.env.local`**, set **`API_ORIGIN=http://127.0.0.1:8080`** so Next rewrites **`/api/auth/*`** to this service.
+**`getApiRoute()`** (see **`web/src/configs/api-routes.ts`**) builds API URLs using **`NEXT_PUBLIC_API_ORIGIN`** for browser requests and **`API_ORIGIN`** for server-side fetches when set (for Docker, typically **`http://api:8080`**). For direct browser calls to the API, configure **`CORS_ALLOWED_ORIGINS`** on **`api/`**.
 
 `GET http://localhost:8080/health` returns `{"status":"ok"}`.
 
 ## Run with Docker Compose (Postgres + Go API + Next.js)
 
-This starts **Postgres**, the **Go API** (which applies **`migrations/`** on startup, then serves **`GET /health`** on port **8080** by default), and the Next.js app from **`web/`**, using the **development** compose file.
+This starts **Postgres**, the **Go API** (which applies **`api/migrations/`** SQL on startup, then serves **`GET /health`** on port **8080** by default), and the Next.js app from **`web/`**, using the **development** compose file.
 
 1. Copy and adjust environment variables at the **repository root** (optional; defaults work for local tries):
 
@@ -137,7 +137,7 @@ docker compose -f deploy/compose/docker-compose.test.yml up --build
 
 ## Database migrations
 
-SQL files live in **`migrations/`** at the repository root. The **Go API** applies pending files on startup (filenames recorded in **`schema_migrations`**, same rules as before). **`deploy/docker/scripts/run-migrations.sh`** is still available if you need to run SQL manually.
+SQL files live in **`api/migrations/`**. The **Go API** applies pending files on startup (filenames recorded in **`schema_migrations`**, same rules as before). **`deploy/docker/scripts/run-migrations.sh`** is still available if you need to run SQL manually (optional **`MIGRATIONS_PATH`**, default **`/migrations`** in containers).
 
 If you run Postgres yourself, apply the same files in order with `psql` or your preferred migration workflow. **Seeding** is not run by the API — use your own scripts (see **`data/`**).
 

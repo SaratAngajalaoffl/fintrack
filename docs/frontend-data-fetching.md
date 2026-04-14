@@ -13,7 +13,7 @@ Fintrack is server-first with App Router. Use browser-side fetching only for int
 - Keep `page.tsx` and non-interactive sections as Server Components.
 - Keep request functions in `web/src/services/` (e.g. `web/src/services/auth/auth-api.ts`).
 - In client components, use query hooks from `web/src/components/hooks/queries/` rather than calling `fetch` directly.
-- Build endpoints with `getApiRoute(...)` from `web/src/configs/api-routes.ts`.
+- Build API URLs with `getApiRoute(...)` from `web/src/configs/api-routes.ts` (prepends **`NEXT_PUBLIC_API_ORIGIN`** / **`getApiOrigin()`**; see that file).
 - Build UI/app paths with `getAppRoute(...)` from `web/src/configs/app-routes.ts`.
 
 ## Current adoption

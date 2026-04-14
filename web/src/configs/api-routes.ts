@@ -86,10 +86,10 @@ type GetApiRouteArgs<T extends ApiRouteKey> =
       ? [params?: ApiRouteParams<T>]
       : [params: ApiRouteParams<T>];
 
-export const getApiRoute = <T extends ApiRouteKey>(
+function resolveApiPath<T extends ApiRouteKey>(
   key: T,
   ...args: GetApiRouteArgs<T>
-): string => {
+): string {
   const route = apiRoutes[key] as {
     path: string;
     create?: (params?: unknown) => string;
@@ -98,6 +98,37 @@ export const getApiRoute = <T extends ApiRouteKey>(
     return route.create(args[0]);
   }
   return route.path;
+}
+
+/**
+ * Base URL for the Go HTTP API (no trailing slash).
+ *
+ * - **Browser:** `NEXT_PUBLIC_API_ORIGIN` only (baked into the client bundle).
+ * - **Server:** prefers `API_ORIGIN`, then `NEXT_PUBLIC_API_ORIGIN` (e.g. Docker SSR can call `http://api:8080`).
+ *
+ * When this returns `""`, `getApiRoute()` produces same-origin paths like `/api/auth/login`. Pair with
+ * **`next.config.ts` rewrites** (when `NEXT_PUBLIC_API_ORIGIN` is unset) so the browser stays on the Next
+ * origin and session cookies remain visible to **`middleware.ts`**.
+ *
+ * When set to an absolute URL (e.g. `http://127.0.0.1:8080`), rewrites are disabled — enable CORS on the API
+ * (`CORS_ALLOWED_ORIGINS`) for credentialed `fetch`.
+ */
+export function getApiOrigin(): string {
+  const isServer = typeof window === "undefined";
+  const raw = isServer
+    ? (process.env.API_ORIGIN ?? process.env.NEXT_PUBLIC_API_ORIGIN)
+    : process.env.NEXT_PUBLIC_API_ORIGIN;
+  const u = typeof raw === "string" ? raw.trim().replace(/\/$/, "") : "";
+  return u;
+}
+
+export const getApiRoute = <T extends ApiRouteKey>(
+  key: T,
+  ...args: GetApiRouteArgs<T>
+): string => {
+  const path = resolveApiPath(key, ...args);
+  const origin = getApiOrigin();
+  return origin ? `${origin}${path}` : path;
 };
 
 export type { ApiRouteKey };

@@ -19,9 +19,11 @@ CREATE TABLE IF NOT EXISTS schema_migrations (
 );
 EOSQL
 
+MIGRATIONS_DIR="${MIGRATIONS_PATH:-/migrations}"
+
 applied=0
 skipped=0
-for f in $(find /migrations -maxdepth 1 -name '*.sql' -type f 2>/dev/null | sort); do
+for f in $(find "$MIGRATIONS_DIR" -maxdepth 1 -name '*.sql' -type f 2>/dev/null | sort); do
   [ -f "$f" ] || continue
   version=$(basename "$f")
   exists=$(psql -h "$PGHOST" -U "${PGUSER:-postgres}" -d "${PGDATABASE:-postgres}" -tAc \
