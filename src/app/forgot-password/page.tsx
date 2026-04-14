@@ -1,7 +1,7 @@
 import Link from "next/link";
 
-import { AuthPageLayout } from "@/components/auth/auth-page-layout";
-import { ForgotPasswordForm } from "@/components/auth/forgot-password-form";
+import { AuthPageLayout } from "@/components/ui/layout";
+import { ForgotPasswordForm } from "@/components/ui/forms/forgot-password-form";
 import { Button } from "@/components/ui";
 
 export const metadata = {

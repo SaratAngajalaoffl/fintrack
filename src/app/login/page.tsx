@@ -1,7 +1,7 @@
 import Link from "next/link";
 
-import { AuthPageLayout } from "@/components/auth/auth-page-layout";
-import { LoginForm } from "@/components/auth/login-form";
+import { AuthPageLayout } from "@/components/ui/layout";
+import { LoginForm } from "@/components/ui/forms/login-form";
 import { Button } from "@/components/ui";
 import { safeRedirectPath } from "@/lib/safe-redirect";
 

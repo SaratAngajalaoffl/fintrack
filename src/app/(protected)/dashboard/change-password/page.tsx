@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 
-import { ChangePasswordForm } from "@/components/auth/change-password-form";
+import { ChangePasswordForm } from "@/components/ui/forms/change-password-form";
 import { getSession } from "@/lib/auth/session";
 
 export const metadata = {

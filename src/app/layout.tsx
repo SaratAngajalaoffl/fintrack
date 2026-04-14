@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Montserrat } from "next/font/google";
-import { SiteHeader } from "@/components/site-header";
+import { SiteHeader } from "@/components/ui/common/header";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import "./globals.css";
 

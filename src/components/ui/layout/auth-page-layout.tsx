@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-import { LandingHeroBackground } from "@/components/landing/landing-hero-background";
+import { LandingHeroBackground } from "@/components/ui/landing";
 
 /**
  * Server layout: the animated gradient is a client child (`LandingHeroBackground`);

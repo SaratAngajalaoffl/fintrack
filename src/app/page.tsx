@@ -1,4 +1,4 @@
-import { LandingHero } from "@/components/landing/landing-hero";
+import { LandingHero } from "@/components/ui/landing";
 import { getSession } from "@/lib/auth/session";
 
 export default async function Home() {

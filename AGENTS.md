@@ -45,24 +45,24 @@ The project follows **[shadcn/ui](https://ui.shadcn.com)** conventions: `compone
 
 ## Repository layout
 
-| Path                    | Purpose                                                                                                                                                                                                                |
-| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `src/app/`              | App Router: `layout.tsx`, `page.tsx`, routes, route groups, layouts.                                                                                                                                                   |
-| `src/components/ui/`    | **Shared UI kit** — organized by kind (see [UI component structure](#ui-component-structure)). Public API: `@/components/ui` (`index.ts`). **Do not** recreate primitives in feature folders.                          |
-| `src/components/icons/` | **Inline SVG icon components** — `@/components/icons` (`index.ts`). Not under `ui/`; see [Icons](#icons).                                                                                                              |
-| `src/components/hooks/` | **Shared React hooks** — `@/components/hooks` (see [Hooks](#hooks)). One hook per file (`use-*.ts`), re-exported from `index.ts` when useful.                                                                          |
-| `src/app/showcase/`     | **UI showcase** — `/showcase` previews primitives and variants; update when adding or changing shared UI.                                                                                                              |
-| `src/lib/`              | **`utils.ts`** — **`cn()`** for Tailwind class merging. **`formatting/`** — shared formatters (`date-formatting.ts`, `number-formatting.ts`, `string-formatting.ts`). Auth, DB, and other app libraries live here too. |
-| `components.json`       | **shadcn/ui** CLI config (registry style, aliases, `globals.css` path). Run `npx shadcn@latest add <component>` to add or refresh components.                                                                          |
-| `src/`                  | Feature components and other shared code outside `ui/`. **Reusable hooks** live in `src/components/hooks/` (not loose files under `src/hooks/` unless justified).                                                      |
-| `public/brand/`         | **Brand marks** — round / long / short logos (favicon, header). Not for generic UI icons; see [Icons](#icons).                                                                                                         |
-| `public/icons/`         | **Static icon assets** — `.svg`, `.png`, and similar files served as `/icons/…` (see [Icons](#icons)).                                                                                                                 |
-| `docs/`                 | Contributor docs (`CONTRIBUTING.md`) and [docs index](docs/README.md).                                                                                                                                                 |
-| `migrations/`           | Ordered `*.sql` files; applied idempotently via `schema_migrations`.                                                                                                                                                   |
-| `deploy/docker/`        | Dockerfiles (`Dockerfile.dev`, `Dockerfile.test`, `Dockerfile.prod`) and `scripts/run-migrations.sh`.                                                                                                                  |
-| `deploy/compose/`       | `docker-compose.dev.yml`, `docker-compose.test.yml`, `docker-compose.prod.yml`.                                                                                                                                        |
+| Path                    | Purpose                                                                                                                                                                                                                                              |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/app/`              | App Router: `layout.tsx`, `page.tsx`, routes, route groups, layouts.                                                                                                                                                                                 |
+| `src/components/ui/`    | **UI kit** (primitives) **plus** composed app UI — see [UI component structure](#ui-component-structure). Primitives: `@/components/ui` (`index.ts`). **Do not** recreate primitives in feature folders.                                             |
+| `src/components/icons/` | **Inline SVG icon components** — `@/components/icons` (`index.ts`). Not under `ui/`; see [Icons](#icons).                                                                                                                                            |
+| `src/components/hooks/` | **Shared React hooks** — `@/components/hooks` (see [Hooks](#hooks)). One hook per file (`use-*.ts`), re-exported from `index.ts` when useful.                                                                                                        |
+| `src/app/showcase/`     | **UI showcase** — `/showcase` previews primitives and variants; update when adding or changing shared UI.                                                                                                                                            |
+| `src/lib/`              | **`utils.ts`** — **`cn()`** for Tailwind class merging. **`formatting/`** — shared formatters (`date-formatting.ts`, `number-formatting.ts`, `string-formatting.ts`). Auth, DB, and other app libraries live here too.                               |
+| `components.json`       | **shadcn/ui** CLI config (registry style, aliases, `globals.css` path). Run `npx shadcn@latest add <component>` to add or refresh components.                                                                                                        |
+| `src/`                  | App Router routes (`src/app/`), libraries (`src/lib/`), and **`src/components/`** which only contains **`hooks/`**, **`icons/`**, and **`ui/`** — no top-level `auth/` or `landing/` folders; see [UI component structure](#ui-component-structure). |
+| `public/brand/`         | **Brand marks** — round / long / short logos (favicon, header). Not for generic UI icons; see [Icons](#icons).                                                                                                                                       |
+| `public/icons/`         | **Static icon assets** — `.svg`, `.png`, and similar files served as `/icons/…` (see [Icons](#icons)).                                                                                                                                               |
+| `docs/`                 | Contributor docs (`CONTRIBUTING.md`) and [docs index](docs/README.md).                                                                                                                                                                               |
+| `migrations/`           | Ordered `*.sql` files; applied idempotently via `schema_migrations`.                                                                                                                                                                                 |
+| `deploy/docker/`        | Dockerfiles (`Dockerfile.dev`, `Dockerfile.test`, `Dockerfile.prod`) and `scripts/run-migrations.sh`.                                                                                                                                                |
+| `deploy/compose/`       | `docker-compose.dev.yml`, `docker-compose.test.yml`, `docker-compose.prod.yml`.                                                                                                                                                                      |
 
-Add feature modules under `src/` with clear boundaries (e.g. `src/components/`, `src/lib/formatting/`, `src/app/(dashboard)/`) as the app grows.
+Add feature modules under `src/` with clear boundaries (e.g. `src/lib/formatting/`, `src/app/(dashboard)/`, composed UI under `src/components/ui/forms/` / `common/` / `landing/` / `layout/`) as the app grows.
 
 ### Hooks
 
@@ -75,6 +75,10 @@ Add feature modules under `src/` with clear boundaries (e.g. `src/components/`, 
 
 ## UI component structure
 
+Everything under `src/components/` is organized as **`hooks/`**, **`icons/`**, and **`ui/`**. Do **not** add a top-level `src/components/auth/` (or similar domain folders): authentication **routes** live under `src/app/`, **API** under `src/app/api/`, and **shared auth-related UI** belongs under the `ui/` subtrees below.
+
+### UI kit (primitives)
+
 Shared primitives live under `src/components/ui/`. **One main component per file** (plus small colocated helpers). Group related pieces in a **kebab-case folder** named after the feature (e.g. `multi-select/`, `dialog/`).
 
 | Area              | Path pattern                                      | Notes                                                                                                                                                                  |
@@ -84,9 +88,22 @@ Shared primitives live under `src/components/ui/`. **One main component per file
 | Layout / overlays | `card/`, `dialog/`, `dropdown-menu/`, `tooltip/`  | One file per exported part (`DialogContent.tsx`, `CardHeader.tsx`, …).                                                                                                 |
 | Shared types      | Next to the feature                               | e.g. `inputs/multi-select/types.ts` to avoid circular imports between sibling modules.                                                                                 |
 
-Inline SVG **icon components** live in **`src/components/icons/`** (not under `ui/`); see [Icons](#icons).
+**Barrel:** `src/components/ui/index.ts` re-exports **primitives only**. **Import from `@/components/ui`** for `Button`, `Card`, `TextField`, etc.
 
-**Barrel:** `src/components/ui/index.ts` re-exports the public API. **Import from `@/components/ui`** for app code unless you need a deep path for internal reuse.
+### Composed app UI (also under `ui/`)
+
+Screens and chrome built **from** the kit (and each other) live in sibling folders under `src/components/ui/`. **One kebab-case folder per component**; add an `index.ts` that re-exports the public symbol so consumers can import `@/components/ui/forms/login-form` (folder path) without repeating the file name.
+
+| Area        | Path pattern     | Purpose                                                                                                                                                                         |
+| ----------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Forms**   | `forms/<name>/`  | Multi-field route forms: login, signup, forgot/reset/change password, etc. Colocate small helpers (e.g. OTP field) under `forms/` as their own folder when shared across forms. |
+| **Common**  | `common/<name>/` | App-wide chrome that is **not** a generic primitive: `common/header/` (`SiteHeader`), `common/user-profile-menu/`, `common/logout-button/`, etc.                                |
+| **Landing** | `landing/`       | Marketing landing sections (hero, backgrounds).                                                                                                                                 |
+| **Layout**  | `layout/`        | Route-level layout wrappers (e.g. `AuthPageLayout` for auth pages).                                                                                                             |
+
+**Barrel:** `src/components/ui/common/index.ts` may re-export frequently used chrome. **`forms/index.ts`** re-exports form entry points for convenience; prefer specific paths when only one form is needed.
+
+Inline SVG **icon components** live in **`src/components/icons/`** (not under `ui/`); see [Icons](#icons).
 
 **Conventions:** Use `cn()` from **`@/lib/utils`**. Match naming and imports in sibling files; add `"use client"` only where the UI primitive requires it (see [React Server Components](#react-server-components-default)). See [shadcn/ui and Radix](#shadcnui-and-radix). After adding or changing a primitive, **extend the showcase** (below).
 
@@ -165,6 +182,7 @@ Remove generated artifacts when you need a clean slate: delete the `.next` direc
 
 - Do not commit secrets or real `.env` files.
 - Do not introduce large refactors unrelated to the task; match existing patterns and file layout.
+- Do not add `src/components/auth/` (or other top-level domain folders next to `hooks/` / `icons/` / `ui/`); place auth-related UI under `src/components/ui/forms/`, `common/`, or `layout/` per [UI component structure](#ui-component-structure).
 - Do not edit `.pen` design files with plain text tools; use the Pencil MCP tooling if those assets exist.
 
 ## When in doubt

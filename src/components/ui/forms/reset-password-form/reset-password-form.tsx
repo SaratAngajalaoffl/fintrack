@@ -5,7 +5,7 @@ import * as React from "react";
 import { Controller, useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 
-import { PasswordResetOtpField } from "@/components/auth/password-reset-otp-field";
+import { PasswordResetOtpField } from "@/components/ui/forms/password-reset-otp-field";
 import {
   Button,
   Card,

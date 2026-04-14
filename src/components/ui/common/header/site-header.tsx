@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 
-import { UserProfileMenu } from "@/components/auth/user-profile-menu";
+import { UserProfileMenu } from "@/components/ui/common/user-profile-menu";
 import { Button } from "@/components/ui";
 import { getSession } from "@/lib/auth/session";
 
