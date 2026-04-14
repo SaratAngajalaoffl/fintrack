@@ -1,4 +1,6 @@
 #!/bin/sh
+# Optional manual runner — the same *.sql files are applied automatically by the Go API on startup.
+# Default stack uses `deploy/docker/Dockerfile.api` (no separate migrate container). Seeding is not performed here.
 set -e
 
 PGHOST="${PGHOST:-postgres}"

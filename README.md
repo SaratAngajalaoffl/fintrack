@@ -86,18 +86,20 @@ This repository is a **simple monorepo** (no npm workspaces): install Node depen
 
 6. Open [http://localhost:3000](http://localhost:3000).
 
-Optional — **Go API** (minimal health server):
+**Go API** (auth + migrations + health): from **`api/`**, set **`DATABASE_URL`**, **`JWT_SECRET`** (same string as **`web/.env.local`** / middleware, ≥16 chars), then:
 
 ```bash
 cd api
-go run ./cmd/fintrack
+go run ./cmd/api
 ```
+
+In **`web/.env.local`**, set **`API_ORIGIN=http://127.0.0.1:8080`** so Next rewrites **`/api/auth/*`** to this service.
 
 `GET http://localhost:8080/health` returns `{"status":"ok"}`.
 
-## Run with Docker Compose (web app + Postgres)
+## Run with Docker Compose (Postgres + Go API + Next.js)
 
-This runs the Next.js app from **`web/`**, applies migrations, and starts Postgres using the **development** compose file.
+This starts **Postgres**, the **Go API** (which applies **`migrations/`** on startup, then serves **`GET /health`** on port **8080** by default), and the Next.js app from **`web/`**, using the **development** compose file.
 
 1. Copy and adjust environment variables at the **repository root** (optional; defaults work for local tries):
 
@@ -111,9 +113,9 @@ This runs the Next.js app from **`web/`**, applies migrations, and starts Postgr
    docker compose -f deploy/compose/docker-compose.dev.yml up --build
    ```
 
-3. The app is available at [http://localhost:3000](http://localhost:3000) (or the host port you set with `WEB_PORT`).
+3. **Web:** [http://localhost:3000](http://localhost:3000) (or `WEB_PORT`). **API:** [http://localhost:8080/health](http://localhost:8080/health) (or `API_PORT`).
 
-`DATABASE_URL` is set inside Compose for the `web` service; you usually do not need to change it for this stack.
+`DATABASE_URL` is set for **`api`** and **`web`** inside Compose; defaults are usually fine for local use.
 
 ### Other Compose profiles
 
@@ -133,13 +135,11 @@ docker compose -f deploy/compose/docker-compose.prod.yml up --build -d
 docker compose -f deploy/compose/docker-compose.test.yml up --build
 ```
 
-Avoid `docker compose up --abort-on-container-exit` with these files: the one-shot migration service can interact badly with that flag.
-
 ## Database migrations
 
-SQL files live in **`migrations/`**. When using Docker Compose, a **`migrate`** service runs before the app and applies any new migration files (tracked in `schema_migrations`).
+SQL files live in **`migrations/`** at the repository root. The **Go API** applies pending files on startup (filenames recorded in **`schema_migrations`**, same rules as before). **`deploy/docker/scripts/run-migrations.sh`** is still available if you need to run SQL manually.
 
-If you run Postgres yourself, apply the same files in order with `psql` or your preferred migration workflow.
+If you run Postgres yourself, apply the same files in order with `psql` or your preferred migration workflow. **Seeding** is not run by the API — use your own scripts (see **`data/`**).
 
 ## Scripts
 

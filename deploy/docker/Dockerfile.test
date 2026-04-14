@@ -9,6 +9,7 @@ RUN npm ci
 
 COPY web/ .
 
+ENV API_ORIGIN=http://api:8080
 ENV NODE_ENV=test
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV CI=1

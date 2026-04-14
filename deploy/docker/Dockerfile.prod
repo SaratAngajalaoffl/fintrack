@@ -11,6 +11,8 @@ WORKDIR /app/web
 COPY --from=deps /app/web/node_modules ./node_modules
 COPY web/ .
 ENV NEXT_TELEMETRY_DISABLED=1
+# Used by next.config.ts rewrites (proxy /api/auth → Go). Must match the `api` service hostname in Compose.
+ENV API_ORIGIN=http://api:8080
 RUN npm run build
 
 FROM base AS runner

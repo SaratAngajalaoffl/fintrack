@@ -15,9 +15,9 @@ This document tracks the move from **Next.js Route Handlers** (`web/src/app/api/
 | Path | Role |
 | ---- | ---- |
 | **`web/`** | Next.js app — `package.json`, **`web/src/`**, **`web/public/`**. Install with **`cd web && npm install`**. |
-| **`api/`** | Go module — **`api/go.mod`**, **`api/cmd/fintrack/`**. Run with **`cd api && go run ./cmd/fintrack`**. |
+| **`api/`** | Go module — **`api/go.mod`**, **`api/cmd/api/`**. Run with **`cd api && go run ./cmd/api`**. |
 | **`migrations/`** | SQL migrations (shared). |
-| **`deploy/`** | Docker Compose and Dockerfiles (Next builds from **`web/`**); extend with an **`api`** service when ready. |
+| **`deploy/`** | Docker Compose and Dockerfiles — **`web/`** (Next), **`api/`** (Go, see **`deploy/docker/Dockerfile.api`**). |
 
 There is **no** root `package.json` and **no** npm/pnpm workspaces: treat **`web/`** and **`api/`** as two independent projects sharing one git repository.
 
@@ -27,8 +27,8 @@ These paths are implemented under **`web/src/app/api/`** and mirrored in **`web/
 
 | Area | Routes |
 | ---- | ------ |
-| **Auth** | `POST /api/auth/signup`, `POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/auth/me`, `GET /api/auth/account-data`, `POST /api/auth/forgot-password`, `POST /api/auth/reset-password`, `POST /api/auth/change-password/request-otp`, `POST /api/auth/change-password` |
-| **Bank accounts** | `GET`/`POST /api/bank-accounts`, `GET`/`PATCH`/`DELETE /api/bank-accounts/[accountId]` |
+| **Auth** | Implemented in **Go** (`api/`). Next.js rewrites **`/api/auth/*`** via **`API_ORIGIN`**. Paths unchanged: signup, login, logout, me, account-data, forgot/reset password, change-password + request-otp. |
+| **Bank accounts** | Implemented in **Go**. Next rewrites **`/api/bank-accounts`** (see **`API_ORIGIN`**). Same paths as before. |
 | **Credit cards** | `GET`/`POST /api/credit-cards`, `GET`/`PATCH`/`DELETE /api/credit-cards/[cardId]` |
 | **Fund buckets** | `GET`/`POST /api/fund-buckets`, `POST .../allocate`, `POST .../unlock`, `PATCH .../priority` |
 | **Expense categories** | `GET`/`POST /api/expense-categories`, `GET`/`PATCH`/`DELETE /api/expense-categories/[categoryId]` |
@@ -44,27 +44,28 @@ Complete phases in order unless noted. Mark checkboxes in a PR when a phase is d
 
 ### Phase 1 — Repository skeleton
 
-- [x] **Go module** at **`api/`** with minimal **`GET /health`** (see **[api/README.md](../api/README.md)**).
-- [ ] Structured logging, graceful shutdown; optional **`DATABASE_URL`** wiring when DB access is added.
-- [ ] **Docker / Compose:** optional **`api`** service building the Go binary; document ports in **`deploy/compose/*.yml`** when introduced.
+- [x] **Go module** at **`api/`** with **`GET /health`**, **`internal/`** layout, and startup **SQL migrations** (same files as **`migrations/`** at repo root). See **[api/README.md](../api/README.md)**.
+- [x] **Logging & HTTP:** structured logs (`slog`), graceful shutdown, **`DATABASE_URL`** + **`MIGRATIONS_PATH`**.
+- [x] **Docker / Compose:** **`api`** service (**`deploy/docker/Dockerfile.api`**), **`postgres` → `api` → `web`**. No separate **`migrate`** container.
 - [x] **Developer workflow:** run Next from **`web/`** and the API from **`api/`** (two terminals), documented in root **README** and **AGENTS.md**.
 
 ### Phase 2 — Client integration contract
 
-- [ ] **Base URL:** a single env-driven base for browser and server fetches (e.g. `NEXT_PUBLIC_API_BASE_URL` for client-side; server may use internal URL in Docker).
-- [ ] Update **`web/src/services/`** (and any Server Component fetches) to use that base when calling the Go API — starting with **no** production traffic to Go until routes exist.
-- [ ] Keep **`web/src/configs/api-routes.ts`** as the **path** registry; either paths stay identical (`/api/...` on the Go server behind a reverse proxy) or you version once (e.g. `/v1/...`) and update the helper in one place.
+- [x] **Auth:** same paths **`/api/auth/*`**; Next **`rewrites`** to **`API_ORIGIN`** (Go). **`JWT_SECRET`** must match between **`api`** and **`web`** (middleware).
+- [x] **Bank accounts:** same paths **`/api/bank-accounts`**; rewrites on **`web`** (plus **`JWT_SECRET`** for session on protected routes).
+- [ ] **Other domains:** optional **`NEXT_PUBLIC_API_BASE_URL`** (or keep rewrites) when moving remaining APIs; update **`web/src/services/`** as each domain lands in Go.
+- [x] Keep **`web/src/configs/api-routes.ts`** as the **path** registry (paths unchanged for auth).
 
 ### Phase 3 — Strangler: migrate one vertical slice
 
 - [ ] Implement the first domain in Go (recommend starting with **read-heavy** or **small** surface area, e.g. expense categories or a read-only endpoint).
-- [ ] Point the frontend for **only that slice** at the Go service (directly in dev, or via proxy in Next `rewrites` if you need same-origin cookies — **decide cookie/session strategy** before moving auth).
+- [ ] Point the frontend for **only that slice** at the Go service (directly in dev, or via proxy in Next `rewrites` for same-origin cookies — **auth** already uses this pattern).
 - [ ] Deprecate or remove the corresponding Next Route Handlers once parity is verified (tests or manual checklist).
 
 ### Phase 4 — Domain-by-domain migration
 
-- [ ] Repeat for **bank accounts**, **credit cards**, **fund buckets**, and remaining **auth** routes.
-- [ ] **Auth last or with extra care:** session cookies, CSRF, and OTP flows often need explicit design so behavior matches the current Next implementation.
+- [ ] Repeat for **bank accounts**, **credit cards**, **fund buckets**, and other non-auth APIs.
+- [x] **Auth** — implemented in Go; session cookie + rewrites + shared **`JWT_SECRET`** (see Phase 2).
 
 ### Phase 5 — Cleanup
 
@@ -79,7 +80,7 @@ Complete phases in order unless noted. Mark checkboxes in a PR when a phase is d
 | Workspace layout | ~~`apps/*`~~ vs **`web/` + `api/`** | **`web/` + `api/`** (no npm workspaces) |
 | API path prefix | Same `/api/...` as today vs `/v1/...` | _TBD_ |
 | Same-origin in prod | Reverse proxy (Caddy/Nginx) vs CORS from browser | _TBD_ |
-| Session transport | HTTP-only cookies (BFF pattern) vs tokens | _TBD_ — align with current **`web/src/app/api/auth/`** behavior |
+| Session transport | HTTP-only cookies (BFF) vs tokens | **HTTP-only cookie** **`fintrack_session`** set by Go; browser calls same-origin **`/api/auth/*`** (Next rewrites to **`API_ORIGIN`**) so **`middleware.ts`** can verify JWT. |
 
 ## Related docs
 

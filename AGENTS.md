@@ -21,7 +21,7 @@ This document orients coding agents and contributors to how Fintrack is organize
 
 - **Routes:** `/dashboard/bank-accounts/my-bank-accounts` (**My Bank Accounts**) and `/dashboard/bank-accounts/statements` (**Bank Statements**). Keep `/dashboard/bank-accounts` as a redirect-only compatibility route.
 - **Code:** Domain types, URL state parsing, and mock rows live under **`web/src/lib/bank-accounts/`**. Composed screen UI lives under **`web/src/components/ui/bank-accounts/`**. Shared primitives for this area: **`ChipComponent`** (`web/src/components/ui/common/chip/`) and **`TableComponent`** (`web/src/components/ui/common/table-component/`) — export from `@/components/ui`.
-- **API:** endpoints under `web/src/app/api/bank-accounts/` (`GET`/`POST`) and `web/src/app/api/bank-accounts/[accountId]/` (`GET`/`PATCH`/`DELETE`), backed by services in `web/src/services/bank-accounts/`.
+- **API:** **`GET`/`POST /api/bank-accounts`**, **`GET`/`PATCH`/`DELETE /api/bank-accounts/:id`** — implemented in **`api/`**; **`web/next.config.ts`** rewrites **`/api/bank-accounts`** to **`API_ORIGIN`**. Client helpers live in `web/src/services/bank-accounts/bank-accounts-api.ts`.
 - **Persistence:** Core account settings live in `bank_accounts`; virtual buckets are normalized in `bank_account_buckets`; preferred categories are normalized in `bank_account_preferred_categories` (migration `012_bank_account_preferred_category_links.sql`). Planned/implemented fields are documented in **[docs/data-model.md](docs/data-model.md)**. Update that file when migrations or API shapes change.
 
 ### Domain: credit cards
@@ -59,11 +59,11 @@ HTTP APIs currently live in **Next.js Route Handlers** (`web/src/app/api/**`). T
 ## Tech stack
 
 - **Framework:** Next.js (App Router), React, TypeScript.
-- **API (planned):** Go service in **`api/`**; see [Monorepo migration](#monorepo-migration-go-api--nextjs). Until migration phases complete, Route Handlers under **`web/src/app/api/`** remain in use.
+- **API:** Go service in **`api/`** — **auth** routes live there; **`web/next.config.ts`** rewrites **`/api/auth/*`** to **`API_ORIGIN`** (see **`web/.env.example`**). Remaining Route Handlers under **`web/src/app/api/`** are migrated incrementally; see [Monorepo migration](#monorepo-migration-go-api--nextjs).
 - **Styling:** Tailwind CSS v4. Theme tokens live in `web/src/app/globals.css` (`@import "tailwindcss"` + `@theme inline`). **Catppuccin Mocha** is the app palette: **red** (`#f38ba8`) as `primary`, **mauve** (`#cba6f7`) as `secondary`. Named Mocha colors are exposed as Tailwind colors: `text-text`, `text-subtext-1`, `text-subtext-0`, `bg-overlay-*`, `bg-surface-*`, `bg-base`, `bg-mantle`, `bg-crust`, etc. Prefer semantic roles where they fit: `bg-background`, `text-foreground`, `text-primary`, `bg-secondary`, `border-border`.
 - **Client data layer:** `@tanstack/react-query` powers browser-side API calls (mutations/queries) behind a small `ReactQueryProvider` client boundary in root layout. Keep routes and non-interactive UI as Server Components.
 - **Fonts:** **Montserrat** via `next/font/google` in `web/src/app/layout.tsx` (`--font-montserrat`), applied to both `--font-sans` and `--font-mono` in `@theme inline` so UI and numeric lines share one family.
-- **Database:** PostgreSQL. SQL migrations live in `migrations/` at the repo root. Docker Compose runs a one-shot `migrate` service before `web` / `test`; see `deploy/docker/scripts/run-migrations.sh` and `deploy/compose/*.yml`.
+- **Database:** PostgreSQL. SQL migrations live in **`migrations/`** at the repo root. The **Go API** (`api/cmd/api`) applies them **on startup** (same **`schema_migrations`** filenames as before). Docker Compose starts **`postgres` → `api` → `web`** (or **`test`**). The script **`deploy/docker/scripts/run-migrations.sh`** remains for manual use; seeding is **not** part of the API (use your own scripts / `data/`).
 
 ## Next.js version note
 
@@ -96,7 +96,7 @@ The repo is a **two-root** layout (no npm workspaces): **`web/`** (Next.js) and 
 | Path                    | Purpose                                                                                                                                                                                                                                                                                      |
 | ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `.githooks/`            | **Native Git hooks** (e.g. `pre-commit` → `lint-staged` in **`web/`**). Enable per clone: **`git config core.hooksPath .githooks`**.                                                                                                                                                         |
-| `api/`                  | **Go HTTP API** — `api/go.mod`, `api/cmd/fintrack/`. Shared migrations stay at repo `migrations/`.                                                                                                                                                                                           |
+| `api/`                  | **Go HTTP API** — `api/go.mod`, **`api/cmd/api/`**. Applies SQL from **`migrations/`** on startup. Shared migrations stay at repo **`migrations/`**.                                                                                                                                         |
 | `web/package.json`      | Next.js app metadata and scripts — use **`cd web`**, then **`npm install`**, **`npm run dev`**, etc.                                                                                                                                                                                          |
 | `web/components.json`   | **shadcn/ui** CLI config (registry style, aliases, `globals.css` path). Run the CLI from **`web/`**.                                                                                                                                                                                         |
 | `web/src/app/`              | App Router: `layout.tsx`, `page.tsx`, routes, route groups, layouts.                                                                                                                                                                                                                         |
@@ -188,7 +188,7 @@ Commands below assume a POSIX shell. **Node** commands run from **`web/`**; **Go
 | Task               | Command                                                                |
 | ------------------ | ---------------------------------------------------------------------- |
 | Dev — Next (local) | `cd web && npm run dev`                                                |
-| Dev — Go API       | `cd api && go run ./cmd/fintrack`                                      |
+| Dev — Go API       | `cd api && go run ./cmd/api`                                           |
 | Lint               | `cd web && npm run lint`                                               |
 | Test (placeholder) | `cd web && npm run test` (currently lint; extend with a real runner when needed) |
 | Production build   | `cd web && npm run build` then `cd web && npm run start`                |
@@ -227,13 +227,13 @@ Remove generated artifacts when you need a clean slate: delete **`web/.next`** (
 ## Database and migrations
 
 - Add new SQL files as `migrations/00x_description.sql` (lexicographic order).
-- The runner records filenames in `schema_migrations`; do not rename applied files without a deliberate migration strategy.
+- The **Go API** records each filename in **`schema_migrations`** (same as the historical shell runner). Do not rename applied files without a deliberate migration strategy.
 - Keep Postgres-specific SQL portable enough for your deployment target; avoid app-only logic in SQL unless necessary.
 
 ## Docker notes
 
-- Do **not** use `docker compose up --abort-on-container-exit` with these stacks: the `migrate` service exits after success and can interact badly with that flag.
-- Production image uses `output: "standalone"` in **`web/next.config.ts`**.
+- Compose order: **`postgres`** (healthy) → **`api`** (runs SQL migrations then **`GET /health`**) → **`web`** / **`test`**. See **`deploy/compose/*.yml`** and **`deploy/docker/Dockerfile.api`**.
+- Production Next image uses `output: "standalone"` in **`web/next.config.ts`**.
 
 ## What not to do
 
