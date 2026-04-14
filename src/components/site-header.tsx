@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 
-import { LogoutButton } from "@/components/auth/logout-button";
+import { UserProfileMenu } from "@/components/auth/user-profile-menu";
 import { Button } from "@/components/ui";
 import { getSession } from "@/lib/auth/session";
 
@@ -33,7 +33,7 @@ export async function SiteHeader() {
               <Button variant="ghost" size="sm" asChild>
                 <Link href="/dashboard">Dashboard</Link>
               </Button>
-              <LogoutButton />
+              <UserProfileMenu email={session.email} />
             </>
           ) : (
             <>

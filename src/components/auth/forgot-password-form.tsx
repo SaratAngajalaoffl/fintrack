@@ -3,6 +3,7 @@
 import Link from "next/link";
 import * as React from "react";
 import { useForm } from "react-hook-form";
+import { useRouter } from "next/navigation";
 
 import {
   Button,
@@ -14,14 +15,14 @@ import {
   CardTitle,
   TextField,
 } from "@/components/ui";
-
-const STORAGE_KEY = "fintrack_password_reset";
+import { PASSWORD_RESET_SESSION_KEY } from "@/lib/auth/password-reset-session";
 
 type ForgotValues = {
   email: string;
 };
 
 export function ForgotPasswordForm() {
+  const router = useRouter();
   const [info, setInfo] = React.useState<string | null>(null);
   const {
     register,
@@ -56,7 +57,7 @@ export function ForgotPasswordForm() {
     if (body.otpToken && body.expiresAt) {
       try {
         sessionStorage.setItem(
-          STORAGE_KEY,
+          PASSWORD_RESET_SESSION_KEY,
           JSON.stringify({
             otpToken: body.otpToken,
             expiresAt: body.expiresAt,
@@ -66,10 +67,12 @@ export function ForgotPasswordForm() {
       } catch {
         /* ignore */
       }
+      router.push("/reset-password");
+      return;
     }
     setInfo(
       body.message ??
-        "If an account exists, check server logs for the OTP and continue on the reset page.",
+        "If an account exists for this email, you will receive further instructions.",
     );
   }
 
@@ -80,8 +83,8 @@ export function ForgotPasswordForm() {
           Forgot password
         </CardTitle>
         <CardDescription>
-          Enter your email. In development, the OTP is printed in the server
-          console; your browser stores the reset token for the next step.
+          Enter the email for your account. If it exists, you can set a new
+          password on the next step.
         </CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit(onSubmit)} noValidate>
@@ -119,7 +122,7 @@ export function ForgotPasswordForm() {
             {isSubmitting ? "Sending…" : "Continue"}
           </Button>
           <Button variant="ghost" className="w-full sm:w-auto" asChild>
-            <Link href="/reset-password">Enter reset code</Link>
+            <Link href="/login">Back to log in</Link>
           </Button>
         </CardFooter>
       </form>

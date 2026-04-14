@@ -5,6 +5,7 @@ import * as React from "react";
 import { Controller, useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 
+import { PasswordResetOtpField } from "@/components/auth/password-reset-otp-field";
 import {
   Button,
   Card,
@@ -15,19 +16,23 @@ import {
   CardTitle,
   TextField,
 } from "@/components/ui";
-
-const STORAGE_KEY = "fintrack_password_reset";
+import { PASSWORD_RESET_SESSION_KEY } from "@/lib/auth/password-reset-session";
 
 type ResetValues = {
   email: string;
   otp: string;
   otpToken: string;
   newPassword: string;
+  confirmPassword: string;
 };
 
 export function ResetPasswordForm() {
   const router = useRouter();
   const [success, setSuccess] = React.useState<string | null>(null);
+  const [sessionStatus, setSessionStatus] = React.useState<
+    "loading" | "ready" | "missing"
+  >("loading");
+
   const {
     register,
     control,
@@ -43,25 +48,35 @@ export function ResetPasswordForm() {
       otp: "",
       otpToken: "",
       newPassword: "",
+      confirmPassword: "",
     },
   });
 
   React.useEffect(() => {
     try {
-      const raw = sessionStorage.getItem(STORAGE_KEY);
-      if (!raw) return;
+      const raw = sessionStorage.getItem(PASSWORD_RESET_SESSION_KEY);
+      if (!raw) {
+        setSessionStatus("missing");
+        return;
+      }
       const parsed = JSON.parse(raw) as {
         otpToken?: string;
         email?: string;
       };
+      if (!parsed.otpToken || !parsed.email) {
+        setSessionStatus("missing");
+        return;
+      }
       reset({
-        email: parsed.email ?? "",
+        email: parsed.email,
+        otpToken: parsed.otpToken,
         otp: "",
-        otpToken: parsed.otpToken ?? "",
         newPassword: "",
+        confirmPassword: "",
       });
+      setSessionStatus("ready");
     } catch {
-      /* ignore */
+      setSessionStatus("missing");
     }
   }, [reset]);
 
@@ -71,7 +86,12 @@ export function ResetPasswordForm() {
     const res = await fetch("/api/auth/reset-password", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
+      body: JSON.stringify({
+        email: data.email,
+        otp: data.otp,
+        otpToken: data.otpToken,
+        newPassword: data.newPassword,
+      }),
     });
     const body = (await res.json().catch(() => ({}))) as {
       error?: string;
@@ -84,14 +104,53 @@ export function ResetPasswordForm() {
       return;
     }
     try {
-      sessionStorage.removeItem(STORAGE_KEY);
+      sessionStorage.removeItem(PASSWORD_RESET_SESSION_KEY);
     } catch {
       /* ignore */
     }
     setSuccess(body.message ?? "Password updated. You can sign in.");
     const current = getValues();
-    reset({ ...current, otp: "", newPassword: "" });
+    reset({
+      ...current,
+      otp: "",
+      newPassword: "",
+      confirmPassword: "",
+    });
     router.refresh();
+  }
+
+  if (sessionStatus === "loading") {
+    return (
+      <Card className="border-border/60 bg-muted/80 shadow-lg backdrop-blur-sm">
+        <CardContent className="py-10 text-center text-sm text-subtext-1">
+          Loading…
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (sessionStatus === "missing") {
+    return (
+      <Card className="border-border/60 bg-muted/80 shadow-lg backdrop-blur-sm">
+        <CardHeader className="space-y-1 text-center">
+          <CardTitle className="text-2xl font-semibold tracking-tight">
+            Reset password
+          </CardTitle>
+          <CardDescription>
+            Start from forgot password so we can verify your email. This page
+            opens automatically after you continue from there.
+          </CardDescription>
+        </CardHeader>
+        <CardFooter className="flex flex-col gap-3 sm:flex-row sm:justify-center">
+          <Button className="w-full sm:w-auto" asChild>
+            <Link href="/forgot-password">Forgot password</Link>
+          </Button>
+          <Button variant="ghost" className="w-full sm:w-auto" asChild>
+            <Link href="/login">Back to log in</Link>
+          </Button>
+        </CardFooter>
+      </Card>
+    );
   }
 
   return (
@@ -101,55 +160,30 @@ export function ResetPasswordForm() {
           Reset password
         </CardTitle>
         <CardDescription>
-          Use the 6-digit code from the server log and the token from the
-          forgot-password step (pre-filled when possible).
+          Enter the verification code and choose a new password.
         </CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit(onSubmit)} noValidate>
+        <input type="hidden" {...register("email")} />
+        <input type="hidden" {...register("otpToken")} />
         <CardContent className="space-y-4">
-          <TextField
-            label="Email"
-            type="email"
-            autoComplete="email"
-            error={errors.email?.message}
-            {...register("email", {
-              required: "Email is required",
-              pattern: {
-                value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                message: "Enter a valid email",
-              },
-            })}
-          />
           <Controller
             name="otp"
             control={control}
             rules={{
-              required: "OTP is required",
-              validate: (v) => /^\d{6}$/.test(v) || "OTP must be 6 digits",
+              required: "Verification code is required",
+              validate: (v) => /^\d{6}$/.test(v) || "Enter the 6-digit code",
             }}
             render={({ field }) => (
-              <TextField
-                label="OTP"
-                inputMode="numeric"
-                autoComplete="one-time-code"
-                maxLength={6}
-                error={errors.otp?.message}
+              <PasswordResetOtpField
                 name={field.name}
-                onBlur={field.onBlur}
                 ref={field.ref}
                 value={field.value}
-                onChange={(e) => {
-                  const v = e.target.value.replace(/\D/g, "").slice(0, 6);
-                  field.onChange(v);
-                }}
+                onBlur={field.onBlur}
+                onChange={field.onChange}
+                error={errors.otp?.message}
               />
             )}
-          />
-          <TextField
-            label="Reset token (otpToken)"
-            error={errors.otpToken?.message}
-            description="JWT from the forgot-password response, or paste manually."
-            {...register("otpToken", { required: "Reset token is required" })}
           />
           <TextField
             label="New password"
@@ -162,6 +196,17 @@ export function ResetPasswordForm() {
                 value: 8,
                 message: "Password must be at least 8 characters",
               },
+            })}
+          />
+          <TextField
+            label="Confirm password"
+            type="password"
+            autoComplete="new-password"
+            error={errors.confirmPassword?.message}
+            {...register("confirmPassword", {
+              required: "Confirm your password",
+              validate: (v, form) =>
+                v === form.newPassword || "Passwords do not match",
             })}
           />
           {errors.root?.message ? (

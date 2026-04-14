@@ -43,6 +43,6 @@ export async function POST(req: Request) {
     otpToken,
     expiresAt,
     message:
-      "If an account exists for this email, use the OTP (see server log in dev) with otpToken and expiresAt to reset your password.",
+      "If an account exists for this email, continue to set a new password.",
   });
 }
