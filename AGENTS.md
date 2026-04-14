@@ -31,6 +31,13 @@ This document orients coding agents and contributors to how Fintrack is organize
 - **API:** endpoints under `src/app/api/credit-cards/` (`GET`/`POST`) and `src/app/api/credit-cards/[cardId]/` (`GET`/`PATCH`/`DELETE`), backed by services in `src/services/credit-cards/`.
 - **Persistence:** Core card settings live in `credit_cards`; preferred categories are normalized in **`credit_card_preferred_categories`** (migration `009_credit_card_preferred_category_links.sql`); bill records are normalized in **`credit_card_bills`** (migration `010_credit_card_bills.sql`). Do not reintroduce `preferred_categories` or `previous_bill_*` fields on `credit_cards`.
 
+### Domain: fund buckets
+
+- **Routes:** `/dashboard/organisation/fund-buckets` (**Fund Buckets**).
+- **Code:** Domain types live under **`src/lib/fund-buckets/`**.
+- **API:** endpoints under `src/app/api/fund-buckets/` — `GET`/`POST` on the root route and action routes for `POST /[bucketId]/allocate`, `POST /[bucketId]/unlock`, and `PATCH /[bucketId]/priority`, backed by services in `src/services/fund-buckets/`.
+- **Persistence:** Fund buckets live in **`fund_buckets`** (migration `013_fund_buckets.sql`) with lock state (`is_locked`), progress (`current_value`), and priority (`high`/`medium`/`low`).
+
 ### Dashboard navigation map
 
 - **Bank Accounts:** `/dashboard/bank-accounts/my-bank-accounts` (My Bank Accounts), `/dashboard/bank-accounts/statements` (Bank Statements).

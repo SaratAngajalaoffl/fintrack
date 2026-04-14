@@ -34,6 +34,24 @@ const apiRoutes = {
     create: (params: { accountId: string }) =>
       `/api/bank-accounts/${encodeURIComponent(params.accountId)}`,
   },
+  fundBuckets: {
+    path: "/api/fund-buckets",
+  },
+  fundBucketAllocate: {
+    path: "/api/fund-buckets/:bucketId/allocate",
+    create: (params: { bucketId: string }) =>
+      `/api/fund-buckets/${encodeURIComponent(params.bucketId)}/allocate`,
+  },
+  fundBucketUnlock: {
+    path: "/api/fund-buckets/:bucketId/unlock",
+    create: (params: { bucketId: string }) =>
+      `/api/fund-buckets/${encodeURIComponent(params.bucketId)}/unlock`,
+  },
+  fundBucketPriority: {
+    path: "/api/fund-buckets/:bucketId/priority",
+    create: (params: { bucketId: string }) =>
+      `/api/fund-buckets/${encodeURIComponent(params.bucketId)}/priority`,
+  },
   creditCards: {
     path: "/api/credit-cards",
   },

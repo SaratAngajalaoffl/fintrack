@@ -8,6 +8,7 @@ import { Controller, useForm } from "react-hook-form";
 
 import {
   useGetExpenseCategories,
+  useGetFundBuckets,
   useMutateDeleteBankAccount,
   useMutateUpdateBankAccount,
   useUserProfile,
@@ -25,6 +26,9 @@ import {
   SelectField,
   TextareaField,
   TextField,
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
 } from "@/components/ui";
 import { ChipComponent } from "@/components/ui/common/chip";
 import {
@@ -506,12 +510,48 @@ export function BankAccountsTablePanel({
 }: BankAccountsTablePanelProps) {
   const { user } = useUserProfile();
   const expenseCategoriesQuery = useGetExpenseCategories();
+  const fundBucketsQuery = useGetFundBuckets();
   const preferredCurrency = user?.preferredCurrency ?? "USD";
   const activeChips = buildActiveToolbarChips(listState);
   const availableCategories = React.useMemo(
     () => (expenseCategoriesQuery.data ?? []).map((category) => category.name),
     [expenseCategoriesQuery.data],
   );
+  const lockedByAccountId = React.useMemo(() => {
+    const map = new Map<string, number>();
+    for (const bucket of fundBucketsQuery.data ?? []) {
+      if (!bucket.isLocked) continue;
+      map.set(
+        bucket.bankAccountId,
+        (map.get(bucket.bankAccountId) ?? 0) + bucket.currentValue,
+      );
+    }
+    return map;
+  }, [fundBucketsQuery.data]);
+  const fundBucketsByAccountId = React.useMemo(() => {
+    const map = new Map<
+      string,
+      Array<{
+        id: string;
+        name: string;
+        currentValue: number;
+        isLocked: boolean;
+      }>
+    >();
+
+    for (const bucket of fundBucketsQuery.data ?? []) {
+      const list = map.get(bucket.bankAccountId) ?? [];
+      list.push({
+        id: bucket.id,
+        name: bucket.name,
+        currentValue: bucket.currentValue,
+        isLocked: bucket.isLocked,
+      });
+      map.set(bucket.bankAccountId, list);
+    }
+
+    return map;
+  }, [fundBucketsQuery.data]);
 
   return (
     <TableComponent
@@ -521,7 +561,7 @@ export function BankAccountsTablePanel({
       sortSlot={<SortMenu base={listState} />}
       searchSlot={<SearchForm base={listState} />}
     >
-      <table className="w-full min-w-[920px] border-collapse text-left text-sm">
+      <table className="w-full min-w-[1040px] border-collapse text-left text-sm">
         <thead>
           <tr className="border-b border-border/80 bg-mantle/90 text-subtext-1">
             <th scope="col" className="px-4 py-3 font-medium">
@@ -535,6 +575,9 @@ export function BankAccountsTablePanel({
             </th>
             <th scope="col" className="px-4 py-3 text-right font-medium">
               Balance
+            </th>
+            <th scope="col" className="px-4 py-3 text-right font-medium">
+              Available balance
             </th>
             <th scope="col" className="px-4 py-3 text-right font-medium">
               Credits this month
@@ -556,69 +599,95 @@ export function BankAccountsTablePanel({
         <tbody className="text-foreground">
           {rows.length === 0 ? (
             <tr>
-              <td colSpan={9} className="px-4 py-10 text-center text-subtext-1">
+              <td
+                colSpan={10}
+                className="px-4 py-10 text-center text-subtext-1"
+              >
                 No accounts match your filters.
               </td>
             </tr>
           ) : (
-            rows.map((row) => (
-              <tr
-                key={row.id}
-                className="border-b border-border/40 transition-colors hover:bg-surface-1/40"
-              >
-                <td className="max-w-40 px-4 py-3 font-medium">{row.name}</td>
-                <td className="max-w-xs px-4 py-3 text-subtext-1">
-                  {row.description}
-                </td>
-                <td className="whitespace-nowrap px-4 py-3">
-                  {accountTypeLabel(row.accountType)}
-                </td>
-                <td className="whitespace-nowrap px-4 py-3 text-right tabular-nums">
-                  {formatCurrency(row.balance, preferredCurrency)}
-                </td>
-                <td className="whitespace-nowrap px-4 py-3 text-right tabular-nums">
-                  {formatCurrency(row.creditsThisMonth, preferredCurrency)}
-                </td>
-                <td className="whitespace-nowrap px-4 py-3 text-right tabular-nums">
-                  {formatCurrency(row.debitsThisMonth, preferredCurrency)}
-                </td>
-                <td className="px-4 py-3">
-                  <div className="flex max-w-56 flex-wrap gap-1.5">
-                    {row.bucketNames.map((b) => (
-                      <ChipComponent
-                        key={b}
-                        variant="filled"
-                        className="max-w-full"
-                      >
-                        {b}
-                      </ChipComponent>
-                    ))}
-                  </div>
-                </td>
-                <td className="px-4 py-3">
-                  <div className="flex max-w-64 flex-wrap gap-1.5">
-                    {row.preferredCategories.map((category) => (
-                      <ChipComponent
-                        key={category}
-                        variant="filled"
-                        className="max-w-full"
-                      >
-                        {category}
-                      </ChipComponent>
-                    ))}
-                  </div>
-                </td>
-                <td className="whitespace-nowrap px-4 py-3 text-right">
-                  <div className="flex justify-end gap-1">
-                    <BankAccountEditDialog
-                      row={row}
-                      availableCategories={availableCategories}
-                    />
-                    <BankAccountDeleteDialog row={row} />
-                  </div>
-                </td>
-              </tr>
-            ))
+            rows.map((row) => {
+              const availableBalance =
+                row.balance - (lockedByAccountId.get(row.id) ?? 0);
+              const fundBuckets = fundBucketsByAccountId.get(row.id) ?? [];
+
+              return (
+                <tr
+                  key={row.id}
+                  className="border-b border-border/40 transition-colors hover:bg-surface-1/40"
+                >
+                  <td className="max-w-40 px-4 py-3 font-medium">{row.name}</td>
+                  <td className="max-w-xs px-4 py-3 text-subtext-1">
+                    {row.description}
+                  </td>
+                  <td className="whitespace-nowrap px-4 py-3">
+                    {accountTypeLabel(row.accountType)}
+                  </td>
+                  <td className="whitespace-nowrap px-4 py-3 text-right tabular-nums">
+                    {formatCurrency(row.balance, preferredCurrency)}
+                  </td>
+                  <td className="whitespace-nowrap px-4 py-3 text-right tabular-nums">
+                    {formatCurrency(availableBalance, preferredCurrency)}
+                  </td>
+                  <td className="whitespace-nowrap px-4 py-3 text-right tabular-nums">
+                    {formatCurrency(row.creditsThisMonth, preferredCurrency)}
+                  </td>
+                  <td className="whitespace-nowrap px-4 py-3 text-right tabular-nums">
+                    {formatCurrency(row.debitsThisMonth, preferredCurrency)}
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex max-w-56 flex-wrap gap-1.5">
+                      {fundBuckets.length === 0 ? (
+                        <span className="text-xs text-subtext-1">-</span>
+                      ) : (
+                        fundBuckets.map((bucket) => (
+                          <Tooltip key={bucket.id}>
+                            <TooltipTrigger asChild>
+                              <span>
+                                <ChipComponent
+                                  variant="filled"
+                                  className="max-w-full"
+                                >
+                                  {bucket.name}
+                                </ChipComponent>
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              {bucket.isLocked
+                                ? `${formatCurrency(bucket.currentValue, preferredCurrency)} locked`
+                                : `Unlocked (${formatCurrency(0, preferredCurrency)} locked)`}
+                            </TooltipContent>
+                          </Tooltip>
+                        ))
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex max-w-64 flex-wrap gap-1.5">
+                      {row.preferredCategories.map((category) => (
+                        <ChipComponent
+                          key={category}
+                          variant="filled"
+                          className="max-w-full"
+                        >
+                          {category}
+                        </ChipComponent>
+                      ))}
+                    </div>
+                  </td>
+                  <td className="whitespace-nowrap px-4 py-3 text-right">
+                    <div className="flex justify-end gap-1">
+                      <BankAccountEditDialog
+                        row={row}
+                        availableCategories={availableCategories}
+                      />
+                      <BankAccountDeleteDialog row={row} />
+                    </div>
+                  </td>
+                </tr>
+              );
+            })
           )}
         </tbody>
       </table>

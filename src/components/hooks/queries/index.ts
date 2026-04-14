@@ -21,3 +21,8 @@ export { useMutateDeleteBankAccount } from "@/components/hooks/queries/use-mutat
 export { useMutateUpdateBankAccount } from "@/components/hooks/queries/use-mutate-update-bank-account";
 export { useGetCurrentUser } from "@/components/hooks/queries/use-get-current-user";
 export { useMutateUpdateUserProfile } from "@/components/hooks/queries/use-mutate-update-preferred-currency";
+export { useGetFundBuckets } from "@/components/hooks/queries/use-get-fund-buckets";
+export { useMutateCreateFundBucket } from "@/components/hooks/queries/use-mutate-create-fund-bucket";
+export { useMutateAllocateFundBucket } from "@/components/hooks/queries/use-mutate-allocate-fund-bucket";
+export { useMutateUnlockFundBucket } from "@/components/hooks/queries/use-mutate-unlock-fund-bucket";
+export { useMutateSetFundBucketPriority } from "@/components/hooks/queries/use-mutate-set-fund-bucket-priority";

@@ -38,6 +38,30 @@ Users configure **bank accounts** as the top-level container for liquid balances
 
 Relationship: **one bank account → many buckets**. Deleting an account should cascade or block per product rules (TBD).
 
+## Fund buckets
+
+Fund buckets are user-defined savings goals tied to a bank account. Allocated amounts stay **locked** and reduce spendable balance conceptually until the bucket is unlocked.
+
+> Status: implemented in migration `013_fund_buckets.sql` (`fund_buckets`, enum `fund_bucket_priority`).
+
+| Field / concept             | Type / notes                                                                 |
+| --------------------------- | ---------------------------------------------------------------------------- |
+| `id`                        | UUID primary key                                                             |
+| `user_id`                   | FK to `users(id)`; buckets are per user                                      |
+| `name`                      | Bucket name (unique per user + bank account)                                 |
+| `target_amount`             | Numeric amount goal (> 0)                                                    |
+| `bank_account_id`           | FK to `bank_accounts(id)`                                                    |
+| `current_value`             | Numeric amount currently allocated/locked (>= 0)                             |
+| `is_locked`                 | Boolean lock state; `TRUE` keeps amount reserved, `FALSE` makes it spendable |
+| `priority`                  | Enum `fund_bucket_priority`: `high`, `medium`, `low`                         |
+| `created_at` / `updated_at` | Standard audit columns                                                       |
+
+Behavioral rules currently implemented by API/service:
+
+- Allocation is only allowed while `is_locked = TRUE`.
+- Allocation cannot exceed available account balance after considering other locked buckets on the same bank account.
+- Unlock is only allowed once `current_value >= target_amount`.
+
 Preferred category mapping is normalized in a many-to-many table:
 
 | Table                               | Fields / notes                                                                                |

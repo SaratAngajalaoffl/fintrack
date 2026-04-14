@@ -24,4 +24,9 @@ export {
   useMutateUpdateBankAccount,
   useGetCurrentUser,
   useMutateUpdateUserProfile,
+  useGetFundBuckets,
+  useMutateCreateFundBucket,
+  useMutateAllocateFundBucket,
+  useMutateUnlockFundBucket,
+  useMutateSetFundBucketPriority,
 } from "./queries";

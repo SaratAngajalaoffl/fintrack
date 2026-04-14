@@ -18,6 +18,13 @@ export {
   updateExpenseCategoryRequest,
 } from "@/services/expense-categories/expense-categories-api";
 export {
+  allocateFundBucketRequest,
+  createFundBucketRequest,
+  getFundBucketsRequest,
+  setFundBucketPriorityRequest,
+  unlockFundBucketRequest,
+} from "@/services/fund-buckets/fund-buckets-api";
+export {
   changePasswordRequest,
   deleteAccountRequest,
   exportAccountDataRequest,
