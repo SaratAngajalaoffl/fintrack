@@ -1,9 +1,11 @@
 import Image from "next/image";
 import Link from "next/link";
 
+import { Github } from "@/components/icons";
 import { UserProfileMenu } from "@/components/ui/common/user-profile-menu";
 import { Button } from "@/components/ui";
 import { getSession } from "@/lib/auth/session";
+import { GITHUB_REPO_URL } from "@/lib/site";
 
 export async function SiteHeader() {
   const session = await getSession();
@@ -26,15 +28,20 @@ export async function SiteHeader() {
         </Link>
         <nav
           className="flex shrink-0 items-center gap-1 sm:gap-2"
-          aria-label="Account"
+          aria-label="Site and account"
         >
+          <Button variant="ghost" size="icon" asChild>
+            <a
+              href={GITHUB_REPO_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Fintrack on GitHub"
+            >
+              <Github />
+            </a>
+          </Button>
           {session ? (
-            <>
-              <Button variant="ghost" size="sm" asChild>
-                <Link href="/dashboard">Dashboard</Link>
-              </Button>
-              <UserProfileMenu email={session.email} />
-            </>
+            <UserProfileMenu email={session.email} />
           ) : (
             <>
               <Button variant="ghost" size="sm" asChild>

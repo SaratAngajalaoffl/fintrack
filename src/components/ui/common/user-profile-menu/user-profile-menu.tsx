@@ -57,6 +57,9 @@ export function UserProfileMenu({ email }: UserProfileMenuProps) {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-52">
         <DropdownMenuItem asChild>
+          <Link href="/dashboard">My Dashboard</Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
           <Link href="/dashboard/change-password">Change password</Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
