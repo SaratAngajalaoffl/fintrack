@@ -24,6 +24,7 @@ export type CreateBankAccountPayload = {
   description?: string;
   initialBalance: number;
   accountType: BankAccountType;
+  preferredCategories?: string[];
 };
 
 export type UpdateBankAccountPayload = {
@@ -33,6 +34,7 @@ export type UpdateBankAccountPayload = {
   accountType?: BankAccountType;
   balance?: number;
   buckets?: string[];
+  preferredCategories?: string[];
 };
 
 export async function createBankAccountRequest(

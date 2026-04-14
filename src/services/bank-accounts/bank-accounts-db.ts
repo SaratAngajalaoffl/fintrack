@@ -3,6 +3,7 @@ import type {
   BankAccountRow,
   BankAccountType,
 } from "@/lib/bank-accounts/types";
+import type { PoolClient } from "pg";
 
 type BankAccountDbRow = {
   id: string;
@@ -11,6 +12,7 @@ type BankAccountDbRow = {
   account_type: BankAccountType;
   balance: string | number;
   bucket_names: string[] | null;
+  preferred_categories: string[] | null;
 };
 
 export type CreateBankAccountInput = {
@@ -22,6 +24,7 @@ export type CreateBankAccountInput = {
   lastDebitAt?: string | null;
   lastCreditAt?: string | null;
   buckets?: string[];
+  preferredCategories?: string[];
 };
 
 export type UpdateBankAccountInput = {
@@ -34,11 +37,84 @@ export type UpdateBankAccountInput = {
   lastDebitAt?: string | null;
   lastCreditAt?: string | null;
   buckets?: string[];
+  preferredCategories?: string[];
 };
 
 function toNumber(value: string | number): number {
   if (typeof value === "number") return value;
   return Number(value);
+}
+
+function normalizePreferredCategories(input: string[]): string[] {
+  return Array.from(
+    new Set(input.map((item) => item.trim()).filter((item) => item.length > 0)),
+  );
+}
+
+async function resolvePreferredCategoryIds(
+  client: PoolClient,
+  userId: string,
+  preferredCategories: string[],
+): Promise<string[]> {
+  if (preferredCategories.length === 0) return [];
+
+  const { rows } = await client.query<{ id: string; name: string }>(
+    `
+      SELECT id, name
+      FROM expense_categories
+      WHERE user_id = $1 AND name = ANY($2::text[])
+    `,
+    [userId, preferredCategories],
+  );
+
+  const foundByName = new Map(rows.map((row) => [row.name, row.id]));
+  const missing = preferredCategories.filter((name) => !foundByName.has(name));
+  if (missing.length > 0) {
+    throw new Error(
+      `Invalid preferred categories: ${missing.join(", ")}. Create them in Expense Categories first.`,
+    );
+  }
+
+  return preferredCategories.map((name) => foundByName.get(name) as string);
+}
+
+async function syncPreferredCategoryMappings(
+  client: PoolClient,
+  userId: string,
+  accountId: string,
+  preferredCategories: string[],
+): Promise<void> {
+  const categoryIds = await resolvePreferredCategoryIds(
+    client,
+    userId,
+    preferredCategories,
+  );
+
+  await client.query(
+    `
+      DELETE FROM bank_account_preferred_categories
+      WHERE user_id = $1 AND bank_account_id = $2
+    `,
+    [userId, accountId],
+  );
+
+  if (categoryIds.length === 0) {
+    return;
+  }
+
+  await client.query(
+    `
+      INSERT INTO bank_account_preferred_categories (
+        bank_account_id,
+        expense_category_id,
+        user_id
+      )
+      SELECT $1, ids.category_id, $2
+      FROM unnest($3::uuid[]) AS ids(category_id)
+      ON CONFLICT (bank_account_id, expense_category_id) DO NOTHING
+    `,
+    [accountId, userId, categoryIds],
+  );
 }
 
 function mapRow(row: BankAccountDbRow): BankAccountRow {
@@ -51,6 +127,7 @@ function mapRow(row: BankAccountDbRow): BankAccountRow {
     creditsThisMonth: 0,
     debitsThisMonth: 0,
     bucketNames: row.bucket_names ?? [],
+    preferredCategories: row.preferred_categories ?? [],
   };
 }
 
@@ -67,12 +144,27 @@ export async function listBankAccounts(
         ba.account_type,
         ba.balance,
         COALESCE(
-          ARRAY_AGG(bab.name ORDER BY bab.name) FILTER (WHERE bab.id IS NOT NULL),
+          ARRAY_AGG(DISTINCT bab.name ORDER BY bab.name) FILTER (
+            WHERE bab.id IS NOT NULL
+          ),
           '{}'
-        ) AS bucket_names
+        ) AS bucket_names,
+        COALESCE(
+          ARRAY_AGG(DISTINCT ec.name ORDER BY ec.name) FILTER (
+            WHERE ec.name IS NOT NULL
+          ),
+          '{}'
+        ) AS preferred_categories
       FROM bank_accounts ba
       LEFT JOIN bank_account_buckets bab
         ON bab.bank_account_id = ba.id
+       AND bab.user_id = ba.user_id
+      LEFT JOIN bank_account_preferred_categories bapc
+        ON bapc.bank_account_id = ba.id
+       AND bapc.user_id = ba.user_id
+      LEFT JOIN expense_categories ec
+        ON ec.id = bapc.expense_category_id
+       AND ec.user_id = ba.user_id
       WHERE ba.user_id = $1
       GROUP BY ba.id
       ORDER BY ba.created_at DESC
@@ -97,12 +189,27 @@ export async function getBankAccountById(
         ba.account_type,
         ba.balance,
         COALESCE(
-          ARRAY_AGG(bab.name ORDER BY bab.name) FILTER (WHERE bab.id IS NOT NULL),
+          ARRAY_AGG(DISTINCT bab.name ORDER BY bab.name) FILTER (
+            WHERE bab.id IS NOT NULL
+          ),
           '{}'
-        ) AS bucket_names
+        ) AS bucket_names,
+        COALESCE(
+          ARRAY_AGG(DISTINCT ec.name ORDER BY ec.name) FILTER (
+            WHERE ec.name IS NOT NULL
+          ),
+          '{}'
+        ) AS preferred_categories
       FROM bank_accounts ba
       LEFT JOIN bank_account_buckets bab
         ON bab.bank_account_id = ba.id
+       AND bab.user_id = ba.user_id
+      LEFT JOIN bank_account_preferred_categories bapc
+        ON bapc.bank_account_id = ba.id
+       AND bapc.user_id = ba.user_id
+      LEFT JOIN expense_categories ec
+        ON ec.id = bapc.expense_category_id
+       AND ec.user_id = ba.user_id
       WHERE ba.user_id = $1 AND ba.id = $2
       GROUP BY ba.id
       LIMIT 1
@@ -117,6 +224,9 @@ export async function createBankAccount(
   input: CreateBankAccountInput,
 ): Promise<BankAccountRow> {
   const pool = getPool();
+  const normalizedPreferredCategories = normalizePreferredCategories(
+    input.preferredCategories ?? [],
+  );
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
@@ -154,6 +264,13 @@ export async function createBankAccount(
       }
     }
 
+    await syncPreferredCategoryMappings(
+      client,
+      input.userId,
+      accountId,
+      normalizedPreferredCategories,
+    );
+
     await client.query("COMMIT");
     const account = await getBankAccountById(input.userId, accountId);
     if (!account) throw new Error("Created account could not be fetched");
@@ -170,6 +287,10 @@ export async function updateBankAccount(
   input: UpdateBankAccountInput,
 ): Promise<BankAccountRow | null> {
   const pool = getPool();
+  const normalizedPreferredCategories =
+    input.preferredCategories !== undefined
+      ? normalizePreferredCategories(input.preferredCategories)
+      : undefined;
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
@@ -224,6 +345,15 @@ export async function updateBankAccount(
           [input.accountId, input.userId, bucketName],
         );
       }
+    }
+
+    if (normalizedPreferredCategories !== undefined) {
+      await syncPreferredCategoryMappings(
+        client,
+        input.userId,
+        input.accountId,
+        normalizedPreferredCategories,
+      );
     }
 
     await client.query("COMMIT");

@@ -7,6 +7,7 @@ import * as React from "react";
 import { Controller, useForm } from "react-hook-form";
 
 import {
+  useGetExpenseCategories,
   useMutateDeleteBankAccount,
   useMutateUpdateBankAccount,
   useUserProfile,
@@ -20,6 +21,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  MultiSelectField,
   SelectField,
   TextareaField,
   TextField,
@@ -259,9 +261,16 @@ type BankAccountEditFormValues = {
   description: string;
   accountType: BankAccountRow["accountType"];
   balance: string;
+  preferredCategories: string[];
 };
 
-function BankAccountEditDialog({ row }: { row: BankAccountRow }) {
+function BankAccountEditDialog({
+  row,
+  availableCategories,
+}: {
+  row: BankAccountRow;
+  availableCategories: string[];
+}) {
   const queryClient = useQueryClient();
   const updateMutation = useMutateUpdateBankAccount();
   const [open, setOpen] = React.useState(false);
@@ -277,6 +286,7 @@ function BankAccountEditDialog({ row }: { row: BankAccountRow }) {
       description: row.description,
       accountType: row.accountType,
       balance: row.balance.toString(),
+      preferredCategories: row.preferredCategories,
     },
   });
 
@@ -287,6 +297,7 @@ function BankAccountEditDialog({ row }: { row: BankAccountRow }) {
         description: row.description,
         accountType: row.accountType,
         balance: row.balance.toString(),
+        preferredCategories: row.preferredCategories,
       });
     }
   }, [open, reset, row]);
@@ -305,6 +316,7 @@ function BankAccountEditDialog({ row }: { row: BankAccountRow }) {
         description: values.description.trim(),
         accountType: values.accountType,
         balance,
+        preferredCategories: values.preferredCategories,
       });
       await queryClient.invalidateQueries({
         queryKey: ["bank-accounts", "list"],
@@ -321,6 +333,10 @@ function BankAccountEditDialog({ row }: { row: BankAccountRow }) {
   }
 
   const submitting = isSubmitting || updateMutation.isPending;
+  const preferredCategoryOptions = availableCategories.map((category) => ({
+    value: category,
+    label: category,
+  }));
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -384,6 +400,24 @@ function BankAccountEditDialog({ row }: { row: BankAccountRow }) {
               )}
             />
           </div>
+          <Controller
+            control={control}
+            name="preferredCategories"
+            render={({ field }) => (
+              <MultiSelectField
+                label="Preferred categories"
+                value={field.value}
+                onValueChange={field.onChange}
+                options={preferredCategoryOptions}
+                placeholder={
+                  preferredCategoryOptions.length > 0
+                    ? "Select preferred categories"
+                    : "No expense categories available"
+                }
+                disabled={preferredCategoryOptions.length === 0}
+              />
+            )}
+          />
           <DialogFooter>
             <Button
               type="button"
@@ -471,8 +505,13 @@ export function BankAccountsTablePanel({
   rows,
 }: BankAccountsTablePanelProps) {
   const { user } = useUserProfile();
+  const expenseCategoriesQuery = useGetExpenseCategories();
   const preferredCurrency = user?.preferredCurrency ?? "USD";
   const activeChips = buildActiveToolbarChips(listState);
+  const availableCategories = React.useMemo(
+    () => (expenseCategoriesQuery.data ?? []).map((category) => category.name),
+    [expenseCategoriesQuery.data],
+  );
 
   return (
     <TableComponent
@@ -482,7 +521,7 @@ export function BankAccountsTablePanel({
       sortSlot={<SortMenu base={listState} />}
       searchSlot={<SearchForm base={listState} />}
     >
-      <table className="w-full min-w-[720px] border-collapse text-left text-sm">
+      <table className="w-full min-w-[920px] border-collapse text-left text-sm">
         <thead>
           <tr className="border-b border-border/80 bg-mantle/90 text-subtext-1">
             <th scope="col" className="px-4 py-3 font-medium">
@@ -506,6 +545,9 @@ export function BankAccountsTablePanel({
             <th scope="col" className="px-4 py-3 font-medium">
               Buckets
             </th>
+            <th scope="col" className="px-4 py-3 font-medium">
+              Preferred categories
+            </th>
             <th scope="col" className="px-4 py-3 text-right font-medium">
               Actions
             </th>
@@ -514,7 +556,7 @@ export function BankAccountsTablePanel({
         <tbody className="text-foreground">
           {rows.length === 0 ? (
             <tr>
-              <td colSpan={8} className="px-4 py-10 text-center text-subtext-1">
+              <td colSpan={9} className="px-4 py-10 text-center text-subtext-1">
                 No accounts match your filters.
               </td>
             </tr>
@@ -553,9 +595,25 @@ export function BankAccountsTablePanel({
                     ))}
                   </div>
                 </td>
+                <td className="px-4 py-3">
+                  <div className="flex max-w-64 flex-wrap gap-1.5">
+                    {row.preferredCategories.map((category) => (
+                      <ChipComponent
+                        key={category}
+                        variant="filled"
+                        className="max-w-full"
+                      >
+                        {category}
+                      </ChipComponent>
+                    ))}
+                  </div>
+                </td>
                 <td className="whitespace-nowrap px-4 py-3 text-right">
                   <div className="flex justify-end gap-1">
-                    <BankAccountEditDialog row={row} />
+                    <BankAccountEditDialog
+                      row={row}
+                      availableCategories={availableCategories}
+                    />
                     <BankAccountDeleteDialog row={row} />
                   </div>
                 </td>

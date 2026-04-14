@@ -4,7 +4,10 @@ import { useQueryClient } from "@tanstack/react-query";
 import * as React from "react";
 import { Controller, useForm } from "react-hook-form";
 
-import { useMutateCreateBankAccount } from "@/components/hooks";
+import {
+  useGetExpenseCategories,
+  useMutateCreateBankAccount,
+} from "@/components/hooks";
 import {
   Button,
   Dialog,
@@ -14,6 +17,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  MultiSelectField,
   SelectField,
   TextareaField,
   TextField,
@@ -26,11 +30,13 @@ type FormValues = {
   description: string;
   initialBalance: string;
   accountType: BankAccountType;
+  preferredCategories: string[];
 };
 
 export function BankAccountCreateDialog() {
   const queryClient = useQueryClient();
   const createMutation = useMutateCreateBankAccount();
+  const expenseCategoriesQuery = useGetExpenseCategories();
   const [open, setOpen] = React.useState(false);
 
   const {
@@ -45,6 +51,7 @@ export function BankAccountCreateDialog() {
       description: "",
       initialBalance: "0",
       accountType: "savings",
+      preferredCategories: [],
     },
   });
 
@@ -61,6 +68,7 @@ export function BankAccountCreateDialog() {
         description: values.description.trim(),
         initialBalance,
         accountType: values.accountType,
+        preferredCategories: values.preferredCategories,
       });
       await queryClient.invalidateQueries({
         queryKey: ["bank-accounts", "list"],
@@ -78,6 +86,14 @@ export function BankAccountCreateDialog() {
   }
 
   const submitting = isSubmitting || createMutation.isPending;
+  const preferredCategoryOptions = React.useMemo(
+    () =>
+      (expenseCategoriesQuery.data ?? []).map((category) => ({
+        value: category.name,
+        label: category.name,
+      })),
+    [expenseCategoriesQuery.data],
+  );
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -143,6 +159,30 @@ export function BankAccountCreateDialog() {
               )}
             />
           </div>
+
+          <Controller
+            control={control}
+            name="preferredCategories"
+            render={({ field }) => (
+              <MultiSelectField
+                label="Preferred categories"
+                value={field.value}
+                onValueChange={field.onChange}
+                options={preferredCategoryOptions}
+                placeholder={
+                  expenseCategoriesQuery.isLoading
+                    ? "Loading expense categories..."
+                    : preferredCategoryOptions.length > 0
+                      ? "Select preferred categories"
+                      : "No expense categories available"
+                }
+                disabled={
+                  expenseCategoriesQuery.isLoading ||
+                  preferredCategoryOptions.length === 0
+                }
+              />
+            )}
+          />
 
           <DialogFooter>
             <Button

@@ -22,9 +22,17 @@ type UpdateBankAccountBody = {
   lastDebitAt?: string | null;
   lastCreditAt?: string | null;
   buckets?: string[];
+  preferredCategories?: string[];
 };
 
 function normalizeBuckets(input: unknown): string[] | undefined {
+  if (!Array.isArray(input)) return undefined;
+  return input
+    .map((item) => (typeof item === "string" ? item.trim() : ""))
+    .filter(Boolean);
+}
+
+function normalizeCategories(input: unknown): string[] | undefined {
   if (!Array.isArray(input)) return undefined;
   return input
     .map((item) => (typeof item === "string" ? item.trim() : ""))
@@ -89,6 +97,7 @@ export async function PATCH(req: Request, context: RouteContext) {
     lastDebitAt: body.lastDebitAt,
     lastCreditAt: body.lastCreditAt,
     buckets: normalizeBuckets(body.buckets),
+    preferredCategories: normalizeCategories(body.preferredCategories),
   });
 
   if (!row) {

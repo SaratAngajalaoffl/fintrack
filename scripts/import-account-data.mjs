@@ -245,6 +245,34 @@ async function main() {
       );
     }
 
+    for (const account of data.bankAccounts ?? []) {
+      await client.query(
+        `DELETE FROM bank_account_preferred_categories
+         WHERE user_id = $1 AND bank_account_id = $2`,
+        [account.user_id, account.id],
+      );
+
+      const preferredCategories = account.preferred_categories ?? [];
+      if (preferredCategories.length === 0) continue;
+
+      await client.query(
+        `INSERT INTO bank_account_preferred_categories (
+           bank_account_id,
+           expense_category_id,
+           user_id
+         )
+         SELECT
+           $1::uuid,
+           ec.id,
+           $2::uuid
+         FROM expense_categories ec
+         WHERE ec.user_id = $2::uuid
+           AND ec.name = ANY($3::text[])
+         ON CONFLICT (bank_account_id, expense_category_id) DO NOTHING`,
+        [account.id, account.user_id, preferredCategories],
+      );
+    }
+
     for (const card of data.creditCards ?? []) {
       await client.query(
         `DELETE FROM credit_card_preferred_categories

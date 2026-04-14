@@ -23,6 +23,7 @@ type BankAccountRow = {
   account_type: string;
   initial_balance: string;
   balance: string;
+  preferred_categories: string[];
   last_debit_at: string | null;
   last_credit_at: string | null;
   created_at: string;
@@ -117,12 +118,32 @@ export async function GET() {
       [user.id],
     );
     const bankAccountsResult = await client.query<BankAccountRow>(
-      `SELECT id, user_id, name, description, account_type::text, initial_balance::text,
-              balance::text, last_debit_at::text, last_credit_at::text,
-              created_at::text, updated_at::text
-       FROM bank_accounts
-       WHERE user_id = $1
-       ORDER BY created_at ASC`,
+      `SELECT
+              ba.id,
+              ba.user_id,
+              ba.name,
+              ba.description,
+              ba.account_type::text,
+              ba.initial_balance::text,
+              ba.balance::text,
+              COALESCE(
+                array_agg(ec.name ORDER BY ec.name) FILTER (WHERE ec.name IS NOT NULL),
+                '{}'
+              ) AS preferred_categories,
+              ba.last_debit_at::text,
+              ba.last_credit_at::text,
+              ba.created_at::text,
+              ba.updated_at::text
+       FROM bank_accounts ba
+       LEFT JOIN bank_account_preferred_categories bapc
+         ON bapc.bank_account_id = ba.id
+        AND bapc.user_id = ba.user_id
+       LEFT JOIN expense_categories ec
+         ON ec.id = bapc.expense_category_id
+        AND ec.user_id = ba.user_id
+       WHERE ba.user_id = $1
+       GROUP BY ba.id
+       ORDER BY ba.created_at ASC`,
       [user.id],
     );
     const bankAccountBucketsResult = await client.query<BankAccountBucketRow>(

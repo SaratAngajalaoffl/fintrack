@@ -6,7 +6,7 @@ Domain shapes evolve with migrations and APIs. This document tracks **planned an
 
 Users configure **bank accounts** as the top-level container for liquid balances. Each account has a running **balance** (seeded from an **initial balance** at creation and updated as transactions post).
 
-> Status: implemented in migration `004_bank_accounts.sql` (`bank_accounts`, `bank_account_buckets`, enum `bank_account_type`).
+> Status: implemented in migrations `004_bank_accounts.sql` (`bank_accounts`, `bank_account_buckets`, enum `bank_account_type`) and `012_bank_account_preferred_category_links.sql` (`bank_account_preferred_categories`).
 
 | Field / concept             | Type / notes                                                                 |
 | --------------------------- | ---------------------------------------------------------------------------- |
@@ -37,6 +37,14 @@ Users configure **bank accounts** as the top-level container for liquid balances
 | `created_at` / `updated_at` | Audit                                                       |
 
 Relationship: **one bank account → many buckets**. Deleting an account should cascade or block per product rules (TBD).
+
+Preferred category mapping is normalized in a many-to-many table:
+
+| Table                               | Fields / notes                                                                                |
+| ----------------------------------- | --------------------------------------------------------------------------------------------- |
+| `bank_account_preferred_categories` | `bank_account_id` FK, `expense_category_id` FK, `user_id` FK, `created_at`, composite PK pair |
+
+Relationship: **one bank account ↔ many expense categories**, and **one expense category ↔ many bank accounts**.
 
 ## List / filter / sort (UI ↔ API)
 

@@ -12,10 +12,11 @@ export type BankAccountRow = {
   creditsThisMonth: number;
   debitsThisMonth: number;
   bucketNames: string[];
+  preferredCategories: string[];
 };
 
 export type BankAccountsListState = {
-  /** Case-insensitive search across name, description, and bucket names. */
+  /** Case-insensitive search across name, description, buckets, and preferred categories. */
   q: string;
   type: "all" | BankAccountType;
   /** Sort field: name, balance, credits, debits — prefix `-` for descending. */

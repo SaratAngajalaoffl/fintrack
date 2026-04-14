@@ -49,6 +49,7 @@ export function filterAndSortBankAccounts<
     creditsThisMonth: number;
     debitsThisMonth: number;
     bucketNames: string[];
+    preferredCategories: string[];
   },
 >(rows: T[], state: BankAccountsListState): T[] {
   let list = [...rows];
@@ -59,7 +60,10 @@ export function filterAndSortBankAccounts<
       (a) =>
         a.name.toLowerCase().includes(needle) ||
         a.description.toLowerCase().includes(needle) ||
-        a.bucketNames.some((b) => b.toLowerCase().includes(needle)),
+        a.bucketNames.some((b) => b.toLowerCase().includes(needle)) ||
+        a.preferredCategories.some((category) =>
+          category.toLowerCase().includes(needle),
+        ),
     );
   }
 

@@ -14,7 +14,15 @@ type CreateBankAccountBody = {
   description?: string;
   initialBalance?: number;
   accountType?: BankAccountType;
+  preferredCategories?: string[];
 };
+
+function normalizeCategories(input: unknown): string[] {
+  if (!Array.isArray(input)) return [];
+  return input
+    .map((item) => (typeof item === "string" ? item.trim() : ""))
+    .filter(Boolean);
+}
 
 export async function GET() {
   const session = await getSession();
@@ -73,6 +81,7 @@ export async function POST(req: Request) {
     description: body.description?.trim() ?? "",
     accountType,
     initialBalance,
+    preferredCategories: normalizeCategories(body.preferredCategories),
   });
 
   return NextResponse.json({ row: account }, { status: 201 });

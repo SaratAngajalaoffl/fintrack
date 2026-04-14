@@ -11,6 +11,7 @@ export const MOCK_BANK_ACCOUNTS: BankAccountRow[] = [
     creditsThisMonth: 3_200,
     debitsThisMonth: 1_180.25,
     bucketNames: ["Tax", "Bangkok trip"],
+    preferredCategories: ["Rent", "Groceries"],
   },
   {
     id: "2",
@@ -21,6 +22,7 @@ export const MOCK_BANK_ACCOUNTS: BankAccountRow[] = [
     creditsThisMonth: 500,
     debitsThisMonth: 0,
     bucketNames: ["iPhone purchase", "Emergency"],
+    preferredCategories: ["Emergency Fund"],
   },
   {
     id: "3",
@@ -31,6 +33,7 @@ export const MOCK_BANK_ACCOUNTS: BankAccountRow[] = [
     creditsThisMonth: 800,
     debitsThisMonth: 920,
     bucketNames: ["Rent", "Subscriptions"],
+    preferredCategories: ["Rent", "Utilities"],
   },
 ];
 

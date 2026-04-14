@@ -22,7 +22,7 @@ This document orients coding agents and contributors to how Fintrack is organize
 - **Routes:** `/dashboard/bank-accounts/my-bank-accounts` (**My Bank Accounts**) and `/dashboard/bank-accounts/statements` (**Bank Statements**). Keep `/dashboard/bank-accounts` as a redirect-only compatibility route.
 - **Code:** Domain types, URL state parsing, and mock rows live under **`src/lib/bank-accounts/`**. Composed screen UI lives under **`src/components/ui/bank-accounts/`**. Shared primitives for this area: **`ChipComponent`** (`src/components/ui/common/chip/`) and **`TableComponent`** (`src/components/ui/common/table-component/`) — export from `@/components/ui`.
 - **API:** endpoints under `src/app/api/bank-accounts/` (`GET`/`POST`) and `src/app/api/bank-accounts/[accountId]/` (`GET`/`PATCH`/`DELETE`), backed by services in `src/services/bank-accounts/`.
-- **Persistence:** Planned tables and fields (accounts, buckets, balances, last credit/debit times) are documented in **[docs/data-model.md](docs/data-model.md)**. Update that file when migrations or API shapes change.
+- **Persistence:** Core account settings live in `bank_accounts`; virtual buckets are normalized in `bank_account_buckets`; preferred categories are normalized in `bank_account_preferred_categories` (migration `012_bank_account_preferred_category_links.sql`). Planned/implemented fields are documented in **[docs/data-model.md](docs/data-model.md)**. Update that file when migrations or API shapes change.
 
 ### Domain: credit cards
 
