@@ -4,6 +4,14 @@ export {
   getBankAccountsRequest,
 } from "@/services/bank-accounts/bank-accounts-api";
 export {
+  createCreditCardRequest,
+  getCreditCardsRequest,
+} from "@/services/credit-cards/credit-cards-api";
+export {
+  createExpenseCategoryRequest,
+  getExpenseCategoriesRequest,
+} from "@/services/expense-categories/expense-categories-api";
+export {
   changePasswordRequest,
   forgotPasswordRequest,
   getCurrentUserRequest,

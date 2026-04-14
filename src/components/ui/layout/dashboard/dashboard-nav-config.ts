@@ -30,7 +30,7 @@ export const DASHBOARD_NAV_ITEMS: DashboardNavItem[] = [
   },
   {
     href: "/dashboard/expenses",
-    label: "Expenses",
+    label: "Expense categories",
     icon: WalletCards,
   },
 ];

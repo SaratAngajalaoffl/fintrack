@@ -31,6 +31,22 @@ const apiRoutes = {
     create: (params: { accountId: string }) =>
       `/api/bank-accounts/${encodeURIComponent(params.accountId)}`,
   },
+  creditCards: {
+    path: "/api/credit-cards",
+  },
+  creditCardById: {
+    path: "/api/credit-cards/:cardId",
+    create: (params: { cardId: string }) =>
+      `/api/credit-cards/${encodeURIComponent(params.cardId)}`,
+  },
+  expenseCategories: {
+    path: "/api/expense-categories",
+  },
+  expenseCategoryById: {
+    path: "/api/expense-categories/:categoryId",
+    create: (params: { categoryId: string }) =>
+      `/api/expense-categories/${encodeURIComponent(params.categoryId)}`,
+  },
 } as const;
 
 type ApiRoutes = typeof apiRoutes;

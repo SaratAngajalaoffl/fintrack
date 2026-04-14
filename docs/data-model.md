@@ -50,6 +50,52 @@ The bank accounts list page uses query parameters (server-rendered):
 
 Future REST or server actions should accept equivalent filters for consistency.
 
+## Credit cards
+
+Users can manage **credit cards** with balances, category preferences, and billing-cycle metadata.
+
+> Status: implemented in migration `006_credit_cards.sql` (`credit_cards`).
+
+| Field / concept             | Type / notes                                  |
+| --------------------------- | --------------------------------------------- |
+| `id`                        | UUID primary key                              |
+| `user_id`                   | FK to `users(id)`; cards are per user         |
+| `name`                      | Credit card display name                      |
+| `description`               | Optional long-form notes                      |
+| `max_balance`               | Numeric credit limit                          |
+| `used_balance`              | Numeric amount currently used                 |
+| `locked_balance`            | Numeric amount temporarily locked/held        |
+| `preferred_categories`      | `text[]` (e.g. `Groceries`, `Rent`, `Travel`) |
+| `bill_generation_day`       | Integer day of month (1-31)                   |
+| `bill_due_day`              | Integer day of month (1-31)                   |
+| `previous_bill_cycle_label` | Nullable text label (e.g. `Mar 2026`)         |
+| `previous_bill_pdf_url`     | Nullable link/reference to uploaded bill PDF  |
+| `previous_bill_paid`        | Boolean status for the previous billing cycle |
+| `created_at` / `updated_at` | Standard audit columns                        |
+
+The dashboard shows:
+
+- Number of cards
+- Total balance (`max_balance` sum)
+- Total usage (`used_balance` sum)
+- Total locked (`locked_balance` sum)
+
+## Expense categories
+
+Users can define personal **expense categories** that power future transaction tagging and reporting.
+
+> Status: implemented in migration `007_expense_categories.sql` (`expense_categories`).
+
+| Field / concept             | Type / notes                                                  |
+| --------------------------- | ------------------------------------------------------------- |
+| `id`                        | UUID primary key (auto-generated)                             |
+| `user_id`                   | FK to `users(id)`; categories are per user                    |
+| `name`                      | Category name (unique per user)                               |
+| `description`               | Optional description text                                     |
+| `icon_url`                  | URL/link to icon asset                                        |
+| `color`                     | One Catppuccin Mocha token (`text`, `surface-0`, `red`, etc.) |
+| `created_at` / `updated_at` | Standard audit columns                                        |
+
 ## User profiles
 
 Per-user profile details are stored separately from auth credentials and are loaded globally for app UI.

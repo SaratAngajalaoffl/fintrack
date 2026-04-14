@@ -6,6 +6,10 @@ export { useMutateChangePassword } from "@/components/hooks/queries/use-mutate-c
 export { useMutateRequestChangePasswordOtp } from "@/components/hooks/queries/use-mutate-request-change-password-otp";
 export { useMutateLogout } from "@/components/hooks/queries/use-mutate-logout";
 export { useGetBankAccounts } from "@/components/hooks/queries/use-get-bank-accounts";
+export { useGetCreditCards } from "@/components/hooks/queries/use-get-credit-cards";
+export { useMutateCreateCreditCard } from "@/components/hooks/queries/use-mutate-create-credit-card";
+export { useGetExpenseCategories } from "@/components/hooks/queries/use-get-expense-categories";
+export { useMutateCreateExpenseCategory } from "@/components/hooks/queries/use-mutate-create-expense-category";
 export { useMutateCreateBankAccount } from "@/components/hooks/queries/use-mutate-create-bank-account";
 export { useGetCurrentUser } from "@/components/hooks/queries/use-get-current-user";
 export { useMutateUpdateUserProfile } from "@/components/hooks/queries/use-mutate-update-preferred-currency";

@@ -129,6 +129,10 @@ Git hooks (via Husky) run **Prettier** and **ESLint** on staged files before eac
 
 Contributions are welcome. Please read **[docs/CONTRIBUTING.md](docs/CONTRIBUTING.md)** for guidelines, and **[docs/README.md](docs/README.md)** for a small documentation index.
 
+## Acknowledgements
+
+Fintrack is built on top of excellent open source software and community work. Special thanks to the teams and maintainers behind [Next.js](https://nextjs.org/), [React](https://react.dev/), [Tailwind CSS](https://tailwindcss.com/), [PostgreSQL](https://www.postgresql.org/), and [Docker](https://www.docker.com/) for the tools that make this project possible.
+
 ## License
 
 Fintrack is released under the **[MIT License](LICENSE)**.
