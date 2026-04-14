@@ -52,6 +52,7 @@ SELECT
   + (SELECT COUNT(*) FROM bank_accounts)
   + (SELECT COUNT(*) FROM bank_account_buckets)
   + (SELECT COUNT(*) FROM credit_cards)
+  + (SELECT COUNT(*) FROM credit_card_bills)
   + (SELECT COUNT(*) FROM expense_categories);
 ")
 
@@ -164,7 +165,6 @@ WITH payload AS (
 INSERT INTO credit_cards (
   id, user_id, name, description, max_balance, used_balance, locked_balance,
   preferred_categories, bill_generation_day, bill_due_day,
-  previous_bill_cycle_label, previous_bill_pdf_url, previous_bill_paid,
   created_at, updated_at
 )
 SELECT
@@ -178,9 +178,6 @@ SELECT
   COALESCE(ARRAY(SELECT jsonb_array_elements_text(row->'preferred_categories')), ARRAY[]::text[]),
   (row->>'bill_generation_day')::smallint,
   (row->>'bill_due_day')::smallint,
-  NULLIF(row->>'previous_bill_cycle_label', ''),
-  NULLIF(row->>'previous_bill_pdf_url', ''),
-  COALESCE((row->>'previous_bill_paid')::boolean, false),
   (row->>'created_at')::timestamptz,
   (row->>'updated_at')::timestamptz
 FROM payload, jsonb_array_elements(COALESCE(doc->'creditCards', '[]'::jsonb)) AS row
@@ -195,9 +192,36 @@ SET
   preferred_categories = EXCLUDED.preferred_categories,
   bill_generation_day = EXCLUDED.bill_generation_day,
   bill_due_day = EXCLUDED.bill_due_day,
-  previous_bill_cycle_label = EXCLUDED.previous_bill_cycle_label,
-  previous_bill_pdf_url = EXCLUDED.previous_bill_pdf_url,
-  previous_bill_paid = EXCLUDED.previous_bill_paid,
+  updated_at = EXCLUDED.updated_at;
+
+WITH payload AS (
+  SELECT :'seed_json'::jsonb AS doc
+)
+INSERT INTO credit_card_bills (
+  id, user_id, credit_card_id, bill_generation_date, bill_due_date,
+  bill_pdf_url, is_bill_paid, bill_payment_date, created_at, updated_at
+)
+SELECT
+  (row->>'id')::uuid,
+  (row->>'user_id')::uuid,
+  (row->>'credit_card_id')::uuid,
+  (row->>'bill_generation_date')::date,
+  (row->>'bill_due_date')::date,
+  NULLIF(row->>'bill_pdf_url', ''),
+  COALESCE((row->>'is_bill_paid')::boolean, false),
+  NULLIF(row->>'bill_payment_date', '')::date,
+  (row->>'created_at')::timestamptz,
+  (row->>'updated_at')::timestamptz
+FROM payload, jsonb_array_elements(COALESCE(doc->'creditCardBills', '[]'::jsonb)) AS row
+ON CONFLICT (id) DO UPDATE
+SET
+  user_id = EXCLUDED.user_id,
+  credit_card_id = EXCLUDED.credit_card_id,
+  bill_generation_date = EXCLUDED.bill_generation_date,
+  bill_due_date = EXCLUDED.bill_due_date,
+  bill_pdf_url = EXCLUDED.bill_pdf_url,
+  is_bill_paid = EXCLUDED.is_bill_paid,
+  bill_payment_date = EXCLUDED.bill_payment_date,
   updated_at = EXCLUDED.updated_at;
 
 WITH payload AS (

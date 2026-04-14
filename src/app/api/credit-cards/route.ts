@@ -17,9 +17,6 @@ type CreateCreditCardBody = {
   preferredCategories?: string[];
   billGenerationDay?: number;
   billDueDay?: number;
-  previousBillCycleLabel?: string | null;
-  previousBillPdfUrl?: string | null;
-  previousBillPaid?: boolean;
 };
 
 function isValidDay(value: unknown): value is number {
@@ -117,9 +114,6 @@ export async function POST(req: Request) {
     preferredCategories: normalizeCategories(body.preferredCategories),
     billGenerationDay: body.billGenerationDay,
     billDueDay: body.billDueDay,
-    previousBillCycleLabel: body.previousBillCycleLabel ?? null,
-    previousBillPdfUrl: body.previousBillPdfUrl ?? null,
-    previousBillPaid: body.previousBillPaid ?? false,
   });
 
   return NextResponse.json({ row }, { status: 201 });

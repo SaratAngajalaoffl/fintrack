@@ -50,9 +50,19 @@ type CreditCardRow = {
   preferred_categories: string[];
   bill_generation_day: number;
   bill_due_day: number;
-  previous_bill_cycle_label: string | null;
-  previous_bill_pdf_url: string | null;
-  previous_bill_paid: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+type CreditCardBillRow = {
+  id: string;
+  user_id: string;
+  credit_card_id: string;
+  bill_generation_date: string;
+  bill_due_date: string;
+  bill_pdf_url: string | null;
+  is_bill_paid: boolean;
+  bill_payment_date: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -125,12 +135,20 @@ export async function GET() {
     );
     const creditCardsResult = await client.query<CreditCardRow>(
       `SELECT id, user_id, name, description, max_balance::text, used_balance::text,
-              locked_balance::text, preferred_categories, bill_generation_day,
-              bill_due_day, previous_bill_cycle_label, previous_bill_pdf_url,
-              previous_bill_paid, created_at::text, updated_at::text
+              locked_balance::text, preferred_categories, bill_generation_day, bill_due_day,
+              created_at::text, updated_at::text
        FROM credit_cards
        WHERE user_id = $1
        ORDER BY created_at ASC`,
+      [user.id],
+    );
+    const creditCardBillsResult = await client.query<CreditCardBillRow>(
+      `SELECT id, user_id, credit_card_id, bill_generation_date::text, bill_due_date::text,
+              bill_pdf_url, is_bill_paid, bill_payment_date::text,
+              created_at::text, updated_at::text
+       FROM credit_card_bills
+       WHERE user_id = $1
+       ORDER BY bill_generation_date ASC`,
       [user.id],
     );
     const expenseCategoriesResult = await client.query<ExpenseCategoryRow>(
@@ -164,6 +182,7 @@ export async function GET() {
       bankAccounts: bankAccountsResult.rows,
       bankAccountBuckets: bankAccountBucketsResult.rows,
       creditCards: creditCardsResult.rows,
+      creditCardBills: creditCardBillsResult.rows,
       expenseCategories: expenseCategoriesResult.rows,
     };
 

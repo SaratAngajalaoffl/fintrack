@@ -1,8 +1,29 @@
+"use client";
+
+import { useQueryClient } from "@tanstack/react-query";
 import { ArrowDownUp, Filter, Search } from "lucide-react";
 import Link from "next/link";
+import * as React from "react";
+import { Controller, useForm } from "react-hook-form";
 
-import { useUserProfile } from "@/components/hooks";
-import { Button } from "@/components/ui";
+import {
+  useMutateDeleteBankAccount,
+  useMutateUpdateBankAccount,
+  useUserProfile,
+} from "@/components/hooks";
+import { toast } from "@/components/ui/common/toast";
+import {
+  Button,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  SelectField,
+  TextareaField,
+  TextField,
+} from "@/components/ui";
 import { ChipComponent } from "@/components/ui/common/chip";
 import {
   TableComponent,
@@ -239,6 +260,213 @@ function SearchForm({ base }: { base: BankAccountsListState }) {
   );
 }
 
+type BankAccountEditFormValues = {
+  name: string;
+  description: string;
+  accountType: BankAccountRow["accountType"];
+  balance: string;
+};
+
+function BankAccountEditDialog({ row }: { row: BankAccountRow }) {
+  const queryClient = useQueryClient();
+  const updateMutation = useMutateUpdateBankAccount();
+  const [open, setOpen] = React.useState(false);
+  const {
+    register,
+    control,
+    reset,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<BankAccountEditFormValues>({
+    defaultValues: {
+      name: row.name,
+      description: row.description,
+      accountType: row.accountType,
+      balance: row.balance.toString(),
+    },
+  });
+
+  React.useEffect(() => {
+    if (open) {
+      reset({
+        name: row.name,
+        description: row.description,
+        accountType: row.accountType,
+        balance: row.balance.toString(),
+      });
+    }
+  }, [open, reset, row]);
+
+  async function onSubmit(values: BankAccountEditFormValues) {
+    const balance = Number(values.balance);
+    if (!Number.isFinite(balance)) {
+      toast.error("Balance must be a valid number");
+      return;
+    }
+
+    try {
+      await updateMutation.mutateAsync({
+        accountId: row.id,
+        name: values.name.trim(),
+        description: values.description.trim(),
+        accountType: values.accountType,
+        balance,
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["bank-accounts", "list"],
+      });
+      toast.success("Bank account updated");
+      setOpen(false);
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Could not update bank account",
+      );
+    }
+  }
+
+  const submitting = isSubmitting || updateMutation.isPending;
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        className="h-8 px-2 text-xs"
+        onClick={() => setOpen(true)}
+      >
+        Edit
+      </Button>
+      <DialogContent className="sm:max-w-xl">
+        <DialogHeader>
+          <DialogTitle>Edit bank account</DialogTitle>
+          <DialogDescription>
+            Update account details and balance.
+          </DialogDescription>
+        </DialogHeader>
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="space-y-4"
+          noValidate
+        >
+          <TextField
+            label="Bank account name"
+            required
+            error={errors.name?.message}
+            {...register("name", { required: "Bank account name is required" })}
+          />
+          <TextareaField
+            label="Description"
+            error={errors.description?.message}
+            {...register("description")}
+          />
+          <div className="grid gap-4 sm:grid-cols-2">
+            <TextField
+              label="Balance"
+              required
+              type="number"
+              step="0.01"
+              error={errors.balance?.message}
+              {...register("balance", { required: "Balance is required" })}
+            />
+            <Controller
+              control={control}
+              name="accountType"
+              rules={{ required: "Account type is required" }}
+              render={({ field }) => (
+                <SelectField
+                  label="Account type"
+                  required
+                  value={field.value}
+                  onValueChange={field.onChange}
+                  options={[
+                    { value: "savings", label: "Savings" },
+                    { value: "current", label: "Current" },
+                  ]}
+                  error={errors.accountType?.message}
+                />
+              )}
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={submitting}>
+              {submitting ? "Saving..." : "Save changes"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function BankAccountDeleteDialog({ row }: { row: BankAccountRow }) {
+  const queryClient = useQueryClient();
+  const deleteMutation = useMutateDeleteBankAccount();
+  const [open, setOpen] = React.useState(false);
+
+  async function handleDelete() {
+    try {
+      await deleteMutation.mutateAsync(row.id);
+      await queryClient.invalidateQueries({
+        queryKey: ["bank-accounts", "list"],
+      });
+      toast.success("Bank account deleted");
+      setOpen(false);
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Could not delete bank account",
+      );
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        className="h-8 px-2 text-xs text-destructive"
+        onClick={() => setOpen(true)}
+      >
+        Delete
+      </Button>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Delete bank account?</DialogTitle>
+          <DialogDescription>
+            This action cannot be undone. This will permanently delete{" "}
+            <span className="font-medium text-foreground">{row.name}</span>.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            variant="destructive"
+            onClick={handleDelete}
+            disabled={deleteMutation.isPending}
+          >
+            {deleteMutation.isPending ? "Deleting..." : "Delete"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export type BankAccountsTablePanelProps = {
   listState: BankAccountsListState;
   rows: BankAccountRow[];
@@ -333,24 +561,8 @@ export function BankAccountsTablePanel({
                 </td>
                 <td className="whitespace-nowrap px-4 py-3 text-right">
                   <div className="flex justify-end gap-1">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 px-2 text-xs"
-                      disabled
-                    >
-                      Edit
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 px-2 text-xs text-destructive"
-                      disabled
-                    >
-                      Delete
-                    </Button>
+                    <BankAccountEditDialog row={row} />
+                    <BankAccountDeleteDialog row={row} />
                   </div>
                 </td>
               </tr>

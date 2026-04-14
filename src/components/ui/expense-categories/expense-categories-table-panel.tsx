@@ -1,8 +1,31 @@
+"use client";
+
+import { useQueryClient } from "@tanstack/react-query";
 import { ArrowDownUp, Search } from "lucide-react";
 import Link from "next/link";
+import * as React from "react";
+import { Controller, useForm } from "react-hook-form";
 
-import { Button } from "@/components/ui";
+import {
+  useMutateDeleteExpenseCategory,
+  useMutateUpdateExpenseCategory,
+} from "@/components/hooks";
+import { toast } from "@/components/ui/common/toast";
+import {
+  Button,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  Field,
+  SelectField,
+  TextareaField,
+  TextField,
+} from "@/components/ui";
 import { Icon, type IconName } from "@/components/ui/icon-picker";
+import { IconPicker } from "@/components/ui/icon-picker";
 import {
   TableComponent,
   type TableToolbarChip,
@@ -178,6 +201,251 @@ function SearchForm({ base }: { base: ExpenseCategoriesListState }) {
   );
 }
 
+type ExpenseCategoryEditFormValues = {
+  name: string;
+  description: string;
+  iconUrl: IconName;
+  color: CatppuccinMochaColor;
+};
+
+function formatIconName(name: IconName): string {
+  return name
+    .split("-")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+function ExpenseCategoryEditDialog({ row }: { row: ExpenseCategoryRow }) {
+  const queryClient = useQueryClient();
+  const updateMutation = useMutateUpdateExpenseCategory();
+  const [open, setOpen] = React.useState(false);
+  const {
+    register,
+    control,
+    reset,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<ExpenseCategoryEditFormValues>({
+    defaultValues: {
+      name: row.name,
+      description: row.description,
+      iconUrl: row.iconUrl as IconName,
+      color: row.color,
+    },
+  });
+
+  React.useEffect(() => {
+    if (open) {
+      reset({
+        name: row.name,
+        description: row.description,
+        iconUrl: row.iconUrl as IconName,
+        color: row.color,
+      });
+    }
+  }, [open, reset, row]);
+
+  async function onSubmit(values: ExpenseCategoryEditFormValues) {
+    try {
+      await updateMutation.mutateAsync({
+        categoryId: row.id,
+        name: values.name.trim(),
+        description: values.description.trim(),
+        iconUrl: values.iconUrl.trim(),
+        color: values.color,
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["expense-categories", "list"],
+      });
+      toast.success("Expense category updated");
+      setOpen(false);
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Could not update expense category",
+      );
+    }
+  }
+
+  const submitting = isSubmitting || updateMutation.isPending;
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        className="h-8 px-2 text-xs"
+        onClick={() => setOpen(true)}
+      >
+        Edit
+      </Button>
+      <DialogContent className="sm:max-w-xl">
+        <DialogHeader>
+          <DialogTitle>Edit expense category</DialogTitle>
+          <DialogDescription>
+            Update category name, icon, color, and description.
+          </DialogDescription>
+        </DialogHeader>
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="space-y-4"
+          noValidate
+        >
+          <TextField
+            label="Category name"
+            required
+            error={errors.name?.message}
+            {...register("name", { required: "Category name is required" })}
+          />
+          <TextareaField
+            label="Description"
+            error={errors.description?.message}
+            {...register("description")}
+          />
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Controller
+              control={control}
+              name="iconUrl"
+              rules={{ required: "Category icon is required" }}
+              render={({ field }) => (
+                <Field
+                  label="Category icon"
+                  required
+                  error={errors.iconUrl?.message}
+                >
+                  <IconPicker
+                    value={field.value}
+                    onValueChange={field.onChange}
+                    triggerPlaceholder="Select icon"
+                  >
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="h-10 w-full justify-start gap-2"
+                    >
+                      <Icon name={field.value} className="size-4" />
+                      <span className="truncate text-sm">
+                        {formatIconName(field.value)}
+                      </span>
+                    </Button>
+                  </IconPicker>
+                </Field>
+              )}
+            />
+            <Controller
+              control={control}
+              name="color"
+              rules={{ required: "Category color is required" }}
+              render={({ field }) => (
+                <SelectField
+                  label="Category color"
+                  required
+                  value={field.value}
+                  onValueChange={(value) =>
+                    field.onChange(value as CatppuccinMochaColor)
+                  }
+                  options={Object.keys(COLOR_HEX_BY_TOKEN).map((color) => ({
+                    value: color,
+                    label: (
+                      <span
+                        className="inline-flex items-center"
+                        aria-label={color}
+                      >
+                        <span
+                          className="inline-block h-2 w-20 rounded-sm border border-border/60"
+                          style={{
+                            backgroundColor:
+                              COLOR_HEX_BY_TOKEN[color as CatppuccinMochaColor],
+                          }}
+                          aria-hidden
+                        />
+                      </span>
+                    ),
+                  }))}
+                  error={errors.color?.message}
+                />
+              )}
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={submitting}>
+              {submitting ? "Saving..." : "Save changes"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function ExpenseCategoryDeleteDialog({ row }: { row: ExpenseCategoryRow }) {
+  const queryClient = useQueryClient();
+  const deleteMutation = useMutateDeleteExpenseCategory();
+  const [open, setOpen] = React.useState(false);
+
+  async function handleDelete() {
+    try {
+      await deleteMutation.mutateAsync(row.id);
+      await queryClient.invalidateQueries({
+        queryKey: ["expense-categories", "list"],
+      });
+      toast.success("Expense category deleted");
+      setOpen(false);
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Could not delete expense category",
+      );
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        className="h-8 px-2 text-xs text-destructive"
+        onClick={() => setOpen(true)}
+      >
+        Delete
+      </Button>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Delete expense category?</DialogTitle>
+          <DialogDescription>
+            This action cannot be undone. This will permanently delete{" "}
+            <span className="font-medium text-foreground">{row.name}</span>.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            variant="destructive"
+            onClick={handleDelete}
+            disabled={deleteMutation.isPending}
+          >
+            {deleteMutation.isPending ? "Deleting..." : "Delete"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export type ExpenseCategoriesTablePanelProps = {
   listState: ExpenseCategoriesListState;
   rows: ExpenseCategoryRow[];
@@ -250,24 +518,8 @@ export function ExpenseCategoriesTablePanel({
                 </td>
                 <td className="whitespace-nowrap px-4 py-3 text-right">
                   <div className="flex justify-end gap-1">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 px-2 text-xs"
-                      disabled
-                    >
-                      Edit
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 px-2 text-xs text-destructive"
-                      disabled
-                    >
-                      Delete
-                    </Button>
+                    <ExpenseCategoryEditDialog row={row} />
+                    <ExpenseCategoryDeleteDialog row={row} />
                   </div>
                 </td>
               </tr>

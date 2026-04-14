@@ -1,16 +1,39 @@
+"use client";
+
+import { useQueryClient } from "@tanstack/react-query";
 import {
   ArrowDownUp,
   CheckCircle2,
-  Download,
+  CircleX,
   Filter,
   Search,
   TriangleAlert,
-  Upload,
 } from "lucide-react";
 import Link from "next/link";
+import * as React from "react";
+import { Controller, useForm } from "react-hook-form";
 
-import { useUserProfile } from "@/components/hooks";
-import { Button } from "@/components/ui";
+import {
+  useMutateDeleteCreditCard,
+  useMutateUpdateCreditCard,
+  useUserProfile,
+} from "@/components/hooks";
+import { toast } from "@/components/ui/common/toast";
+import {
+  Button,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  MultiSelectField,
+  TextareaField,
+  TextField,
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui";
 import { ChipComponent } from "@/components/ui/common/chip";
 import {
   TableComponent,
@@ -47,7 +70,151 @@ function money(value: number, currency: string) {
 
 function utilizationPercent(row: CreditCardRow): number {
   if (row.maxBalance <= 0) return 0;
-  return (row.usedBalance / row.maxBalance) * 100;
+  return (row.usedBalance + row.lockedBalance) / row.maxBalance;
+}
+
+function utilizationStatusIcon(utilizationRatio: number) {
+  const utilizationPercentValue = utilizationRatio * 100;
+  if (utilizationPercentValue <= 25) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span className="inline-flex" tabIndex={0}>
+            <CheckCircle2 className="size-4 text-emerald-300" aria-hidden />
+          </span>
+        </TooltipTrigger>
+        <TooltipContent>All Good!</TooltipContent>
+      </Tooltip>
+    );
+  }
+  if (utilizationPercentValue <= 33) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span className="inline-flex" tabIndex={0}>
+            <TriangleAlert className="size-4 text-amber-300" aria-hidden />
+          </span>
+        </TooltipTrigger>
+        <TooltipContent>
+          Your utilisation is getting close to 33%, be careful as it will effect
+          your credit score
+        </TooltipContent>
+      </Tooltip>
+    );
+  }
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className="inline-flex" tabIndex={0}>
+          <CircleX className="size-4 text-red-300" aria-hidden />
+        </span>
+      </TooltipTrigger>
+      <TooltipContent>
+        Your utilisation crossed 33%, pay it before bill generation date to
+        protect your credit score
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
+function toStartOfDay(date: Date): Date {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+function dayDiff(from: Date, to: Date): number {
+  const oneDayMs = 1000 * 60 * 60 * 24;
+  return Math.round(
+    (toStartOfDay(to).getTime() - toStartOfDay(from).getTime()) / oneDayMs,
+  );
+}
+
+function getBillingTimeline(generationDay: number, dueDay: number, now: Date) {
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  const today = now.getDate();
+  const hasGeneratedThisCycle = today >= generationDay;
+
+  const generationDate = hasGeneratedThisCycle
+    ? new Date(year, month, generationDay)
+    : new Date(year, month - 1, generationDay);
+  const dueDate = hasGeneratedThisCycle
+    ? new Date(year, month + (dueDay >= generationDay ? 0 : 1), dueDay)
+    : new Date(year, month + (dueDay >= generationDay ? -1 : 0), dueDay);
+  const nextGenerationDate = hasGeneratedThisCycle
+    ? new Date(year, month + 1, generationDay)
+    : new Date(year, month, generationDay);
+
+  return { generationDate, dueDate, nextGenerationDate, hasGeneratedThisCycle };
+}
+
+function formatBillGenerationLabel(
+  generationDay: number,
+  dueDay: number,
+): string {
+  const now = new Date();
+  const timeline = getBillingTimeline(generationDay, dueDay, now);
+
+  if (timeline.hasGeneratedThisCycle) {
+    const daysSinceGeneration = dayDiff(timeline.generationDate, now);
+    return `Generated ${formatNumber(daysSinceGeneration, "en-US", {
+      maximumFractionDigits: 0,
+    })} days ago`;
+  }
+
+  const daysUntilGeneration = dayDiff(now, timeline.nextGenerationDate);
+  return `In ${formatNumber(daysUntilGeneration, "en-US", {
+    maximumFractionDigits: 0,
+  })} days`;
+}
+
+function formatLastBillGeneratedLabel(row: CreditCardRow): string {
+  if (!row.latestBill) return "No bills yet";
+
+  const now = new Date();
+  const generatedAt = new Date(row.latestBill.billGenerationDate);
+  const daysAgo = Math.max(0, dayDiff(generatedAt, now));
+
+  return `${formatNumber(daysAgo, "en-US", {
+    maximumFractionDigits: 0,
+  })} days ago`;
+}
+
+function getLastBillDueMeta(row: CreditCardRow): {
+  label: string;
+  tone: "muted" | "success" | "warning" | "danger";
+} {
+  if (!row.latestBill) {
+    return { label: "No bills yet", tone: "muted" };
+  }
+
+  if (row.latestBill.isBillPaid) {
+    if (row.latestBill.billPaymentDate) {
+      const paidAt = new Date(row.latestBill.billPaymentDate);
+      const now = new Date();
+      const daysAgo = Math.max(0, dayDiff(paidAt, now));
+      return { label: `Paid ${daysAgo} days ago`, tone: "success" };
+    }
+    return { label: "Paid", tone: "success" };
+  }
+
+  const dueAt = new Date(row.latestBill.billDueDate);
+  const now = new Date();
+  const daysUntilDue = dayDiff(now, dueAt);
+  if (daysUntilDue >= 0) {
+    return {
+      label: `Due in ${formatNumber(daysUntilDue, "en-US", {
+        maximumFractionDigits: 0,
+      })} days`,
+      tone: "warning",
+    };
+  }
+
+  return {
+    label: `Overdue by ${formatNumber(Math.abs(daysUntilDue), "en-US", {
+      maximumFractionDigits: 0,
+    })} days`,
+    tone: "danger",
+  };
 }
 
 function sortDescription(sort: string): string {
@@ -274,6 +441,308 @@ function SearchForm({ base }: { base: CreditCardsListState }) {
   );
 }
 
+type CreditCardEditFormValues = {
+  name: string;
+  description: string;
+  maxBalance: string;
+  usedBalance: string;
+  lockedBalance: string;
+  preferredCategories: string[];
+  billGenerationDay: string;
+  billDueDay: string;
+};
+
+function CreditCardEditDialog({
+  row,
+  availableCategories,
+}: {
+  row: CreditCardRow;
+  availableCategories: CreditCardCategory[];
+}) {
+  const queryClient = useQueryClient();
+  const updateMutation = useMutateUpdateCreditCard();
+  const [open, setOpen] = React.useState(false);
+  const {
+    register,
+    control,
+    reset,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<CreditCardEditFormValues>({
+    defaultValues: {
+      name: row.name,
+      description: row.description,
+      maxBalance: row.maxBalance.toString(),
+      usedBalance: row.usedBalance.toString(),
+      lockedBalance: row.lockedBalance.toString(),
+      preferredCategories: row.preferredCategories,
+      billGenerationDay: row.billGenerationDay.toString(),
+      billDueDay: row.billDueDay.toString(),
+    },
+  });
+
+  React.useEffect(() => {
+    if (open) {
+      reset({
+        name: row.name,
+        description: row.description,
+        maxBalance: row.maxBalance.toString(),
+        usedBalance: row.usedBalance.toString(),
+        lockedBalance: row.lockedBalance.toString(),
+        preferredCategories: row.preferredCategories,
+        billGenerationDay: row.billGenerationDay.toString(),
+        billDueDay: row.billDueDay.toString(),
+      });
+    }
+  }, [open, reset, row]);
+
+  async function onSubmit(values: CreditCardEditFormValues) {
+    const maxBalance = Number(values.maxBalance);
+    const usedBalance = Number(values.usedBalance);
+    const lockedBalance = Number(values.lockedBalance);
+    const billGenerationDay = Number(values.billGenerationDay);
+    const billDueDay = Number(values.billDueDay);
+
+    if (!Number.isFinite(maxBalance) || maxBalance < 0) {
+      toast.error("Max balance must be a valid non-negative number");
+      return;
+    }
+    if (!Number.isFinite(usedBalance) || usedBalance < 0) {
+      toast.error("Used balance must be a valid non-negative number");
+      return;
+    }
+    if (!Number.isFinite(lockedBalance) || lockedBalance < 0) {
+      toast.error("Locked balance must be a valid non-negative number");
+      return;
+    }
+    if (
+      !Number.isInteger(billGenerationDay) ||
+      billGenerationDay < 1 ||
+      billGenerationDay > 31
+    ) {
+      toast.error("Bill generation day must be between 1 and 31");
+      return;
+    }
+    if (!Number.isInteger(billDueDay) || billDueDay < 1 || billDueDay > 31) {
+      toast.error("Bill due day must be between 1 and 31");
+      return;
+    }
+
+    try {
+      await updateMutation.mutateAsync({
+        cardId: row.id,
+        name: values.name.trim(),
+        description: values.description.trim(),
+        maxBalance,
+        usedBalance,
+        lockedBalance,
+        preferredCategories: values.preferredCategories,
+        billGenerationDay,
+        billDueDay,
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["credit-cards", "list"],
+      });
+      toast.success("Credit card updated");
+      setOpen(false);
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Could not update credit card",
+      );
+    }
+  }
+
+  const submitting = isSubmitting || updateMutation.isPending;
+  const preferredCategoryOptions = availableCategories.map((category) => ({
+    value: category,
+    label: category,
+  }));
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        className="h-8 px-2 text-xs"
+        onClick={() => setOpen(true)}
+      >
+        Edit
+      </Button>
+      <DialogContent className="sm:max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Edit credit card</DialogTitle>
+          <DialogDescription>
+            Update balances, preferred categories, and billing dates.
+          </DialogDescription>
+        </DialogHeader>
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="space-y-4"
+          noValidate
+        >
+          <TextField
+            label="Credit card name"
+            required
+            error={errors.name?.message}
+            {...register("name", { required: "Credit card name is required" })}
+          />
+          <TextareaField
+            label="Description"
+            error={errors.description?.message}
+            {...register("description")}
+          />
+          <div className="grid gap-4 sm:grid-cols-3">
+            <TextField
+              label="Max balance"
+              required
+              type="number"
+              step="0.01"
+              error={errors.maxBalance?.message}
+              {...register("maxBalance", {
+                required: "Max balance is required",
+              })}
+            />
+            <TextField
+              label="Used balance"
+              required
+              type="number"
+              step="0.01"
+              error={errors.usedBalance?.message}
+              {...register("usedBalance", {
+                required: "Used balance is required",
+              })}
+            />
+            <TextField
+              label="Locked balance"
+              required
+              type="number"
+              step="0.01"
+              error={errors.lockedBalance?.message}
+              {...register("lockedBalance", {
+                required: "Locked balance is required",
+              })}
+            />
+          </div>
+          <Controller
+            control={control}
+            name="preferredCategories"
+            render={({ field }) => (
+              <MultiSelectField
+                label="Preferred categories"
+                value={field.value}
+                onValueChange={field.onChange}
+                options={preferredCategoryOptions}
+                placeholder={
+                  preferredCategoryOptions.length > 0
+                    ? "Select preferred categories"
+                    : "No expense categories available"
+                }
+                disabled={preferredCategoryOptions.length === 0}
+              />
+            )}
+          />
+          <div className="grid gap-4 sm:grid-cols-2">
+            <TextField
+              label="Bill generation day"
+              required
+              type="number"
+              min={1}
+              max={31}
+              step="1"
+              error={errors.billGenerationDay?.message}
+              {...register("billGenerationDay", {
+                required: "Bill generation day is required",
+              })}
+            />
+            <TextField
+              label="Bill due day"
+              required
+              type="number"
+              min={1}
+              max={31}
+              step="1"
+              error={errors.billDueDay?.message}
+              {...register("billDueDay", {
+                required: "Bill due day is required",
+              })}
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={submitting}>
+              {submitting ? "Saving..." : "Save changes"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function CreditCardDeleteDialog({ row }: { row: CreditCardRow }) {
+  const queryClient = useQueryClient();
+  const deleteMutation = useMutateDeleteCreditCard();
+  const [open, setOpen] = React.useState(false);
+
+  async function handleDelete() {
+    try {
+      await deleteMutation.mutateAsync(row.id);
+      await queryClient.invalidateQueries({
+        queryKey: ["credit-cards", "list"],
+      });
+      toast.success("Credit card deleted");
+      setOpen(false);
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Could not delete credit card",
+      );
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        className="h-8 px-2 text-xs text-destructive"
+        onClick={() => setOpen(true)}
+      >
+        Delete
+      </Button>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Delete credit card?</DialogTitle>
+          <DialogDescription>
+            This action cannot be undone. This will permanently delete{" "}
+            <span className="font-medium text-foreground">{row.name}</span>.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            variant="destructive"
+            onClick={handleDelete}
+            disabled={deleteMutation.isPending}
+          >
+            {deleteMutation.isPending ? "Deleting..." : "Delete"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 type CreditCardsTablePanelProps = {
   listState: CreditCardsListState;
   rows: CreditCardRow[];
@@ -324,13 +793,13 @@ export function CreditCardsTablePanel({
               Preferred categories
             </th>
             <th scope="col" className="px-4 py-3 text-right font-medium">
-              Bill generation in
+              Last bill generated
             </th>
             <th scope="col" className="px-4 py-3 font-medium">
-              Previous bill
+              Last bill due
             </th>
             <th scope="col" className="px-4 py-3 font-medium">
-              Bill paid
+              Next bill generation
             </th>
             <th scope="col" className="px-4 py-3 text-right font-medium">
               Actions
@@ -352,7 +821,11 @@ export function CreditCardsTablePanel({
               const billGenerationIn = getBillGenerationInDays(
                 row.billGenerationDay,
               );
-              const dueDateLabel = `Due day ${row.billDueDay}`;
+              const nextBillGenerationLabel = formatBillGenerationLabel(
+                row.billGenerationDay,
+                row.billDueDay,
+              );
+              const lastBillDueMeta = getLastBillDueMeta(row);
               const utilization = utilizationPercent(row);
 
               return (
@@ -374,11 +847,14 @@ export function CreditCardsTablePanel({
                     {money(row.lockedBalance, preferredCurrency)}
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 text-right tabular-nums">
-                    {formatNumber(utilization, "en-US", {
-                      style: "percent",
-                      minimumFractionDigits: 1,
-                      maximumFractionDigits: 1,
-                    })}
+                    <span className="inline-flex w-full items-center justify-end gap-1.5">
+                      {utilizationStatusIcon(utilization)}
+                      {formatNumber(utilization, "en-US", {
+                        style: "percent",
+                        minimumFractionDigits: 1,
+                        maximumFractionDigits: 1,
+                      })}
+                    </span>
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex max-w-64 flex-wrap gap-1.5">
@@ -394,66 +870,44 @@ export function CreditCardsTablePanel({
                     </div>
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 text-right tabular-nums">
-                    {formatNumber(billGenerationIn, "en-US", {
-                      maximumFractionDigits: 0,
-                    })}{" "}
-                    days
+                    <span>{formatLastBillGeneratedLabel(row)}</span>
                   </td>
                   <td className="whitespace-nowrap px-4 py-3">
-                    {row.previousBill ? (
-                      <Link
-                        href={row.previousBill.pdfUrl}
-                        className="inline-flex items-center gap-1.5 rounded-md border border-border/70 bg-surface-0 px-2 py-1 text-xs font-medium text-foreground hover:bg-surface-1"
-                      >
-                        <Download className="size-3.5" aria-hidden />
-                        Download PDF
-                      </Link>
-                    ) : (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="h-7 px-2 text-xs"
-                        disabled
-                      >
-                        <Upload className="mr-1 size-3.5" aria-hidden />
-                        Upload bill
-                      </Button>
-                    )}
-                  </td>
-                  <td className="whitespace-nowrap px-4 py-3">
-                    {row.previousBill?.isPaid ? (
-                      <span className="inline-flex items-center gap-1.5 text-emerald-300">
+                    <span
+                      className={
+                        lastBillDueMeta.tone === "success"
+                          ? "inline-flex items-center gap-1.5 text-emerald-300"
+                          : lastBillDueMeta.tone === "warning"
+                            ? "inline-flex items-center gap-1.5 text-amber-300"
+                            : lastBillDueMeta.tone === "danger"
+                              ? "inline-flex items-center gap-1.5 text-red-300"
+                              : "inline-flex items-center gap-1.5 text-subtext-1"
+                      }
+                    >
+                      {lastBillDueMeta.tone === "success" ? (
                         <CheckCircle2 className="size-4" aria-hidden />
-                        Paid
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1.5 text-amber-300">
+                      ) : lastBillDueMeta.tone === "warning" ? (
                         <TriangleAlert className="size-4" aria-hidden />
-                        Pending - {dueDateLabel}
-                      </span>
-                    )}
+                      ) : lastBillDueMeta.tone === "danger" ? (
+                        <CircleX className="size-4" aria-hidden />
+                      ) : null}
+                      {lastBillDueMeta.label}
+                    </span>
+                  </td>
+                  <td className="whitespace-nowrap px-4 py-3">
+                    <span
+                      title={`${billGenerationIn} days until next generation`}
+                    >
+                      {nextBillGenerationLabel}
+                    </span>
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 text-right">
                     <div className="flex justify-end gap-1">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 px-2 text-xs"
-                        disabled
-                      >
-                        Edit
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 px-2 text-xs text-destructive"
-                        disabled
-                      >
-                        Delete
-                      </Button>
+                      <CreditCardEditDialog
+                        row={row}
+                        availableCategories={availableCategories}
+                      />
+                      <CreditCardDeleteDialog row={row} />
                     </div>
                   </td>
                 </tr>

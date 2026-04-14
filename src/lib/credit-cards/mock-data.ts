@@ -14,10 +14,13 @@ export const MOCK_CREDIT_CARDS: CreditCardRow[] = [
     preferredCategories: ["Groceries", "Dining", "Travel"],
     billGenerationDay: 18,
     billDueDay: 1,
-    previousBill: {
-      cycleLabel: "Mar 2026",
-      pdfUrl: "#",
-      isPaid: true,
+    latestBill: {
+      id: "bill-1",
+      billGenerationDate: "2026-03-18",
+      billDueDate: "2026-04-01",
+      billPdfUrl: "#",
+      isBillPaid: true,
+      billPaymentDate: "2026-03-28",
     },
   },
   {
@@ -30,10 +33,13 @@ export const MOCK_CREDIT_CARDS: CreditCardRow[] = [
     preferredCategories: ["Rent", "Utilities"],
     billGenerationDay: 12,
     billDueDay: 25,
-    previousBill: {
-      cycleLabel: "Mar 2026",
-      pdfUrl: "#",
-      isPaid: false,
+    latestBill: {
+      id: "bill-2",
+      billGenerationDate: "2026-03-12",
+      billDueDate: "2026-03-25",
+      billPdfUrl: "#",
+      isBillPaid: false,
+      billPaymentDate: null,
     },
   },
   {
@@ -46,7 +52,7 @@ export const MOCK_CREDIT_CARDS: CreditCardRow[] = [
     preferredCategories: ["Travel", "Shopping"],
     billGenerationDay: 27,
     billDueDay: 8,
-    previousBill: null,
+    latestBill: null,
   },
 ];
 

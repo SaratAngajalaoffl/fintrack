@@ -12,9 +12,12 @@ type CreditCardDbRow = {
   preferred_categories: string[] | null;
   bill_generation_day: number;
   bill_due_day: number;
-  previous_bill_cycle_label: string | null;
-  previous_bill_pdf_url: string | null;
-  previous_bill_paid: boolean;
+  latest_bill_id: string | null;
+  latest_bill_generation_date: string | null;
+  latest_bill_due_date: string | null;
+  latest_bill_pdf_url: string | null;
+  latest_bill_paid: boolean | null;
+  latest_bill_payment_date: string | null;
 };
 
 export type CreateCreditCardInput = {
@@ -27,9 +30,6 @@ export type CreateCreditCardInput = {
   preferredCategories: string[];
   billGenerationDay: number;
   billDueDay: number;
-  previousBillCycleLabel?: string | null;
-  previousBillPdfUrl?: string | null;
-  previousBillPaid?: boolean;
 };
 
 export type UpdateCreditCardInput = {
@@ -43,9 +43,6 @@ export type UpdateCreditCardInput = {
   preferredCategories?: string[];
   billGenerationDay?: number;
   billDueDay?: number;
-  previousBillCycleLabel?: string | null;
-  previousBillPdfUrl?: string | null;
-  previousBillPaid?: boolean;
 };
 
 function toNumber(value: string | number): number {
@@ -137,12 +134,17 @@ function mapRow(row: CreditCardDbRow): CreditCardRow {
       []) as CreditCardRow["preferredCategories"],
     billGenerationDay: row.bill_generation_day,
     billDueDay: row.bill_due_day,
-    previousBill:
-      row.previous_bill_cycle_label && row.previous_bill_pdf_url
+    latestBill:
+      row.latest_bill_id &&
+      row.latest_bill_generation_date &&
+      row.latest_bill_due_date
         ? {
-            cycleLabel: row.previous_bill_cycle_label,
-            pdfUrl: row.previous_bill_pdf_url,
-            isPaid: row.previous_bill_paid,
+            id: row.latest_bill_id,
+            billGenerationDate: row.latest_bill_generation_date,
+            billDueDate: row.latest_bill_due_date,
+            billPdfUrl: row.latest_bill_pdf_url,
+            isBillPaid: row.latest_bill_paid ?? false,
+            billPaymentDate: row.latest_bill_payment_date,
           }
         : null,
   };
@@ -167,9 +169,12 @@ export async function listCreditCards(
         ) AS preferred_categories,
         cc.bill_generation_day,
         cc.bill_due_day,
-        cc.previous_bill_cycle_label,
-        cc.previous_bill_pdf_url,
-        cc.previous_bill_paid
+        lb.id AS latest_bill_id,
+        lb.bill_generation_date::text AS latest_bill_generation_date,
+        lb.bill_due_date::text AS latest_bill_due_date,
+        lb.bill_pdf_url AS latest_bill_pdf_url,
+        lb.is_bill_paid AS latest_bill_paid,
+        lb.bill_payment_date::text AS latest_bill_payment_date
       FROM credit_cards cc
       LEFT JOIN credit_card_preferred_categories ccpc
         ON ccpc.credit_card_id = cc.id
@@ -177,8 +182,29 @@ export async function listCreditCards(
       LEFT JOIN expense_categories ec
         ON ec.id = ccpc.expense_category_id
        AND ec.user_id = cc.user_id
+      LEFT JOIN LATERAL (
+        SELECT
+          ccb.id,
+          ccb.bill_generation_date,
+          ccb.bill_due_date,
+          ccb.bill_pdf_url,
+          ccb.is_bill_paid,
+          ccb.bill_payment_date
+        FROM credit_card_bills ccb
+        WHERE ccb.user_id = cc.user_id
+          AND ccb.credit_card_id = cc.id
+        ORDER BY ccb.bill_generation_date DESC
+        LIMIT 1
+      ) lb ON TRUE
       WHERE cc.user_id = $1
-      GROUP BY cc.id
+      GROUP BY
+        cc.id,
+        lb.id,
+        lb.bill_generation_date,
+        lb.bill_due_date,
+        lb.bill_pdf_url,
+        lb.is_bill_paid,
+        lb.bill_payment_date
       ORDER BY cc.created_at DESC
     `,
     [userId],
@@ -206,9 +232,12 @@ export async function getCreditCardById(
         ) AS preferred_categories,
         cc.bill_generation_day,
         cc.bill_due_day,
-        cc.previous_bill_cycle_label,
-        cc.previous_bill_pdf_url,
-        cc.previous_bill_paid
+        lb.id AS latest_bill_id,
+        lb.bill_generation_date::text AS latest_bill_generation_date,
+        lb.bill_due_date::text AS latest_bill_due_date,
+        lb.bill_pdf_url AS latest_bill_pdf_url,
+        lb.is_bill_paid AS latest_bill_paid,
+        lb.bill_payment_date::text AS latest_bill_payment_date
       FROM credit_cards cc
       LEFT JOIN credit_card_preferred_categories ccpc
         ON ccpc.credit_card_id = cc.id
@@ -216,8 +245,29 @@ export async function getCreditCardById(
       LEFT JOIN expense_categories ec
         ON ec.id = ccpc.expense_category_id
        AND ec.user_id = cc.user_id
+      LEFT JOIN LATERAL (
+        SELECT
+          ccb.id,
+          ccb.bill_generation_date,
+          ccb.bill_due_date,
+          ccb.bill_pdf_url,
+          ccb.is_bill_paid,
+          ccb.bill_payment_date
+        FROM credit_card_bills ccb
+        WHERE ccb.user_id = cc.user_id
+          AND ccb.credit_card_id = cc.id
+        ORDER BY ccb.bill_generation_date DESC
+        LIMIT 1
+      ) lb ON TRUE
       WHERE cc.user_id = $1 AND cc.id = $2
-      GROUP BY cc.id
+      GROUP BY
+        cc.id,
+        lb.id,
+        lb.bill_generation_date,
+        lb.bill_due_date,
+        lb.bill_pdf_url,
+        lb.is_bill_paid,
+        lb.bill_payment_date
       LIMIT 1
     `,
     [userId, cardId],
@@ -246,12 +296,9 @@ export async function createCreditCard(
           locked_balance,
           preferred_categories,
           bill_generation_day,
-          bill_due_day,
-          previous_bill_cycle_label,
-          previous_bill_pdf_url,
-          previous_bill_paid
+          bill_due_day
         )
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
         RETURNING id
       `,
       [
@@ -264,9 +311,6 @@ export async function createCreditCard(
         normalizedCategories,
         input.billGenerationDay,
         input.billDueDay,
-        input.previousBillCycleLabel ?? null,
-        input.previousBillPdfUrl ?? null,
-        input.previousBillPaid ?? false,
       ],
     );
     await syncPreferredCategoryMappings(
@@ -314,9 +358,6 @@ export async function updateCreditCard(
           preferred_categories = COALESCE($8, preferred_categories),
           bill_generation_day = COALESCE($9, bill_generation_day),
           bill_due_day = COALESCE($10, bill_due_day),
-          previous_bill_cycle_label = COALESCE($11, previous_bill_cycle_label),
-          previous_bill_pdf_url = COALESCE($12, previous_bill_pdf_url),
-          previous_bill_paid = COALESCE($13, previous_bill_paid),
           updated_at = NOW()
         WHERE user_id = $1 AND id = $2
       `,
@@ -331,9 +372,6 @@ export async function updateCreditCard(
         normalizedCategories ?? null,
         input.billGenerationDay ?? null,
         input.billDueDay ?? null,
-        input.previousBillCycleLabel ?? null,
-        input.previousBillPdfUrl ?? null,
-        input.previousBillPaid ?? null,
       ],
     );
 

@@ -26,6 +26,15 @@ export type CreateBankAccountPayload = {
   accountType: BankAccountType;
 };
 
+export type UpdateBankAccountPayload = {
+  accountId: string;
+  name?: string;
+  description?: string;
+  accountType?: BankAccountType;
+  balance?: number;
+  buckets?: string[];
+};
+
 export async function createBankAccountRequest(
   payload: CreateBankAccountPayload,
 ) {
@@ -46,4 +55,42 @@ export async function createBankAccountRequest(
     throw new Error("Bank account was created but no row was returned");
   }
   return body.row;
+}
+
+export async function updateBankAccountRequest({
+  accountId,
+  ...payload
+}: UpdateBankAccountPayload) {
+  const res = await fetch(`${getApiRoute("bankAccounts")}/${accountId}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify(payload),
+  });
+  const body = (await res.json().catch(() => ({}))) as {
+    error?: string;
+    row?: BankAccountRow;
+  };
+  if (!res.ok) {
+    throw new Error(body.error ?? "Could not update bank account");
+  }
+  if (!body.row) {
+    throw new Error("Bank account was updated but no row was returned");
+  }
+  return body.row;
+}
+
+export async function deleteBankAccountRequest(accountId: string) {
+  const res = await fetch(`${getApiRoute("bankAccounts")}/${accountId}`, {
+    method: "DELETE",
+    credentials: "include",
+  });
+  const body = (await res.json().catch(() => ({}))) as {
+    error?: string;
+    ok?: boolean;
+  };
+  if (!res.ok) {
+    throw new Error(body.error ?? "Could not delete bank account");
+  }
+  return body.ok ?? true;
 }

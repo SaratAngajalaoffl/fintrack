@@ -152,12 +152,11 @@ async function main() {
         `INSERT INTO credit_cards (
            id, user_id, name, description, max_balance, used_balance, locked_balance,
            preferred_categories, bill_generation_day, bill_due_day,
-           previous_bill_cycle_label, previous_bill_pdf_url, previous_bill_paid,
            created_at, updated_at
          )
          VALUES (
            $1, $2, $3, $4, $5::numeric, $6::numeric, $7::numeric, $8::text[],
-           $9, $10, $11, $12, $13, $14::timestamptz, $15::timestamptz
+           $9, $10, $11::timestamptz, $12::timestamptz
          )
          ON CONFLICT (id)
          DO UPDATE SET
@@ -170,9 +169,6 @@ async function main() {
            preferred_categories = EXCLUDED.preferred_categories,
            bill_generation_day = EXCLUDED.bill_generation_day,
            bill_due_day = EXCLUDED.bill_due_day,
-           previous_bill_cycle_label = EXCLUDED.previous_bill_cycle_label,
-           previous_bill_pdf_url = EXCLUDED.previous_bill_pdf_url,
-           previous_bill_paid = EXCLUDED.previous_bill_paid,
            updated_at = EXCLUDED.updated_at`,
         [
           card.id,
@@ -185,11 +181,42 @@ async function main() {
           card.preferred_categories ?? [],
           card.bill_generation_day,
           card.bill_due_day,
-          card.previous_bill_cycle_label,
-          card.previous_bill_pdf_url,
-          card.previous_bill_paid,
           card.created_at,
           card.updated_at,
+        ],
+      );
+    }
+
+    for (const bill of data.creditCardBills ?? []) {
+      await client.query(
+        `INSERT INTO credit_card_bills (
+           id, user_id, credit_card_id, bill_generation_date, bill_due_date,
+           bill_pdf_url, is_bill_paid, bill_payment_date, created_at, updated_at
+         )
+         VALUES (
+           $1, $2, $3, $4::date, $5::date, $6, $7, $8::date, $9::timestamptz, $10::timestamptz
+         )
+         ON CONFLICT (id)
+         DO UPDATE SET
+           user_id = EXCLUDED.user_id,
+           credit_card_id = EXCLUDED.credit_card_id,
+           bill_generation_date = EXCLUDED.bill_generation_date,
+           bill_due_date = EXCLUDED.bill_due_date,
+           bill_pdf_url = EXCLUDED.bill_pdf_url,
+           is_bill_paid = EXCLUDED.is_bill_paid,
+           bill_payment_date = EXCLUDED.bill_payment_date,
+           updated_at = EXCLUDED.updated_at`,
+        [
+          bill.id,
+          bill.user_id,
+          bill.credit_card_id,
+          bill.bill_generation_date,
+          bill.bill_due_date,
+          bill.bill_pdf_url,
+          bill.is_bill_paid,
+          bill.bill_payment_date,
+          bill.created_at,
+          bill.updated_at,
         ],
       );
     }

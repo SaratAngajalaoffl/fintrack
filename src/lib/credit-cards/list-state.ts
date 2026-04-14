@@ -84,8 +84,10 @@ export function filterAndSortCreditCards(
   const mult = desc ? -1 : 1;
 
   list.sort((a, b) => {
-    const utilA = a.maxBalance > 0 ? a.usedBalance / a.maxBalance : 0;
-    const utilB = b.maxBalance > 0 ? b.usedBalance / b.maxBalance : 0;
+    const utilA =
+      a.maxBalance > 0 ? (a.usedBalance + a.lockedBalance) / a.maxBalance : 0;
+    const utilB =
+      b.maxBalance > 0 ? (b.usedBalance + b.lockedBalance) / b.maxBalance : 0;
 
     switch (key) {
       case "max":

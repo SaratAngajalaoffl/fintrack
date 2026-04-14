@@ -11,6 +11,7 @@ This document orients coding agents and contributors to how Fintrack is organize
 ## Agent workflow (Cursor / automation)
 
 - **Do not create git commits** unless the user explicitly asks you to commit. Implement changes and leave them **uncommitted** so the user can review the diff and commit themselves.
+- **Keep this file current:** whenever routes, APIs, schemas, architecture, conventions, or developer workflows change, update **`AGENTS.md`** in the same task so guidance stays accurate.
 
 ## Product
 
@@ -22,6 +23,13 @@ This document orients coding agents and contributors to how Fintrack is organize
 - **Code:** Domain types, URL state parsing, and mock rows live under **`src/lib/bank-accounts/`**. Composed screen UI lives under **`src/components/ui/bank-accounts/`**. Shared primitives for this area: **`ChipComponent`** (`src/components/ui/common/chip/`) and **`TableComponent`** (`src/components/ui/common/table-component/`) — export from `@/components/ui`.
 - **API:** endpoints under `src/app/api/bank-accounts/` (`GET`/`POST`) and `src/app/api/bank-accounts/[accountId]/` (`GET`/`PATCH`/`DELETE`), backed by services in `src/services/bank-accounts/`.
 - **Persistence:** Planned tables and fields (accounts, buckets, balances, last credit/debit times) are documented in **[docs/data-model.md](docs/data-model.md)**. Update that file when migrations or API shapes change.
+
+### Domain: credit cards
+
+- **Routes:** `/dashboard/credit-cards` (list + add-card dialog + table toolbar: search / preferred category filter / sort via query string).
+- **Code:** Domain types and list URL state live under **`src/lib/credit-cards/`**. Composed screen UI lives under **`src/components/ui/credit-cards/`**.
+- **API:** endpoints under `src/app/api/credit-cards/` (`GET`/`POST`) and `src/app/api/credit-cards/[cardId]/` (`GET`/`PATCH`/`DELETE`), backed by services in `src/services/credit-cards/`.
+- **Persistence:** Core card settings live in `credit_cards`; bill records are normalized in **`credit_card_bills`** (migration `010_credit_card_bills.sql`). Do not reintroduce `previous_bill_*` fields on `credit_cards`.
 
 ## Tech stack
 

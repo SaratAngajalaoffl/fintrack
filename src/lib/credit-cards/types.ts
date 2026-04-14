@@ -1,9 +1,12 @@
 export type CreditCardCategory = string;
 
 export type CreditCardBillInfo = {
-  cycleLabel: string;
-  pdfUrl: string;
-  isPaid: boolean;
+  id: string;
+  billGenerationDate: string;
+  billDueDate: string;
+  billPdfUrl: string | null;
+  isBillPaid: boolean;
+  billPaymentDate: string | null;
 };
 
 export type CreditCardRow = {
@@ -16,7 +19,7 @@ export type CreditCardRow = {
   preferredCategories: CreditCardCategory[];
   billGenerationDay: number;
   billDueDay: number;
-  previousBill: CreditCardBillInfo | null;
+  latestBill: CreditCardBillInfo | null;
 };
 
 export type CreditCardsListState = {

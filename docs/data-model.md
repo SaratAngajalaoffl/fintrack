@@ -52,9 +52,9 @@ Future REST or server actions should accept equivalent filters for consistency.
 
 ## Credit cards
 
-Users can manage **credit cards** with balances, category preferences, and billing-cycle metadata.
+Users can manage **credit cards** with balances, category preferences, and billing-cycle settings.
 
-> Status: implemented in migrations `006_credit_cards.sql` (`credit_cards`) and `009_credit_card_preferred_category_links.sql` (`credit_card_preferred_categories`).
+> Status: implemented in migrations `006_credit_cards.sql` (`credit_cards`), `009_credit_card_preferred_category_links.sql` (`credit_card_preferred_categories`), and `010_credit_card_bills.sql` (`credit_card_bills`).
 
 | Field / concept             | Type / notes                                                                        |
 | --------------------------- | ----------------------------------------------------------------------------------- |
@@ -68,9 +68,6 @@ Users can manage **credit cards** with balances, category preferences, and billi
 | `preferred_categories`      | Legacy `text[]` copy kept for compatibility/export; canonical mapping is relational |
 | `bill_generation_day`       | Integer day of month (1-31)                                                         |
 | `bill_due_day`              | Integer day of month (1-31)                                                         |
-| `previous_bill_cycle_label` | Nullable text label (e.g. `Mar 2026`)                                               |
-| `previous_bill_pdf_url`     | Nullable link/reference to uploaded bill PDF                                        |
-| `previous_bill_paid`        | Boolean status for the previous billing cycle                                       |
 | `created_at` / `updated_at` | Standard audit columns                                                              |
 
 Preferred category mapping is normalized in a many-to-many table:
@@ -80,6 +77,14 @@ Preferred category mapping is normalized in a many-to-many table:
 | `credit_card_preferred_categories` | `credit_card_id` FK, `expense_category_id` FK, `user_id` FK, `created_at`, composite PK pair |
 
 Relationship: **one credit card ↔ many expense categories**, and **one expense category ↔ many credit cards**.
+
+Credit-card bills are normalized in a dedicated one-to-many table:
+
+| Table               | Fields / notes                                                                                                                                |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `credit_card_bills` | `id`, `user_id`, `credit_card_id`, `bill_generation_date`, `bill_due_date`, `bill_pdf_url`, `is_bill_paid`, `bill_payment_date`, audit fields |
+
+Relationship: **one credit card → many bills**. The latest bill (by `bill_generation_date`) is used for dashboard billing timeline status.
 
 The dashboard shows:
 

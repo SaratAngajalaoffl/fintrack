@@ -22,9 +22,6 @@ type UpdateCreditCardBody = {
   preferredCategories?: string[];
   billGenerationDay?: number;
   billDueDay?: number;
-  previousBillCycleLabel?: string | null;
-  previousBillPdfUrl?: string | null;
-  previousBillPaid?: boolean;
 };
 
 function isValidDay(value: unknown): value is number {
@@ -118,9 +115,6 @@ export async function PATCH(req: Request, context: RouteContext) {
     preferredCategories: normalizeCategories(body.preferredCategories),
     billGenerationDay: body.billGenerationDay,
     billDueDay: body.billDueDay,
-    previousBillCycleLabel: body.previousBillCycleLabel,
-    previousBillPdfUrl: body.previousBillPdfUrl,
-    previousBillPaid: body.previousBillPaid,
   });
 
   if (!row) {
