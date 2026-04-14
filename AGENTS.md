@@ -12,6 +12,7 @@ This document orients coding agents and contributors to how Fintrack is organize
 
 - **Do not create git commits** unless the user explicitly asks you to commit. Implement changes and leave them **uncommitted** so the user can review the diff and commit themselves.
 - **Keep this file current:** whenever routes, APIs, schemas, architecture, conventions, or developer workflows change, update **`AGENTS.md`** in the same task so guidance stays accurate.
+- **Tests:** When you add or change behavior in **`api/`** (handlers, auth, repository, middleware, migrations), add or update **Go tests** in the same task: fast **unit tests** for pure logic (`internal/auth`, `httpx`, `middleware`, helpers) and **integration tests** against Postgres (Docker) for HTTP + SQL paths (`internal/integration`, `internal/migrate`, shared **`internal/testutil`**). Run **`cd api && make test`** before finishing. Do not merge behavior-only changes without tests unless the user explicitly excuses tests for a spike.
 
 ## Product
 
@@ -59,6 +60,13 @@ HTTP APIs for app domains are implemented in the **Go** service (**`api/`**). **
 
 **Route paths** stay aligned with **`web/src/configs/api-routes.ts`**.
 
+### Go API tests (`api/`)
+
+- **Unit tests** (`go test`, no Docker): packages such as **`internal/auth`**, **`internal/httpx`**, **`internal/middleware`**, **`internal/config`**, **`internal/handler`** (helpers), **`internal/migrate`** (`DirExists`), **`internal/repository`** (`IsUniqueViolation`), **`pkg/logger`**.
+- **Integration tests** (Docker required): **`internal/integration`** (full HTTP flows + DB), **`internal/migrate`** (`migrate_integration_test.go`), using **`internal/testutil`** to start **Postgres 16** via **testcontainers** and apply **`api/migrations/`**. If Docker is unavailable, those tests **skip** (`t.Skip`).
+- **Commands:** from **`api/`**: **`make test`** runs the full suite; **`make test-cover`** writes **`coverage.out`** and prints total statement coverage (uses **`-coverpkg=./internal/...,./pkg/...`** so integration tests count toward handler/repository coverage). See **`api/Makefile`** and **`api/README.md`**.
+- **Coverage expectations:** Combined coverage for **`internal/`** + **`pkg/`** is typically **~60%** statement coverage with the current suite (integration tests exercise happy paths across domains; **`cmd/api`** has no tests). Pushing toward **~100%** would mean many more table-driven cases (validation failures, DB errors, 404s) and/or test doubles for the DB layer—do that when a domain is high-risk or when you are hardening a specific package, not as a blanket requirement for every small change.
+
 ## Tech stack
 
 - **Framework:** Next.js (App Router), React, TypeScript.
@@ -98,6 +106,7 @@ The repo is a **two-root** layout (no npm workspaces): **`web/`** (Next.js) and 
 
 | Path                    | Purpose                                                                                                                                                                                                                                                                                      |
 | ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `.github/workflows/`    | **GitHub Actions** — e.g. **`ci.yml`** runs **`web`** and **`api`** lint + tests on push/PR.                                                                                                                                                                                                  |
 | `.githooks/`            | **Native Git hooks** (e.g. `pre-commit` → `lint-staged` in **`web/`**). Enable per clone: **`git config core.hooksPath .githooks`**.                                                                                                                                                         |
 | `api/`                  | **Go HTTP API** — `api/go.mod`, **`api/cmd/api/`**, ordered SQL in **`api/migrations/`** (applied on startup). Image: **`api/deploy/Dockerfile`**.                                                                                          |
 | `web/package.json`      | Next.js app metadata and scripts — use **`cd web`**, then **`npm install`**, **`npm run dev`**, etc.                                                                                                                                                                                          |
@@ -189,8 +198,11 @@ Commands below assume a POSIX shell. **Node** commands run from **`web/`**; **Go
 
 | Task               | Command                                                                |
 | ------------------ | ---------------------------------------------------------------------- |
+| CI (GitHub)        | **`.github/workflows/ci.yml`** on push/PR: **`web`** (`npm ci`, ESLint, `npm test`) and **`api`** (`golangci-lint`, `go test ./...`). API tests need Docker (testcontainers). |
 | Dev — Next (local) | `cd web && npm run dev`                                                |
 | Dev — Go API       | `cd api && go run ./cmd/api`                                           |
+| Test — Go API      | `cd api && make test` (integration tests need **Docker** for Postgres) |
+| Coverage — Go API  | `cd api && make test-cover` (writes **`api/coverage.out`**)            |
 | Lint               | `cd web && npm run lint`                                               |
 | Test (placeholder) | `cd web && npm run test` (currently lint; extend with a real runner when needed) |
 | Production build   | `cd web && npm run build` then `cd web && npm run start`                |
