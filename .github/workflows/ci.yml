@@ -53,12 +53,10 @@ jobs:
           go-version-file: api/go.mod
           cache-dependency-path: api/go.sum
 
-      # v1.x binaries are built with Go 1.24 and fail on go 1.25+ in go.mod ("targeted Go version").
-      # Use golangci-lint v2.x (built with Go 1.25+).
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v6
         with:
-          version: v2.11.4
+          version: latest
           working-directory: api
           args: --timeout=5m
 
