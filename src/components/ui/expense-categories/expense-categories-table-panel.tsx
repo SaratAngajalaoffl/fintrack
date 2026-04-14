@@ -30,6 +30,7 @@ import {
   TableComponent,
   type TableToolbarChip,
 } from "@/components/ui/common/table-component";
+import { getAppRoute } from "@/configs/app-routes";
 import { expenseCategoriesListHref } from "@/lib/expense-categories/list-state";
 import type {
   CatppuccinMochaColor,
@@ -173,7 +174,7 @@ function SearchForm({ base }: { base: ExpenseCategoriesListState }) {
   return (
     <form
       method="get"
-      action="/dashboard/expenses"
+      action={getAppRoute("dashboardExpenseCategories")}
       className="flex max-w-full items-center gap-1.5"
       role="search"
     >

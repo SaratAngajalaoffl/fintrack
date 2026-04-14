@@ -2,8 +2,9 @@ import type {
   ExpenseCategoriesListState,
   ExpenseCategoryRow,
 } from "@/lib/expense-categories/types";
+import { getAppRoute } from "@/configs/app-routes";
 
-const PATH = "/dashboard/expenses";
+const PATH = getAppRoute("dashboardExpenseCategories");
 
 function first(value: string | string[] | undefined): string | undefined {
   if (Array.isArray(value)) return value[0];

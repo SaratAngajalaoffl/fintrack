@@ -29,6 +29,7 @@ import {
   TableComponent,
   type TableToolbarChip,
 } from "@/components/ui/common/table-component";
+import { getAppRoute } from "@/configs/app-routes";
 import type {
   BankAccountRow,
   BankAccountsListState,
@@ -237,7 +238,7 @@ function SearchForm({ base }: { base: BankAccountsListState }) {
   return (
     <form
       method="get"
-      action="/dashboard/bank-accounts"
+      action={getAppRoute("dashboardBankAccounts")}
       className="flex max-w-full items-center gap-1.5"
       role="search"
     >

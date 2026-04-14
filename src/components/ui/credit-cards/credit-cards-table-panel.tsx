@@ -39,6 +39,7 @@ import {
   TableComponent,
   type TableToolbarChip,
 } from "@/components/ui/common/table-component";
+import { getAppRoute } from "@/configs/app-routes";
 import {
   creditCardsListHref,
   getBillGenerationInDays,
@@ -413,7 +414,7 @@ function SearchForm({ base }: { base: CreditCardsListState }) {
   return (
     <form
       method="get"
-      action="/dashboard/credit-cards"
+      action={getAppRoute("dashboardCreditCards")}
       className="flex max-w-full items-center gap-1.5"
       role="search"
     >

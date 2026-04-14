@@ -28,13 +28,22 @@ const appRoutes = {
     path: "/dashboard",
   },
   dashboardIncome: {
-    path: "/dashboard/income",
+    path: "/dashboard/receivables/income",
   },
   dashboardExpenses: {
-    path: "/dashboard/expenses",
+    path: "/dashboard/expenses/my-expenses",
+  },
+  dashboardExpenseEmis: {
+    path: "/dashboard/expenses/emis",
+  },
+  dashboardExpenseLoans: {
+    path: "/dashboard/expenses/loans",
   },
   dashboardCreditCards: {
-    path: "/dashboard/credit-cards",
+    path: "/dashboard/credit-cards/my-credit-cards",
+  },
+  dashboardCreditCardBills: {
+    path: "/dashboard/credit-cards/bills",
   },
   dashboardChangePassword: {
     path: "/dashboard/change-password",
@@ -43,7 +52,31 @@ const appRoutes = {
     path: "/dashboard/account-settings",
   },
   dashboardBankAccounts: {
-    path: "/dashboard/bank-accounts",
+    path: "/dashboard/bank-accounts/my-bank-accounts",
+  },
+  dashboardBankStatements: {
+    path: "/dashboard/bank-accounts/statements",
+  },
+  dashboardLending: {
+    path: "/dashboard/receivables/lending",
+  },
+  dashboardTransactionsInternal: {
+    path: "/dashboard/transactions/internal",
+  },
+  dashboardTransactionsCredits: {
+    path: "/dashboard/transactions/credits",
+  },
+  dashboardTransactionsDebits: {
+    path: "/dashboard/transactions/debits",
+  },
+  dashboardExpenseCategories: {
+    path: "/dashboard/organisation/expense-categories",
+  },
+  dashboardFundBuckets: {
+    path: "/dashboard/organisation/fund-buckets",
+  },
+  dashboardExpenseGroups: {
+    path: "/dashboard/organisation/expense-groups",
   },
 } as const;
 

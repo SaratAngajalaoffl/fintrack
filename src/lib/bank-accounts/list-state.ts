@@ -1,6 +1,7 @@
 import type { BankAccountsListState } from "@/lib/bank-accounts/types";
+import { getAppRoute } from "@/configs/app-routes";
 
-const PATH = "/dashboard/bank-accounts";
+const PATH = getAppRoute("dashboardBankAccounts");
 
 function first(value: string | string[] | undefined): string | undefined {
   if (Array.isArray(value)) return value[0];

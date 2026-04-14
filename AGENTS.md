@@ -19,17 +19,26 @@ This document orients coding agents and contributors to how Fintrack is organize
 
 ### Domain: bank accounts
 
-- **Routes:** `/dashboard/bank-accounts` (list + add-account dialog + table toolbar: search / type filter / sort via query string).
+- **Routes:** `/dashboard/bank-accounts/my-bank-accounts` (**My Bank Accounts**) and `/dashboard/bank-accounts/statements` (**Bank Statements**). Keep `/dashboard/bank-accounts` as a redirect-only compatibility route.
 - **Code:** Domain types, URL state parsing, and mock rows live under **`src/lib/bank-accounts/`**. Composed screen UI lives under **`src/components/ui/bank-accounts/`**. Shared primitives for this area: **`ChipComponent`** (`src/components/ui/common/chip/`) and **`TableComponent`** (`src/components/ui/common/table-component/`) — export from `@/components/ui`.
 - **API:** endpoints under `src/app/api/bank-accounts/` (`GET`/`POST`) and `src/app/api/bank-accounts/[accountId]/` (`GET`/`PATCH`/`DELETE`), backed by services in `src/services/bank-accounts/`.
 - **Persistence:** Planned tables and fields (accounts, buckets, balances, last credit/debit times) are documented in **[docs/data-model.md](docs/data-model.md)**. Update that file when migrations or API shapes change.
 
 ### Domain: credit cards
 
-- **Routes:** `/dashboard/credit-cards` (list + add-card dialog + table toolbar: search / preferred category filter / sort via query string).
+- **Routes:** `/dashboard/credit-cards/my-credit-cards` (**My Credit Cards**) and `/dashboard/credit-cards/bills` (**Credit Card Bills**). Keep `/dashboard/credit-cards` as a redirect-only compatibility route.
 - **Code:** Domain types and list URL state live under **`src/lib/credit-cards/`**. Composed screen UI lives under **`src/components/ui/credit-cards/`**.
 - **API:** endpoints under `src/app/api/credit-cards/` (`GET`/`POST`) and `src/app/api/credit-cards/[cardId]/` (`GET`/`PATCH`/`DELETE`), backed by services in `src/services/credit-cards/`.
 - **Persistence:** Core card settings live in `credit_cards`; bill records are normalized in **`credit_card_bills`** (migration `010_credit_card_bills.sql`). Do not reintroduce `previous_bill_*` fields on `credit_cards`.
+
+### Dashboard navigation map
+
+- **Bank Accounts:** `/dashboard/bank-accounts/my-bank-accounts` (My Bank Accounts), `/dashboard/bank-accounts/statements` (Bank Statements).
+- **Credit Cards:** `/dashboard/credit-cards/my-credit-cards` (My Credit Cards), `/dashboard/credit-cards/bills` (Credit Card Bills).
+- **Expenses:** `/dashboard/expenses/my-expenses` (My Expenses), `/dashboard/expenses/emis` (EMIs), `/dashboard/expenses/loans` (Loans).
+- **Receivables:** `/dashboard/receivables/income` (Income), `/dashboard/receivables/lending` (Lending).
+- **Transactions:** `/dashboard/transactions/internal` (Internal), `/dashboard/transactions/credits` (Credits), `/dashboard/transactions/debits` (Debits).
+- **Organisation:** `/dashboard/organisation/expense-categories` (Expense Categories), `/dashboard/organisation/fund-buckets` (Fund Buckets), `/dashboard/organisation/expense-groups` (Expense Groups).
 
 ## Tech stack
 
