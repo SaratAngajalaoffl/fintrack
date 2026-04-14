@@ -1,6 +1,7 @@
 import { ArrowDownUp, Filter, Search } from "lucide-react";
 import Link from "next/link";
 
+import { useUserProfile } from "@/components/hooks";
 import { Button } from "@/components/ui";
 import { ChipComponent } from "@/components/ui/common/chip";
 import {
@@ -25,10 +26,10 @@ function accountTypeLabel(type: BankAccountRow["accountType"]): string {
   return type === "savings" ? "Savings" : "Current";
 }
 
-function money(value: number) {
+function money(value: number, currency: string) {
   return formatNumber(value, "en-US", {
     style: "currency",
-    currency: "USD",
+    currency,
   });
 }
 
@@ -247,6 +248,8 @@ export function BankAccountsTablePanel({
   listState,
   rows,
 }: BankAccountsTablePanelProps) {
+  const { user } = useUserProfile();
+  const preferredCurrency = user?.preferredCurrency ?? "USD";
   const activeChips = buildActiveToolbarChips(listState);
 
   return (
@@ -307,13 +310,13 @@ export function BankAccountsTablePanel({
                   {accountTypeLabel(row.accountType)}
                 </td>
                 <td className="whitespace-nowrap px-4 py-3 text-right tabular-nums">
-                  {money(row.balance)}
+                  {money(row.balance, preferredCurrency)}
                 </td>
                 <td className="whitespace-nowrap px-4 py-3 text-right tabular-nums">
-                  {money(row.creditsThisMonth)}
+                  {money(row.creditsThisMonth, preferredCurrency)}
                 </td>
                 <td className="whitespace-nowrap px-4 py-3 text-right tabular-nums">
-                  {money(row.debitsThisMonth)}
+                  {money(row.debitsThisMonth, preferredCurrency)}
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex max-w-56 flex-wrap gap-1.5">

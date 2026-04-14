@@ -13,6 +13,7 @@ import {
   SheetTrigger,
 } from "@/components/ui";
 
+import { DashboardAccountSettingsLink } from "./dashboard-account-settings-link";
 import { DashboardSidebarGreeting } from "./dashboard-sidebar-greeting";
 import { DashboardSidebarLogout } from "./dashboard-sidebar-logout";
 import { DashboardNavLinkList } from "./dashboard-nav-link-list";
@@ -51,6 +52,9 @@ export function DashboardMobileNav({ email }: DashboardMobileNavProps) {
               onNavigate={() => setOpen(false)}
             />
             <DashboardNavLinkList onNavigate={() => setOpen(false)} />
+            <div className="space-y-2">
+              <DashboardAccountSettingsLink onNavigate={() => setOpen(false)} />
+            </div>
             <div className="border-t border-border/60 pt-3">
               <DashboardSidebarLogout />
             </div>

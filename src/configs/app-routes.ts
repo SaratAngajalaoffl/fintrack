@@ -39,11 +39,11 @@ const appRoutes = {
   dashboardChangePassword: {
     path: "/dashboard/change-password",
   },
+  dashboardAccountSettings: {
+    path: "/dashboard/account-settings",
+  },
   dashboardBankAccounts: {
     path: "/dashboard/bank-accounts",
-  },
-  dashboardBankAccountsNew: {
-    path: "/dashboard/bank-accounts/new",
   },
 } as const;
 

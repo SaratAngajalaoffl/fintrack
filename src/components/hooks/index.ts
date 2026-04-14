@@ -1,4 +1,5 @@
 export { useMouseReactiveGradient } from "./use-mouse-reactive-gradient";
+export { UserProfileProvider, useUserProfile } from "./use-user-profile";
 export {
   useMutateLogin,
   useMutateSignup,
@@ -8,4 +9,7 @@ export {
   useMutateRequestChangePasswordOtp,
   useMutateLogout,
   useGetBankAccounts,
+  useMutateCreateBankAccount,
+  useGetCurrentUser,
+  useMutateUpdateUserProfile,
 } from "./queries";

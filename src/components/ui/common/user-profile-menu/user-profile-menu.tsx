@@ -60,6 +60,11 @@ export function UserProfileMenu({ email }: UserProfileMenuProps) {
           <Link href={getAppRoute("dashboard")}>My Dashboard</Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
+          <Link href={getAppRoute("dashboardAccountSettings")}>
+            Account settings
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
           <Link href={getAppRoute("dashboardChangePassword")}>
             Change password
           </Link>

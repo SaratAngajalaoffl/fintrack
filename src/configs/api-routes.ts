@@ -23,6 +23,14 @@ const apiRoutes = {
   authChangePassword: {
     path: "/api/auth/change-password",
   },
+  bankAccounts: {
+    path: "/api/bank-accounts",
+  },
+  bankAccountById: {
+    path: "/api/bank-accounts/:accountId",
+    create: (params: { accountId: string }) =>
+      `/api/bank-accounts/${encodeURIComponent(params.accountId)}`,
+  },
 } as const;
 
 type ApiRoutes = typeof apiRoutes;

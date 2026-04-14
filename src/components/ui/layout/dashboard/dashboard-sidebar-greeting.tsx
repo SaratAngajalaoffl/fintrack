@@ -3,7 +3,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import * as React from "react";
 
+import { useUserProfile } from "@/components/hooks";
 import { getAppRoute } from "@/configs/app-routes";
 import { dicebearThumbsAvatarUrl } from "@/lib/avatars/dicebear-thumbs";
 import { cn } from "@/lib/utils";
@@ -39,12 +41,19 @@ export function DashboardSidebarGreeting({
   onNavigate,
 }: DashboardSidebarGreetingProps) {
   const pathname = usePathname();
+  const { user } = useUserProfile();
   const isOverview = pathname === getAppRoute("dashboard");
+  const [greeting, setGreeting] = React.useState("Welcome");
+
+  React.useEffect(() => {
+    setGreeting(timeOfDayGreeting());
+  }, []);
+
   const avatarUrl = dicebearThumbsAvatarUrl(
     email.trim() || "user",
     AVATAR_SIZE,
   );
-  const name = displayNameFromEmail(email);
+  const name = user?.name?.trim() || displayNameFromEmail(email);
 
   return (
     <div className={cn("border-b border-border/60 pb-3", className)}>
@@ -67,7 +76,7 @@ export function DashboardSidebarGreeting({
           unoptimized
         />
         <div className="min-w-0 flex-1 text-left">
-          <p className="text-xs text-subtext-1">{timeOfDayGreeting()}</p>
+          <p className="text-xs text-subtext-1">{greeting}</p>
           <p className="truncate font-medium text-foreground">{name}</p>
         </div>
       </Link>

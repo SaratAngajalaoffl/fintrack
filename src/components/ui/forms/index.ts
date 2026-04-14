@@ -1,3 +1,4 @@
+export { AccountSettingsForm } from "./account-settings-form";
 export { ChangePasswordForm } from "./change-password-form";
 export { ForgotPasswordForm } from "./forgot-password-form";
 export { LoginForm } from "./login-form";

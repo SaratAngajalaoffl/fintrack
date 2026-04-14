@@ -1,8 +1,7 @@
-import Link from "next/link";
-
-import { Button } from "@/components/ui";
-import { BankAccountsDataPanel } from "@/components/ui/bank-accounts";
-import { getAppRoute } from "@/configs/app-routes";
+import {
+  BankAccountCreateDialog,
+  BankAccountsDataPanel,
+} from "@/components/ui/bank-accounts";
 import { parseBankAccountsListState } from "@/lib/bank-accounts/list-state";
 
 export const metadata = {
@@ -23,11 +22,7 @@ export default async function BankAccountsPage({ searchParams }: PageProps) {
         <h1 className="text-3xl font-semibold tracking-tight text-foreground">
           Bank Accounts
         </h1>
-        <Button asChild className="shrink-0">
-          <Link href={getAppRoute("dashboardBankAccountsNew")}>
-            Add new account
-          </Link>
-        </Button>
+        <BankAccountCreateDialog />
       </div>
 
       <BankAccountsDataPanel listState={listState} />

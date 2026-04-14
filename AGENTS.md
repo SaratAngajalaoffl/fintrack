@@ -18,8 +18,9 @@ This document orients coding agents and contributors to how Fintrack is organize
 
 ### Domain: bank accounts
 
-- **Routes:** `/dashboard/bank-accounts` (list and table toolbar: search / type filter / sort via query string); `/dashboard/bank-accounts/new` (placeholder until the add flow ships).
+- **Routes:** `/dashboard/bank-accounts` (list + add-account dialog + table toolbar: search / type filter / sort via query string).
 - **Code:** Domain types, URL state parsing, and mock rows live under **`src/lib/bank-accounts/`**. Composed screen UI lives under **`src/components/ui/bank-accounts/`**. Shared primitives for this area: **`ChipComponent`** (`src/components/ui/common/chip/`) and **`TableComponent`** (`src/components/ui/common/table-component/`) — export from `@/components/ui`.
+- **API:** endpoints under `src/app/api/bank-accounts/` (`GET`/`POST`) and `src/app/api/bank-accounts/[accountId]/` (`GET`/`PATCH`/`DELETE`), backed by services in `src/services/bank-accounts/`.
 - **Persistence:** Planned tables and fields (accounts, buckets, balances, last credit/debit times) are documented in **[docs/data-model.md](docs/data-model.md)**. Update that file when migrations or API shapes change.
 
 ## Tech stack

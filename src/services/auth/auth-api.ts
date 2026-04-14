@@ -1,4 +1,5 @@
 import { getApiRoute } from "@/configs/api-routes";
+import type { SupportedCurrency } from "@/lib/user-profile";
 
 export type ApiErrorBody = {
   error?: string;
@@ -25,8 +26,10 @@ export async function loginRequest(payload: {
 }
 
 export async function signupRequest(payload: {
+  name: string;
   email: string;
   password: string;
+  preferredCurrency: SupportedCurrency;
 }) {
   const res = await fetch(getApiRoute("authSignup"), {
     method: "POST",
@@ -35,6 +38,42 @@ export async function signupRequest(payload: {
   });
   const body = await readJson<ApiErrorBody>(res);
   if (!res.ok) throw new Error(body.error ?? "Could not create account");
+  return body;
+}
+
+export type AuthUser = {
+  id: string;
+  email: string;
+  isApproved: boolean;
+  name: string;
+  preferredCurrency: SupportedCurrency;
+};
+
+export async function getCurrentUserRequest() {
+  const res = await fetch(getApiRoute("authMe"), {
+    method: "GET",
+    credentials: "include",
+  });
+  const body = await readJson<{ user?: AuthUser } & ApiErrorBody>(res);
+  if (res.status === 401) return { user: null };
+  if (!res.ok) throw new Error(body.error ?? "Could not load user profile");
+  return { user: body.user ?? null };
+}
+
+export async function updateUserProfileRequest(payload: {
+  name?: string;
+  preferredCurrency?: SupportedCurrency;
+}) {
+  const res = await fetch(getApiRoute("authMe"), {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify(payload),
+  });
+  const body = await readJson<{ user?: AuthUser } & ApiErrorBody>(res);
+  if (!res.ok) {
+    throw new Error(body.error ?? "Could not update profile");
+  }
   return body;
 }
 

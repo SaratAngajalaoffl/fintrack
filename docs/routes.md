@@ -16,3 +16,17 @@ Fintrack keeps route constants in `src/configs/` to avoid scattering literal pat
 - Prefer `getAppRoute("...")` and `getApiRoute("...")` over hardcoded paths.
 - When adding a new page route or API endpoint, update the corresponding config in the same PR.
 - If a route needs params or query strings, add a `create()` function on that route entry to generate the full URL in one place.
+
+## Bank account API routes
+
+- `getApiRoute("bankAccounts")` → `GET` (list), `POST` (create)
+- `getApiRoute("bankAccountById", { accountId })` → `GET` (single), `PATCH` (update), `DELETE` (remove)
+
+## Auth profile API route
+
+- `getApiRoute("authMe")` → `GET` (current authenticated user + profile), `PATCH` (update profile fields like `name` and `preferredCurrency`)
+
+## Dashboard account settings route
+
+- `getAppRoute("dashboardAccountSettings")` → `/dashboard/account-settings`
+- Current settings: editable `name` and `preferredCurrency` (more options can be added later)

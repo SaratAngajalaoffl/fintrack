@@ -1,3 +1,4 @@
+import { useUserProfile } from "@/components/hooks";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
 import { formatNumber } from "@/lib/formatting/number-formatting";
 
@@ -12,9 +13,10 @@ export function BankAccountsSummaryCards({
   totalBalances,
   totalBuckets,
 }: BankAccountsSummaryCardsProps) {
+  const { user } = useUserProfile();
   const balanceLabel = formatNumber(totalBalances, "en-US", {
     style: "currency",
-    currency: "USD",
+    currency: user?.preferredCurrency ?? "USD",
   });
 
   return (

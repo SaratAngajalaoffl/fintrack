@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Montserrat } from "next/font/google";
+import { UserProfileProvider } from "@/components/hooks";
 import { InteractiveBackground } from "@/components/ui/common/background";
 import { SiteHeader } from "@/components/ui/common/header";
 import { Toaster } from "@/components/ui/common/toast";
@@ -33,16 +34,18 @@ export default function RootLayout({
     <html lang="en" className={`${montserrat.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col font-sans">
         <ReactQueryProvider>
-          <TooltipProvider>
-            <div className="relative flex min-h-full flex-1 flex-col">
-              <InteractiveBackground />
-              <div className="relative z-10 flex min-h-full flex-1 flex-col">
-                <SiteHeader />
-                <div className="flex flex-1 flex-col">{children}</div>
+          <UserProfileProvider>
+            <TooltipProvider>
+              <div className="relative flex min-h-full flex-1 flex-col">
+                <InteractiveBackground />
+                <div className="relative z-10 flex min-h-full flex-1 flex-col">
+                  <SiteHeader />
+                  <div className="flex flex-1 flex-col">{children}</div>
+                </div>
+                <Toaster />
               </div>
-              <Toaster />
-            </div>
-          </TooltipProvider>
+            </TooltipProvider>
+          </UserProfileProvider>
         </ReactQueryProvider>
       </body>
     </html>

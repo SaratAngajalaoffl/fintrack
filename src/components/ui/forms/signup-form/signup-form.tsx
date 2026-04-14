@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import * as React from "react";
+import { Controller } from "react-hook-form";
 import { useForm } from "react-hook-form";
 
 import { useMutateSignup } from "@/components/hooks";
@@ -13,27 +14,40 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
+  SelectField,
   TextField,
 } from "@/components/ui";
 import { toast } from "@/components/ui/common/toast";
 import { getAppRoute } from "@/configs/app-routes";
+import {
+  SUPPORTED_CURRENCIES,
+  type SupportedCurrency,
+} from "@/lib/user-profile";
 
 type SignupValues = {
+  name: string;
   email: string;
   password: string;
+  preferredCurrency: SupportedCurrency;
 };
 
 export function SignupForm() {
   const signupMutation = useMutateSignup();
 
   const {
+    control,
     register,
     handleSubmit,
     reset,
     formState: { errors, isSubmitting },
     clearErrors,
   } = useForm<SignupValues>({
-    defaultValues: { email: "", password: "" },
+    defaultValues: {
+      name: "",
+      email: "",
+      password: "",
+      preferredCurrency: "USD",
+    },
   });
 
   async function onSubmit(data: SignupValues) {
@@ -62,11 +76,23 @@ export function SignupForm() {
           Create an account
         </CardTitle>
         <CardDescription>
-          Choose an email and a password (at least 8 characters).
+          Add your profile details to personalize your account.
         </CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit(onSubmit)} noValidate>
         <CardContent className="space-y-4">
+          <TextField
+            label="Name"
+            autoComplete="name"
+            error={errors.name?.message}
+            {...register("name", {
+              required: "Name is required",
+              minLength: {
+                value: 2,
+                message: "Name must be at least 2 characters",
+              },
+            })}
+          />
           <TextField
             label="Email"
             type="email"
@@ -79,6 +105,23 @@ export function SignupForm() {
                 message: "Enter a valid email",
               },
             })}
+          />
+          <Controller
+            control={control}
+            name="preferredCurrency"
+            rules={{ required: "Preferred currency is required" }}
+            render={({ field }) => (
+              <SelectField
+                label="Preferred currency"
+                value={field.value}
+                onValueChange={field.onChange}
+                options={SUPPORTED_CURRENCIES.map((currency) => ({
+                  value: currency,
+                  label: currency,
+                }))}
+                error={errors.preferredCurrency?.message}
+              />
+            )}
           />
           <TextField
             label="Password"

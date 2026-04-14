@@ -1,19 +1,49 @@
-import { MOCK_BANK_ACCOUNTS } from "@/lib/bank-accounts/mock-data";
-import type { BankAccountRow } from "@/lib/bank-accounts/types";
+import { getApiRoute } from "@/configs/api-routes";
+import type {
+  BankAccountRow,
+  BankAccountType,
+} from "@/lib/bank-accounts/types";
 
-const MOCK_DELAY_MS = 2_000;
-
-function wait(ms: number) {
-  return new Promise((resolve) => {
-    setTimeout(resolve, ms);
+export async function getBankAccountsRequest(): Promise<BankAccountRow[]> {
+  const res = await fetch(getApiRoute("bankAccounts"), {
+    method: "GET",
+    credentials: "include",
   });
+  const body = (await res.json().catch(() => ({}))) as {
+    error?: string;
+    rows?: BankAccountRow[];
+  };
+  if (!res.ok) {
+    throw new Error(body.error ?? "Could not load bank accounts");
+  }
+  return body.rows ?? [];
 }
 
-/**
- * Temporary mocked fetch until backend endpoint is ready.
- * Keep this signature stable so callers can switch to real API seamlessly.
- */
-export async function getBankAccountsRequest(): Promise<BankAccountRow[]> {
-  await wait(MOCK_DELAY_MS);
-  return MOCK_BANK_ACCOUNTS;
+export type CreateBankAccountPayload = {
+  name: string;
+  description?: string;
+  initialBalance: number;
+  accountType: BankAccountType;
+};
+
+export async function createBankAccountRequest(
+  payload: CreateBankAccountPayload,
+) {
+  const res = await fetch(getApiRoute("bankAccounts"), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify(payload),
+  });
+  const body = (await res.json().catch(() => ({}))) as {
+    error?: string;
+    row?: BankAccountRow;
+  };
+  if (!res.ok) {
+    throw new Error(body.error ?? "Could not create bank account");
+  }
+  if (!body.row) {
+    throw new Error("Bank account was created but no row was returned");
+  }
+  return body.row;
 }
