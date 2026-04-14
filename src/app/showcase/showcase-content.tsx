@@ -44,6 +44,12 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
   TextareaField,
   TextField,
   Tooltip,
@@ -108,6 +114,7 @@ function IconPlus({ className }: { className?: string }) {
 
 export function ShowcaseContent() {
   const [dialogOpen, setDialogOpen] = React.useState(false);
+  const [sheetOpen, setSheetOpen] = React.useState(false);
   const [multi, setMulti] = React.useState<string[]>(["checking"]);
   const [selectField, setSelectField] = React.useState("savings");
   const [selectRaw, setSelectRaw] = React.useState("checking");
@@ -508,6 +515,35 @@ export function ShowcaseContent() {
                     </DialogFooter>
                   </DialogContent>
                 </Dialog>
+              </CardContent>
+            </Card>
+          </Section>
+
+          <Section
+            title="Sheet"
+            description="Slides in from the right — used for the dashboard mobile menu."
+          >
+            <Card>
+              <CardContent className="pt-6">
+                <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+                  <SheetTrigger asChild>
+                    <Button variant="outline" type="button">
+                      Open sheet
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent>
+                    <SheetHeader>
+                      <SheetTitle>Example sheet</SheetTitle>
+                      <SheetDescription>
+                        Same Radix dialog primitive as the modal, with a
+                        right-edge panel layout.
+                      </SheetDescription>
+                    </SheetHeader>
+                    <p className="text-sm text-subtext-1">
+                      Close with the button above or the × control.
+                    </p>
+                  </SheetContent>
+                </Sheet>
               </CardContent>
             </Card>
           </Section>
