@@ -1,13 +1,13 @@
 # Route configuration
 
-Fintrack keeps route constants in `src/configs/` to avoid scattering literal path strings across UI and API callers.
+Fintrack keeps route constants in `web/src/configs/` to avoid scattering literal path strings across UI and API callers.
 
 ## Files
 
-- `src/configs/app-routes.ts`
+- `web/src/configs/app-routes.ts`
   - Defines app/page routes.
   - Exports `getAppRoute()` for typed route access.
-- `src/configs/api-routes.ts`
+- `web/src/configs/api-routes.ts`
   - Defines API endpoint routes.
   - Exports `getApiRoute()` for typed endpoint access.
 

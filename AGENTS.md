@@ -20,22 +20,22 @@ This document orients coding agents and contributors to how Fintrack is organize
 ### Domain: bank accounts
 
 - **Routes:** `/dashboard/bank-accounts/my-bank-accounts` (**My Bank Accounts**) and `/dashboard/bank-accounts/statements` (**Bank Statements**). Keep `/dashboard/bank-accounts` as a redirect-only compatibility route.
-- **Code:** Domain types, URL state parsing, and mock rows live under **`src/lib/bank-accounts/`**. Composed screen UI lives under **`src/components/ui/bank-accounts/`**. Shared primitives for this area: **`ChipComponent`** (`src/components/ui/common/chip/`) and **`TableComponent`** (`src/components/ui/common/table-component/`) — export from `@/components/ui`.
-- **API:** endpoints under `src/app/api/bank-accounts/` (`GET`/`POST`) and `src/app/api/bank-accounts/[accountId]/` (`GET`/`PATCH`/`DELETE`), backed by services in `src/services/bank-accounts/`.
+- **Code:** Domain types, URL state parsing, and mock rows live under **`web/src/lib/bank-accounts/`**. Composed screen UI lives under **`web/src/components/ui/bank-accounts/`**. Shared primitives for this area: **`ChipComponent`** (`web/src/components/ui/common/chip/`) and **`TableComponent`** (`web/src/components/ui/common/table-component/`) — export from `@/components/ui`.
+- **API:** endpoints under `web/src/app/api/bank-accounts/` (`GET`/`POST`) and `web/src/app/api/bank-accounts/[accountId]/` (`GET`/`PATCH`/`DELETE`), backed by services in `web/src/services/bank-accounts/`.
 - **Persistence:** Core account settings live in `bank_accounts`; virtual buckets are normalized in `bank_account_buckets`; preferred categories are normalized in `bank_account_preferred_categories` (migration `012_bank_account_preferred_category_links.sql`). Planned/implemented fields are documented in **[docs/data-model.md](docs/data-model.md)**. Update that file when migrations or API shapes change.
 
 ### Domain: credit cards
 
 - **Routes:** `/dashboard/credit-cards/my-credit-cards` (**My Credit Cards**) and `/dashboard/credit-cards/bills` (**Credit Card Bills**). Keep `/dashboard/credit-cards` as a redirect-only compatibility route.
-- **Code:** Domain types and list URL state live under **`src/lib/credit-cards/`**. Composed screen UI lives under **`src/components/ui/credit-cards/`**.
-- **API:** endpoints under `src/app/api/credit-cards/` (`GET`/`POST`) and `src/app/api/credit-cards/[cardId]/` (`GET`/`PATCH`/`DELETE`), backed by services in `src/services/credit-cards/`.
+- **Code:** Domain types and list URL state live under **`web/src/lib/credit-cards/`**. Composed screen UI lives under **`web/src/components/ui/credit-cards/`**.
+- **API:** endpoints under `web/src/app/api/credit-cards/` (`GET`/`POST`) and `web/src/app/api/credit-cards/[cardId]/` (`GET`/`PATCH`/`DELETE`), backed by services in `web/src/services/credit-cards/`.
 - **Persistence:** Core card settings live in `credit_cards`; preferred categories are normalized in **`credit_card_preferred_categories`** (migration `009_credit_card_preferred_category_links.sql`); bill records are normalized in **`credit_card_bills`** (migration `010_credit_card_bills.sql`). Do not reintroduce `preferred_categories` or `previous_bill_*` fields on `credit_cards`.
 
 ### Domain: fund buckets
 
 - **Routes:** `/dashboard/organisation/fund-buckets` (**Fund Buckets**).
-- **Code:** Domain types live under **`src/lib/fund-buckets/`**.
-- **API:** endpoints under `src/app/api/fund-buckets/` — `GET`/`POST` on the root route and action routes for `POST /[bucketId]/allocate`, `POST /[bucketId]/unlock`, and `PATCH /[bucketId]/priority`, backed by services in `src/services/fund-buckets/`.
+- **Code:** Domain types live under **`web/src/lib/fund-buckets/`**.
+- **API:** endpoints under `web/src/app/api/fund-buckets/` — `GET`/`POST` on the root route and action routes for `POST /[bucketId]/allocate`, `POST /[bucketId]/unlock`, and `PATCH /[bucketId]/priority`, backed by services in `web/src/services/fund-buckets/`.
 - **Persistence:** Fund buckets live in **`fund_buckets`** (migration `013_fund_buckets.sql`) with lock state (`is_locked`), progress (`current_value`), and priority (`high`/`medium`/`low`).
 
 ### Dashboard navigation map
@@ -47,17 +47,27 @@ This document orients coding agents and contributors to how Fintrack is organize
 - **Transactions:** `/dashboard/transactions/internal` (Internal), `/dashboard/transactions/credits` (Credits), `/dashboard/transactions/debits` (Debits).
 - **Organisation:** `/dashboard/organisation/expense-categories` (Expense Categories), `/dashboard/organisation/fund-buckets` (Fund Buckets), `/dashboard/organisation/expense-groups` (Expense Groups).
 
+## Monorepo migration (Go API + Next.js)
+
+HTTP APIs currently live in **Next.js Route Handlers** (`web/src/app/api/**`). The long-term split is:
+
+- **API:** Dedicated **Go** service in **`api/`** (implemented incrementally).
+- **Frontend:** **Next.js** under **`web/`** — UI, SSR, and calling the API via **`web/src/services/`** and React Query.
+
+**Phased plan, route inventory, and folder layout** are in **[docs/monorepo-migration.md](docs/monorepo-migration.md)**. Update that doc as phases land. Until a phase explicitly moves a route, treat existing paths in **`web/src/configs/api-routes.ts`** and **`web/src/app/api/`** as the source of truth.
+
 ## Tech stack
 
 - **Framework:** Next.js (App Router), React, TypeScript.
-- **Styling:** Tailwind CSS v4. Theme tokens live in `src/app/globals.css` (`@import "tailwindcss"` + `@theme inline`). **Catppuccin Mocha** is the app palette: **red** (`#f38ba8`) as `primary`, **mauve** (`#cba6f7`) as `secondary`. Named Mocha colors are exposed as Tailwind colors: `text-text`, `text-subtext-1`, `text-subtext-0`, `bg-overlay-*`, `bg-surface-*`, `bg-base`, `bg-mantle`, `bg-crust`, etc. Prefer semantic roles where they fit: `bg-background`, `text-foreground`, `text-primary`, `bg-secondary`, `border-border`.
+- **API (planned):** Go service in **`api/`**; see [Monorepo migration](#monorepo-migration-go-api--nextjs). Until migration phases complete, Route Handlers under **`web/src/app/api/`** remain in use.
+- **Styling:** Tailwind CSS v4. Theme tokens live in `web/src/app/globals.css` (`@import "tailwindcss"` + `@theme inline`). **Catppuccin Mocha** is the app palette: **red** (`#f38ba8`) as `primary`, **mauve** (`#cba6f7`) as `secondary`. Named Mocha colors are exposed as Tailwind colors: `text-text`, `text-subtext-1`, `text-subtext-0`, `bg-overlay-*`, `bg-surface-*`, `bg-base`, `bg-mantle`, `bg-crust`, etc. Prefer semantic roles where they fit: `bg-background`, `text-foreground`, `text-primary`, `bg-secondary`, `border-border`.
 - **Client data layer:** `@tanstack/react-query` powers browser-side API calls (mutations/queries) behind a small `ReactQueryProvider` client boundary in root layout. Keep routes and non-interactive UI as Server Components.
-- **Fonts:** **Montserrat** via `next/font/google` in `src/app/layout.tsx` (`--font-montserrat`), applied to both `--font-sans` and `--font-mono` in `@theme inline` so UI and numeric lines share one family.
+- **Fonts:** **Montserrat** via `next/font/google` in `web/src/app/layout.tsx` (`--font-montserrat`), applied to both `--font-sans` and `--font-mono` in `@theme inline` so UI and numeric lines share one family.
 - **Database:** PostgreSQL. SQL migrations live in `migrations/` at the repo root. Docker Compose runs a one-shot `migrate` service before `web` / `test`; see `deploy/docker/scripts/run-migrations.sh` and `deploy/compose/*.yml`.
 
 ## Next.js version note
 
-This project may use a newer Next.js than older training data. Prefer **local** sources: `node_modules/next` types, `next.config.ts`, and official docs for the installed version. If something looks deprecated, verify before relying on it.
+This project may use a newer Next.js than older training data. Prefer **local** sources: **`web/node_modules/next`** types, **`web/next.config.ts`**, and official docs for the installed version. If something looks deprecated, verify before relying on it.
 
 ## React Server Components (default)
 
@@ -66,60 +76,64 @@ The App Router treats modules as **Server Components** unless the file starts wi
 1. **Prefer server for app code:** `page.tsx`, `layout.tsx`, and feature UI should be Server Components when possible. They can `import` client components as children; the server file itself stays a server module.
 2. **Add `"use client"` only when needed:** `useState`, `useEffect`, other hooks, browser APIs (`window`, `document`, `matchMedia`, …), or event handlers that must attach in that module, or libraries that only run on the client (e.g. many Radix primitives).
 3. **Shrink the client boundary:** If only part of a screen is interactive, move that part into a small client file (e.g. `feature-interactive.tsx`) and keep the route or parent as a server component that composes it.
-4. **UI kit:** Files under `src/components/ui/` often use `"use client"` because of Radix/hooks — that is expected. Do not add `"use client"` to a file **only** because it imports `@/components/ui`; the importer can remain a server component.
-5. **Data:** Prefer fetching and secrets on the server (Server Components, Route Handlers, server actions) unless the data must live in the browser. For client-side API calls, keep fetch/request functions in `src/services/` and consume them via React Query hooks under `src/components/hooks/queries/`.
+4. **UI kit:** Files under `web/src/components/ui/` often use `"use client"` because of Radix/hooks — that is expected. Do not add `"use client"` to a file **only** because it imports `@/components/ui`; the importer can remain a server component.
+5. **Data:** Prefer fetching and secrets on the server (Server Components, Route Handlers, server actions) unless the data must live in the browser. For client-side API calls, keep fetch/request functions in `web/src/services/` and consume them via React Query hooks under `web/src/components/hooks/queries/`.
 
 ### shadcn/ui and Radix
 
-The project follows **[shadcn/ui](https://ui.shadcn.com)** conventions: `components.json` at the repo root, **`cn()` in `src/lib/utils.ts`** (`clsx` + `tailwind-merge`, matches the CLI alias), plus composable components under `src/components/ui/`.
+The project follows **[shadcn/ui](https://ui.shadcn.com)** conventions: **`web/components.json`** (run shadcn CLI from **`web/`**), **`cn()` in `web/src/lib/utils.ts`** (`clsx` + `tailwind-merge`, matches the CLI alias), plus composable components under `web/src/components/ui/`.
 
-**Important:** Official shadcn registry components are **implemented with [Radix UI](https://www.radix-ui.com) primitives** (e.g. `@radix-ui/react-dialog`, `@radix-ui/react-select`) plus Tailwind. Those **`@radix-ui/react-*` packages are required dependencies** — they are not optional add-ons. You **cannot** remove Radix from `package.json` and keep stock shadcn components; there is no supported “Radix-free” shadcn build.
+**Important:** Official shadcn registry components are **implemented with [Radix UI](https://www.radix-ui.com) primitives** (e.g. `@radix-ui/react-dialog`, `@radix-ui/react-select`) plus Tailwind. Those **`@radix-ui/react-*` packages are required dependencies** — they are not optional add-ons. You **cannot** remove Radix from **`web/package.json`** and keep stock shadcn components; there is no supported “Radix-free” shadcn build.
 
-- **Prefer** adding or updating UI via the CLI: `npx shadcn@latest add <component>` (or `add --all` after backing up), rather than hand-rolling new Radix wrappers.
+- **Prefer** adding or updating UI via the CLI from **`web/`**: `npx shadcn@latest add <component>` (or `add --all` after backing up), rather than hand-rolling new Radix wrappers.
 - Import **`cn`** from **`@/lib/utils`** (same path the shadcn CLI uses via `components.json` aliases).
 - If you **must** avoid Radix entirely, you would need a **different** stack (e.g. [React Aria](https://react-spectrum.adobe.com/react-aria/), native `<dialog>`, custom controls) — **not** the default shadcn registry — and expect a full rewrite of interactive primitives.
 
 ## Repository layout
 
+The repo is a **two-root** layout (no npm workspaces): **`web/`** (Next.js) and **`api/`** (Go). Install and run Node app scripts from **`web/`**; run Go commands from **`api/`** (see [api/README.md](api/README.md)). Optional **native Git hooks** live under **`.githooks/`** — enable with **`git config core.hooksPath .githooks`** once per clone (see root **README.md**).
+
 | Path                    | Purpose                                                                                                                                                                                                                                                                                      |
 | ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `src/app/`              | App Router: `layout.tsx`, `page.tsx`, routes, route groups, layouts.                                                                                                                                                                                                                         |
-| `src/components/ui/`    | **UI kit** (primitives) **plus** composed app UI — see [UI component structure](#ui-component-structure). Primitives: `@/components/ui` (`index.ts`). **Do not** recreate primitives in feature folders.                                                                                     |
-| `src/components/icons/` | **Inline SVG icon components** — `@/components/icons` (`index.ts`). Not under `ui/`; see [Icons](#icons).                                                                                                                                                                                    |
-| `src/components/hooks/` | **Shared React hooks** — `@/components/hooks` (see [Hooks](#hooks)). Query hooks live in `hooks/queries/` (e.g. `use-mutate-login.ts`), re-exported from `index.ts`.                                                                                                                         |
-| `src/app/showcase/`     | **UI showcase** — `/showcase` previews primitives and variants; update when adding or changing shared UI.                                                                                                                                                                                    |
-| `src/configs/`          | **Route registries** — `app-routes.ts` and `api-routes.ts` expose typed route maps plus `getAppRoute()` / `getApiRoute()` helpers; prefer these instead of hardcoded strings.                                                                                                                |
-| `src/services/`         | **Client data services** — React Query provider plus API request helpers (e.g. `services/auth/auth-api.ts`). Components should call query hooks instead of inlining fetch logic.                                                                                                             |
-| `src/lib/`              | **`utils.ts`** — **`cn()`** for Tailwind class merging. **`formatting/`** — shared formatters (`date-formatting.ts`, `number-formatting.ts`, `string-formatting.ts`). **`bank-accounts/`** — types, list URL state, mocks until APIs exist. Auth, DB, and other app libraries live here too. |
-| `components.json`       | **shadcn/ui** CLI config (registry style, aliases, `globals.css` path). Run `npx shadcn@latest add <component>` to add or refresh components.                                                                                                                                                |
-| `src/`                  | App Router routes (`src/app/`), libraries (`src/lib/`), and **`src/components/`** which only contains **`hooks/`**, **`icons/`**, and **`ui/`** — no top-level `auth/` or `landing/` folders; see [UI component structure](#ui-component-structure).                                         |
-| `public/brand/`         | **Brand marks** — round / long / short logos (favicon, header). Not for generic UI icons; see [Icons](#icons).                                                                                                                                                                               |
-| `public/icons/`         | **Static icon assets** — `.svg`, `.png`, and similar files served as `/icons/…` (see [Icons](#icons)).                                                                                                                                                                                       |
-| `docs/`                 | Contributor docs (`CONTRIBUTING.md`) and [docs index](docs/README.md).                                                                                                                                                                                                                       |
+| `.githooks/`            | **Native Git hooks** (e.g. `pre-commit` → `lint-staged` in **`web/`**). Enable per clone: **`git config core.hooksPath .githooks`**.                                                                                                                                                         |
+| `api/`                  | **Go HTTP API** — `api/go.mod`, `api/cmd/fintrack/`. Shared migrations stay at repo `migrations/`.                                                                                                                                                                                           |
+| `web/package.json`      | Next.js app metadata and scripts — use **`cd web`**, then **`npm install`**, **`npm run dev`**, etc.                                                                                                                                                                                          |
+| `web/components.json`   | **shadcn/ui** CLI config (registry style, aliases, `globals.css` path). Run the CLI from **`web/`**.                                                                                                                                                                                         |
+| `web/src/app/`              | App Router: `layout.tsx`, `page.tsx`, routes, route groups, layouts.                                                                                                                                                                                                                         |
+| `web/src/components/ui/`    | **UI kit** (primitives) **plus** composed app UI — see [UI component structure](#ui-component-structure). Primitives: `@/components/ui` (`index.ts`). **Do not** recreate primitives in feature folders.                                                                                     |
+| `web/src/components/icons/` | **Inline SVG icon components** — `@/components/icons` (`index.ts`). Not under `ui/`; see [Icons](#icons).                                                                                                                                                                                    |
+| `web/src/components/hooks/` | **Shared React hooks** — `@/components/hooks` (see [Hooks](#hooks)). Query hooks live in `hooks/queries/` (e.g. `use-mutate-login.ts`), re-exported from `index.ts`.                                                                                                                         |
+| `web/src/app/showcase/`     | **UI showcase** — `/showcase` previews primitives and variants; update when adding or changing shared UI.                                                                                                                                                                                    |
+| `web/src/configs/`          | **Route registries** — `app-routes.ts` and `api-routes.ts` expose typed route maps plus `getAppRoute()` / `getApiRoute()` helpers; prefer these instead of hardcoded strings.                                                                                                                |
+| `web/src/services/`         | **Client data services** — React Query provider plus API request helpers (e.g. `services/auth/auth-api.ts`). Components should call query hooks instead of inlining fetch logic.                                                                                                             |
+| `web/src/lib/`              | **`utils.ts`** — **`cn()`** for Tailwind class merging. **`formatting/`** — shared formatters (`date-formatting.ts`, `number-formatting.ts`, `string-formatting.ts`). **`bank-accounts/`** — types, list URL state, mocks until APIs exist. Auth, DB, and other app libraries live here too. |
+| `web/public/brand/`         | **Brand marks** — round / long / short logos (favicon, header). Not for generic UI icons; see [Icons](#icons).                                                                                                                                                                               |
+| `web/public/icons/`         | **Static icon assets** — `.svg`, `.png`, and similar files served as `/icons/…` (see [Icons](#icons)).                                                                                                                                                                                       |
+| `docs/`                 | Contributor docs (`CONTRIBUTING.md`), [docs index](docs/README.md), and [monorepo migration](docs/monorepo-migration.md) (Go API + Next.js plan).                                                                                                                                             |
 | `migrations/`           | Ordered `*.sql` files; applied idempotently via `schema_migrations`.                                                                                                                                                                                                                         |
 | `deploy/docker/`        | Dockerfiles (`Dockerfile.dev`, `Dockerfile.test`, `Dockerfile.prod`) and `scripts/run-migrations.sh`.                                                                                                                                                                                        |
 | `deploy/compose/`       | `docker-compose.dev.yml`, `docker-compose.test.yml`, `docker-compose.prod.yml`.                                                                                                                                                                                                              |
 
-Add feature modules under `src/` with clear boundaries (e.g. `src/lib/formatting/`, `src/app/(dashboard)/`, composed UI under `src/components/ui/forms/` / `common/` / `landing/` / `layout/`) as the app grows.
+Add feature modules under `web/src/` with clear boundaries (e.g. `web/src/lib/formatting/`, `web/src/app/(dashboard)/`, composed UI under `web/src/components/ui/forms/` / `common/` / `landing/` / `layout/`) as the app grows.
 
 ### Hooks
 
-**Location:** `src/components/hooks/`.
+**Location:** `web/src/components/hooks/`.
 
 - Add **shared** custom hooks here (used in more than one place or clearly library-level). Name files **`use-kebab-case.ts`** (e.g. `use-mouse-reactive-gradient.ts`) and export the hook as a named function **`useThing`**.
-- **Barrel:** `src/components/hooks/index.ts` re-exports hooks so consumers can import from **`@/components/hooks`** or **`@/components/hooks/use-something`**.
-- **Query hooks:** Put React Query hooks in `src/components/hooks/queries/` (e.g. `use-mutate-login.ts`, future `use-get-bank-accounts.ts`). Keep each hook focused on one endpoint or resource behavior.
-- **Service split:** Keep raw request/fetch logic in `src/services/` and call those service functions from query hooks, not directly from UI components.
+- **Barrel:** `web/src/components/hooks/index.ts` re-exports hooks so consumers can import from **`@/components/hooks`** or **`@/components/hooks/use-something`**.
+- **Query hooks:** Put React Query hooks in `web/src/components/hooks/queries/` (e.g. `use-mutate-login.ts`, future `use-get-bank-accounts.ts`). Keep each hook focused on one endpoint or resource behavior.
+- **Service split:** Keep raw request/fetch logic in `web/src/services/` and call those service functions from query hooks, not directly from UI components.
 - Hooks that are **only** used by a single feature may stay next to that feature until reuse is needed; prefer moving them into `components/hooks/` when they stabilize or are shared.
 - Hooks that use browser-only APIs (`window`, `document`, `matchMedia`, etc.) are only safe from **client** components; do not call them from Server Components.
 
 ## UI component structure
 
-Everything under `src/components/` is organized as **`hooks/`**, **`icons/`**, and **`ui/`**. Do **not** add a top-level `src/components/auth/` (or similar domain folders): authentication **routes** live under `src/app/`, **API** under `src/app/api/`, and **shared auth-related UI** belongs under the `ui/` subtrees below.
+Everything under `web/src/components/` is organized as **`hooks/`**, **`icons/`**, and **`ui/`**. Do **not** add a top-level `web/src/components/auth/` (or similar domain folders): authentication **routes** live under `web/src/app/`, **HTTP API** is migrating to **Go** (see [monorepo migration](docs/monorepo-migration.md)); meanwhile **`web/src/app/api/`** remains operational, and **shared auth-related UI** belongs under the `ui/` subtrees below.
 
 ### UI kit (primitives)
 
-Shared primitives live under `src/components/ui/`. **One main component per file** (plus small colocated helpers). Group related pieces in a **kebab-case folder** named after the feature.
+Shared primitives live under `web/src/components/ui/`. **One main component per file** (plus small colocated helpers). Group related pieces in a **kebab-case folder** named after the feature.
 
 | Area               | Path pattern                                                                                    | Notes                                                                                                                                                                                                     |
 | ------------------ | ----------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -127,11 +141,11 @@ Shared primitives live under `src/components/ui/`. **One main component per file
 | Buttons & overlays | `common/buttons/`, `common/card/`, `common/dialog/`, `common/dropdown-menu/`, `common/tooltip/` | shadcn-style primitives: `Button`, `Card`, `Dialog`, menus, tooltips. One file per exported part (`DialogContent.tsx`, `CardHeader.tsx`, …).                                                              |
 | Shared types       | Next to the feature                                                                             | e.g. `common/inputs/multi-select/types.ts` to avoid circular imports between sibling modules.                                                                                                             |
 
-**Barrel:** `src/components/ui/index.ts` re-exports **primitives** from `common/` (`inputs/`, `buttons/`, `card/`, `dialog/`, …). **Import from `@/components/ui`** for `Button`, `Card`, `TextField`, etc.
+**Barrel:** `web/src/components/ui/index.ts` re-exports **primitives** from `common/` (`inputs/`, `buttons/`, `card/`, `dialog/`, …). **Import from `@/components/ui`** for `Button`, `Card`, `TextField`, etc.
 
 ### Composed app UI (also under `ui/`)
 
-Screens and chrome built **from** the kit (and each other) live in sibling folders under `src/components/ui/`. **One kebab-case folder per component**; add an `index.ts` that re-exports the public symbol so consumers can import `@/components/ui/forms/login-form` (folder path) without repeating the file name.
+Screens and chrome built **from** the kit (and each other) live in sibling folders under `web/src/components/ui/`. **One kebab-case folder per component**; add an `index.ts` that re-exports the public symbol so consumers can import `@/components/ui/forms/login-form` (folder path) without repeating the file name.
 
 | Area        | Path pattern     | Purpose                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | ----------- | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -140,9 +154,9 @@ Screens and chrome built **from** the kit (and each other) live in sibling folde
 | **Landing** | `landing/`       | Marketing landing sections (e.g. hero).                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | **Layout**  | `layout/`        | Route-level layout wrappers (e.g. `AuthPageLayout` for auth pages).                                                                                                                                                                                                                                                                                                                                                                                               |
 
-**Barrel:** `src/components/ui/common/index.ts` re-exports frequently used **app chrome** (interactive background, `toast` / `Toaster`, header, profile menu). **`forms/index.ts`** re-exports form entry points for convenience; prefer specific paths when only one form is needed. Prefer **`@/components/ui`** for primitives (`Button`, `Dialog`, …) rather than deep paths into `common/buttons/`, unless you are editing those modules.
+**Barrel:** `web/src/components/ui/common/index.ts` re-exports frequently used **app chrome** (interactive background, `toast` / `Toaster`, header, profile menu). **`forms/index.ts`** re-exports form entry points for convenience; prefer specific paths when only one form is needed. Prefer **`@/components/ui`** for primitives (`Button`, `Dialog`, …) rather than deep paths into `common/buttons/`, unless you are editing those modules.
 
-Inline SVG **icon components** live in **`src/components/icons/`** (not under `ui/`); see [Icons](#icons).
+Inline SVG **icon components** live in **`web/src/components/icons/`** (not under `ui/`); see [Icons](#icons).
 
 **Conventions:** Use `cn()` from **`@/lib/utils`**. Match naming and imports in sibling files; add `"use client"` only where the UI primitive requires it (see [React Server Components](#react-server-components-default)). See [shadcn/ui and Radix](#shadcnui-and-radix). After adding or changing a primitive, **extend the showcase** (below).
 
@@ -152,16 +166,16 @@ All icon assets follow one of two locations; do not leave ad hoc icon files unde
 
 | Kind                                          | Location                    | Use when                                                                                                                                                                                                                      |
 | --------------------------------------------- | --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Static files** (`.svg`, `.png`, `.webp`, …) | **`public/icons/`**         | You reference a file by URL: `next/image`, `<img src="/icons/name.svg">`, CSS `url()`, or metadata. Subfolders are allowed (e.g. `public/icons/categories/groceries.png`).                                                    |
-| **React components** (inline SVG)             | **`src/components/icons/`** | Shared across the app (e.g. selects, multi-select). One component per file (`PascalCase.tsx`), export from `index.ts`, import via **`@/components/icons`**. Prefer `currentColor` for stroke/fill so icons follow text color. |
+| **Static files** (`.svg`, `.png`, `.webp`, …) | **`web/public/icons/`**         | You reference a file by URL: `next/image`, `<img src="/icons/name.svg">`, CSS `url()`, or metadata. Subfolders are allowed (e.g. `public/icons/categories/groceries.png`).                                                    |
+| **React components** (inline SVG)             | **`web/src/components/icons/`** | Shared across the app (e.g. selects, multi-select). One component per file (`PascalCase.tsx`), export from `index.ts`, import via **`@/components/icons`**. Prefer `currentColor` for stroke/fill so icons follow text color. |
 
-**Brand logos** stay in **`public/brand/`** only — not under `public/icons/`.
+**Brand logos** stay in **`web/public/brand/`** only — not under `web/public/icons/`.
 
 ### Showcase page
 
-The route **`/showcase`** uses a **server** `page.tsx` that renders the client module **`showcase-content.tsx`** (metadata stays in `layout.tsx`). When you **add a new component**, **new variants**, or **meaningful behavior** to `src/components/ui/`:
+The route **`/showcase`** uses a **server** `page.tsx` that renders the client module **`showcase-content.tsx`** (metadata stays in `layout.tsx`). When you **add a new component**, **new variants**, or **meaningful behavior** to `web/src/components/ui/`:
 
-1. Add or update a **section** in **`src/app/showcase/showcase-content.tsx`** that demonstrates the component (and variants, if any).
+1. Add or update a **section** in **`web/src/app/showcase/showcase-content.tsx`** that demonstrates the component (and variants, if any).
 2. Keep demos **interactive** where state matters (dialogs, selects, menus); that file remains a client component.
 3. Prefer **realistic copy** (labels, placeholders) so spacing and typography stay honest.
 
@@ -169,30 +183,33 @@ Do not leave the showcase stale after user-visible kit changes.
 
 ## Commands
 
+Commands below assume a POSIX shell. **Node** commands run from **`web/`**; **Go** commands run from **`api/`**.
+
 | Task               | Command                                                                |
 | ------------------ | ---------------------------------------------------------------------- |
-| Dev (local)        | `npm run dev`                                                          |
-| Lint               | `npm run lint`                                                         |
-| Test (placeholder) | `npm run test` (currently lint; extend with a real runner when needed) |
-| Production build   | `npm run build` then `npm run start`                                   |
+| Dev — Next (local) | `cd web && npm run dev`                                                |
+| Dev — Go API       | `cd api && go run ./cmd/fintrack`                                      |
+| Lint               | `cd web && npm run lint`                                               |
+| Test (placeholder) | `cd web && npm run test` (currently lint; extend with a real runner when needed) |
+| Production build   | `cd web && npm run build` then `cd web && npm run start`                |
 | Docker dev         | `docker compose -f deploy/compose/docker-compose.dev.yml up --build`   |
 
-Environment: copy `.env.example` to `.env` for local Postgres / ports. Compose sets `DATABASE_URL` for services in Docker.
+Environment: for local runs, copy **`.env.example`** at the repo root to **`.env`** and/or add **`web/.env`** for Next (see root README). Compose sets `DATABASE_URL` for the `web` service in Docker.
 
 ### Cleaning Next.js output
 
-Remove generated artifacts when you need a clean slate: delete the `.next` directory (and optionally `.turbo` if present). If Docker created files as root, fix ownership or remove with elevated permissions, for example: `sudo rm -rf .next` or `sudo chown -R "$(whoami)" .next`.
+Remove generated artifacts when you need a clean slate: delete **`web/.next`** (and optionally **`.turbo`** if present). If Docker created files as root, fix ownership or remove with elevated permissions, for example: `sudo rm -rf web/.next` or `sudo chown -R "$(whoami)" web/.next`.
 
 ## UI and theming rules
 
-1. **Reuse `src/components/ui`:** Build screens from the existing kit (`Button`, `ButtonWithTooltip`, `Dialog`, `Field`, `TextField`, `NumericField`, `CurrencyField`, `TextareaField`, `SelectField`, `MultiSelectField`, `RadioField`, `DropdownMenu` / `Menu`, `Card`, `Tooltip`, …). Import from `@/components/ui` (see [UI component structure](#ui-component-structure)). Only add a new primitive in `ui/` when something is genuinely missing; do not duplicate buttons, inputs, or modals ad hoc in feature folders. **New or changed primitives:** update the [showcase page](#showcase-page).
+1. **Reuse `web/src/components/ui`:** Build screens from the existing kit (`Button`, `ButtonWithTooltip`, `Dialog`, `Field`, `TextField`, `NumericField`, `CurrencyField`, `TextareaField`, `SelectField`, `MultiSelectField`, `RadioField`, `DropdownMenu` / `Menu`, `Card`, `Tooltip`, …). Import from `@/components/ui` (see [UI component structure](#ui-component-structure)). Only add a new primitive in `ui/` when something is genuinely missing; do not duplicate buttons, inputs, or modals ad hoc in feature folders. **New or changed primitives:** update the [showcase page](#showcase-page).
 2. **Styling:** Do not hardcode one-off hex colors for core UI unless the task requires it. Use Mocha tokens (`text-text`, `bg-surface-0`, `border-border`, …) or roles (`primary`, `secondary`, `foreground`, `muted`). Use `cn()` from `@/lib/utils` to merge Tailwind classes.
 3. **Tailwind v4:** Add new CSS variables under `:root` and map them in `@theme inline` in `globals.css`.
 4. **CSS variables in utilities (canonical classes):** This project uses Tailwind v4’s **parentheses shorthand** for `var(...)`. **Do not** write `px-[var(--page-padding-x)]` or `min-w-[var(--radix-select-trigger-width)]`. **Do** write `px-(--page-padding-x)`, `w-(--radix-popover-trigger-width)`, `min-w-(--radix-select-trigger-width)`, etc. For expressions (e.g. `min()` with several arguments), use the same form: `max-h-(min(24rem,var(--radix-select-content-available-height)))`. Use square-bracket arbitrary values `[...]` only when this syntax cannot express the value. This avoids ESLint **`suggestCanonicalClasses`** noise and matches the [Tailwind v4 arbitrary value](https://tailwindcss.com/docs/adding-custom-styles) conventions.
 5. **Theme:** The app is **Catppuccin Mocha** (dark). `html` uses **crust** as the outer shell; `body` uses **base** as the main background. A light theme (e.g. Latte) can be added later by extending `:root` or a class on `<html>`.
-6. **Logos:** Round / long / short brand assets under `public/brand/`. Do not remove without replacing usages.
+6. **Logos:** Round / long / short brand assets under `web/public/brand/`. Do not remove without replacing usages.
 7. **Forms:** Prefer `*Field` components for labeled controls with errors; use `inputClassName` when styling the inner control and `className` on the field for the outer wrapper. `TooltipProvider` wraps the app in `layout.tsx` for `ButtonWithTooltip` / `Tooltip`.
-8. **Icons:** Put static `.svg` / `.png` (and similar) under **`public/icons/`**; put shared inline-SVG React icons under **`src/components/icons/`**. See [Icons](#icons).
+8. **Icons:** Put static `.svg` / `.png` (and similar) under **`web/public/icons/`**; put shared inline-SVG React icons under **`web/src/components/icons/`**. See [Icons](#icons).
 9. **Server vs client:** Prefer Server Components for routes and non-interactive UI; keep client boundaries small. See [React Server Components](#react-server-components-default).
 
 ### Catppuccin Mocha reference (implemented)
@@ -216,14 +233,14 @@ Remove generated artifacts when you need a clean slate: delete the `.next` direc
 ## Docker notes
 
 - Do **not** use `docker compose up --abort-on-container-exit` with these stacks: the `migrate` service exits after success and can interact badly with that flag.
-- Production image uses `output: "standalone"` in `next.config.ts`.
+- Production image uses `output: "standalone"` in **`web/next.config.ts`**.
 
 ## What not to do
 
 - Do not commit secrets or real `.env` files.
 - Do not **`git commit`** on the user’s behalf unless they explicitly ask you to; see [Agent workflow](#agent-workflow-cursor--automation).
 - Do not introduce large refactors unrelated to the task; match existing patterns and file layout.
-- Do not add `src/components/auth/` (or other top-level domain folders next to `hooks/` / `icons/` / `ui/`); place auth-related UI under `src/components/ui/forms/`, `common/`, or `layout/` per [UI component structure](#ui-component-structure).
+- Do not add `web/src/components/auth/` (or other top-level domain folders next to `hooks/` / `icons/` / `ui/`); place auth-related UI under `web/src/components/ui/forms/`, `common/`, or `layout/` per [UI component structure](#ui-component-structure).
 - Do not edit `.pen` design files with plain text tools; use the Pencil MCP tooling if those assets exist.
 
 ## When in doubt
