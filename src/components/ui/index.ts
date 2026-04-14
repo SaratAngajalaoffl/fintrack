@@ -114,3 +114,12 @@ export {
   TooltipContent,
   TooltipProvider,
 } from "@/components/ui/common/tooltip";
+export {
+  ChipComponent,
+  type ChipComponentProps,
+} from "@/components/ui/common/chip";
+export {
+  TableComponent,
+  type TableComponentProps,
+  type TableToolbarChip,
+} from "@/components/ui/common/table-component";

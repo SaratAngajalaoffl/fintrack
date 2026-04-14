@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { ArrowDownUp, Filter } from "lucide-react";
 
 import {
   Button,
@@ -11,6 +12,8 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
+  ChipComponent,
+  TableComponent,
   Dialog,
   DialogContent,
   DialogDescription,
@@ -517,6 +520,87 @@ export function ShowcaseContent() {
                 </Dialog>
               </CardContent>
             </Card>
+          </Section>
+
+          <Section
+            title="Chip"
+            description="Outline for toolbar filters; filled for dense labels (e.g. buckets)."
+          >
+            <Card>
+              <CardContent className="flex flex-col gap-4 pt-6">
+                <div className="flex flex-wrap items-center gap-2">
+                  <ChipComponent variant="outline">
+                    Filter: Savings
+                  </ChipComponent>
+                  <ChipComponent variant="outline" trailing={<span>×</span>}>
+                    Sort: Balance
+                  </ChipComponent>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <ChipComponent variant="filled">Tax</ChipComponent>
+                  <ChipComponent variant="filled">Bangkok trip</ChipComponent>
+                </div>
+              </CardContent>
+            </Card>
+          </Section>
+
+          <Section
+            title="Table shell"
+            description="Title row with optional active chips and toolbar slots; table scrolls inside a bordered panel."
+          >
+            <TableComponent
+              title="Example"
+              activeChips={[
+                {
+                  id: "sort",
+                  node: (
+                    <ChipComponent variant="outline" trailing={<span>×</span>}>
+                      Sort: Name (A–Z)
+                    </ChipComponent>
+                  ),
+                },
+              ]}
+              filterSlot={
+                <span
+                  className={cn(
+                    "inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-surface-0/90 text-foreground shadow-sm",
+                  )}
+                  aria-hidden
+                >
+                  <Filter className="size-4" aria-hidden />
+                </span>
+              }
+              sortSlot={
+                <span
+                  className={cn(
+                    "inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-surface-0/90 text-foreground shadow-sm",
+                  )}
+                  aria-hidden
+                >
+                  <ArrowDownUp className="size-4" aria-hidden />
+                </span>
+              }
+              searchSlot={
+                <span className="text-xs text-subtext-1 sm:pt-1.5">
+                  Search…
+                </span>
+              }
+            >
+              <table className="w-full min-w-[20rem] border-collapse text-left text-sm">
+                <thead>
+                  <tr className="border-b border-border/80 bg-mantle/90 text-subtext-1">
+                    <th className="px-4 py-3 font-medium">Column</th>
+                    <th className="px-4 py-3 text-right font-medium">Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="border-b border-border/40">
+                    <td className="px-4 py-3">Sample row</td>
+                    <td className="px-4 py-3 text-right tabular-nums">$0.00</td>
+                  </tr>
+                </tbody>
+              </table>
+            </TableComponent>
           </Section>
 
           <Section

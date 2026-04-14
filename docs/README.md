@@ -5,6 +5,7 @@ Project documentation lives in this directory.
 | Document                        | Description                                                     |
 | ------------------------------- | --------------------------------------------------------------- |
 | [Contributing](CONTRIBUTING.md) | How to contribute code, report issues, and open pull requests   |
+| [Data model](data-model.md)     | Tables and fields for domains (e.g. bank accounts, buckets)     |
 | [Agent guide](../AGENTS.md)     | Conventions for tooling and AI-assisted development (repo root) |
 
 The main project overview and run instructions are in the [root README](../README.md).
