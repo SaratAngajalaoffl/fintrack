@@ -294,11 +294,10 @@ export async function createCreditCard(
           max_balance,
           used_balance,
           locked_balance,
-          preferred_categories,
           bill_generation_day,
           bill_due_day
         )
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
         RETURNING id
       `,
       [
@@ -308,7 +307,6 @@ export async function createCreditCard(
         input.maxBalance,
         input.usedBalance,
         input.lockedBalance,
-        normalizedCategories,
         input.billGenerationDay,
         input.billDueDay,
       ],
@@ -355,9 +353,8 @@ export async function updateCreditCard(
           max_balance = COALESCE($5, max_balance),
           used_balance = COALESCE($6, used_balance),
           locked_balance = COALESCE($7, locked_balance),
-          preferred_categories = COALESCE($8, preferred_categories),
-          bill_generation_day = COALESCE($9, bill_generation_day),
-          bill_due_day = COALESCE($10, bill_due_day),
+          bill_generation_day = COALESCE($8, bill_generation_day),
+          bill_due_day = COALESCE($9, bill_due_day),
           updated_at = NOW()
         WHERE user_id = $1 AND id = $2
       `,
@@ -369,7 +366,6 @@ export async function updateCreditCard(
         input.maxBalance ?? null,
         input.usedBalance ?? null,
         input.lockedBalance ?? null,
-        normalizedCategories ?? null,
         input.billGenerationDay ?? null,
         input.billDueDay ?? null,
       ],

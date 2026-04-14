@@ -54,21 +54,20 @@ Future REST or server actions should accept equivalent filters for consistency.
 
 Users can manage **credit cards** with balances, category preferences, and billing-cycle settings.
 
-> Status: implemented in migrations `006_credit_cards.sql` (`credit_cards`), `009_credit_card_preferred_category_links.sql` (`credit_card_preferred_categories`), and `010_credit_card_bills.sql` (`credit_card_bills`).
+> Status: implemented in migrations `006_credit_cards.sql` (`credit_cards`), `009_credit_card_preferred_category_links.sql` (`credit_card_preferred_categories`), `010_credit_card_bills.sql` (`credit_card_bills`), and `011_drop_credit_cards_preferred_categories.sql` (drops legacy array column).
 
-| Field / concept             | Type / notes                                                                        |
-| --------------------------- | ----------------------------------------------------------------------------------- |
-| `id`                        | UUID primary key                                                                    |
-| `user_id`                   | FK to `users(id)`; cards are per user                                               |
-| `name`                      | Credit card display name                                                            |
-| `description`               | Optional long-form notes                                                            |
-| `max_balance`               | Numeric credit limit                                                                |
-| `used_balance`              | Numeric amount currently used                                                       |
-| `locked_balance`            | Numeric amount temporarily locked/held                                              |
-| `preferred_categories`      | Legacy `text[]` copy kept for compatibility/export; canonical mapping is relational |
-| `bill_generation_day`       | Integer day of month (1-31)                                                         |
-| `bill_due_day`              | Integer day of month (1-31)                                                         |
-| `created_at` / `updated_at` | Standard audit columns                                                              |
+| Field / concept             | Type / notes                           |
+| --------------------------- | -------------------------------------- |
+| `id`                        | UUID primary key                       |
+| `user_id`                   | FK to `users(id)`; cards are per user  |
+| `name`                      | Credit card display name               |
+| `description`               | Optional long-form notes               |
+| `max_balance`               | Numeric credit limit                   |
+| `used_balance`              | Numeric amount currently used          |
+| `locked_balance`            | Numeric amount temporarily locked/held |
+| `bill_generation_day`       | Integer day of month (1-31)            |
+| `bill_due_day`              | Integer day of month (1-31)            |
+| `created_at` / `updated_at` | Standard audit columns                 |
 
 Preferred category mapping is normalized in a many-to-many table:
 

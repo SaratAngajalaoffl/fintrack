@@ -1,11 +1,8 @@
 "use client";
 
-import { useGetCreditCards } from "@/components/hooks";
+import { useGetCreditCards, useGetExpenseCategories } from "@/components/hooks";
 import { ShimmerComponent } from "@/components/ui";
-import {
-  allCreditCardCategories,
-  creditCardsSummary,
-} from "@/lib/credit-cards/mock-data";
+import { creditCardsSummary } from "@/lib/credit-cards/mock-data";
 import { filterAndSortCreditCards } from "@/lib/credit-cards/list-state";
 import type { CreditCardsListState } from "@/lib/credit-cards/types";
 
@@ -18,6 +15,7 @@ type CreditCardsDataPanelProps = {
 
 export function CreditCardsDataPanel({ listState }: CreditCardsDataPanelProps) {
   const creditCardsQuery = useGetCreditCards();
+  const expenseCategoriesQuery = useGetExpenseCategories();
 
   if (creditCardsQuery.isLoading) {
     return (
@@ -68,7 +66,11 @@ export function CreditCardsDataPanel({ listState }: CreditCardsDataPanelProps) {
   const rows = creditCardsQuery.data ?? [];
   const summary = creditCardsSummary(rows);
   const filteredRows = filterAndSortCreditCards(rows, listState);
-  const categories = allCreditCardCategories(rows);
+  const categories = Array.from(
+    new Set(
+      (expenseCategoriesQuery.data ?? []).map((category) => category.name),
+    ),
+  ).sort((a, b) => a.localeCompare(b));
 
   return (
     <>

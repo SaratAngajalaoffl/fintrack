@@ -164,8 +164,7 @@ WITH payload AS (
 )
 INSERT INTO credit_cards (
   id, user_id, name, description, max_balance, used_balance, locked_balance,
-  preferred_categories, bill_generation_day, bill_due_day,
-  created_at, updated_at
+  bill_generation_day, bill_due_day, created_at, updated_at
 )
 SELECT
   (row->>'id')::uuid,
@@ -175,7 +174,6 @@ SELECT
   COALESCE((row->>'max_balance')::numeric, 0),
   COALESCE((row->>'used_balance')::numeric, 0),
   COALESCE((row->>'locked_balance')::numeric, 0),
-  COALESCE(ARRAY(SELECT jsonb_array_elements_text(row->'preferred_categories')), ARRAY[]::text[]),
   (row->>'bill_generation_day')::smallint,
   (row->>'bill_due_day')::smallint,
   (row->>'created_at')::timestamptz,
@@ -189,7 +187,6 @@ SET
   max_balance = EXCLUDED.max_balance,
   used_balance = EXCLUDED.used_balance,
   locked_balance = EXCLUDED.locked_balance,
-  preferred_categories = EXCLUDED.preferred_categories,
   bill_generation_day = EXCLUDED.bill_generation_day,
   bill_due_day = EXCLUDED.bill_due_day,
   updated_at = EXCLUDED.updated_at;

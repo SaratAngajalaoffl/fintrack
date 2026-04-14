@@ -151,12 +151,11 @@ async function main() {
       await client.query(
         `INSERT INTO credit_cards (
            id, user_id, name, description, max_balance, used_balance, locked_balance,
-           preferred_categories, bill_generation_day, bill_due_day,
-           created_at, updated_at
+           bill_generation_day, bill_due_day, created_at, updated_at
          )
          VALUES (
-           $1, $2, $3, $4, $5::numeric, $6::numeric, $7::numeric, $8::text[],
-           $9, $10, $11::timestamptz, $12::timestamptz
+           $1, $2, $3, $4, $5::numeric, $6::numeric, $7::numeric,
+           $8, $9, $10::timestamptz, $11::timestamptz
          )
          ON CONFLICT (id)
          DO UPDATE SET
@@ -166,7 +165,6 @@ async function main() {
            max_balance = EXCLUDED.max_balance,
            used_balance = EXCLUDED.used_balance,
            locked_balance = EXCLUDED.locked_balance,
-           preferred_categories = EXCLUDED.preferred_categories,
            bill_generation_day = EXCLUDED.bill_generation_day,
            bill_due_day = EXCLUDED.bill_due_day,
            updated_at = EXCLUDED.updated_at`,
@@ -178,7 +176,6 @@ async function main() {
           card.max_balance,
           card.used_balance,
           card.locked_balance,
-          card.preferred_categories ?? [],
           card.bill_generation_day,
           card.bill_due_day,
           card.created_at,

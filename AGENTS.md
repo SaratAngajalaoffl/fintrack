@@ -29,7 +29,7 @@ This document orients coding agents and contributors to how Fintrack is organize
 - **Routes:** `/dashboard/credit-cards/my-credit-cards` (**My Credit Cards**) and `/dashboard/credit-cards/bills` (**Credit Card Bills**). Keep `/dashboard/credit-cards` as a redirect-only compatibility route.
 - **Code:** Domain types and list URL state live under **`src/lib/credit-cards/`**. Composed screen UI lives under **`src/components/ui/credit-cards/`**.
 - **API:** endpoints under `src/app/api/credit-cards/` (`GET`/`POST`) and `src/app/api/credit-cards/[cardId]/` (`GET`/`PATCH`/`DELETE`), backed by services in `src/services/credit-cards/`.
-- **Persistence:** Core card settings live in `credit_cards`; bill records are normalized in **`credit_card_bills`** (migration `010_credit_card_bills.sql`). Do not reintroduce `previous_bill_*` fields on `credit_cards`.
+- **Persistence:** Core card settings live in `credit_cards`; preferred categories are normalized in **`credit_card_preferred_categories`** (migration `009_credit_card_preferred_category_links.sql`); bill records are normalized in **`credit_card_bills`** (migration `010_credit_card_bills.sql`). Do not reintroduce `preferred_categories` or `previous_bill_*` fields on `credit_cards`.
 
 ### Dashboard navigation map
 

@@ -134,12 +134,32 @@ export async function GET() {
       [user.id],
     );
     const creditCardsResult = await client.query<CreditCardRow>(
-      `SELECT id, user_id, name, description, max_balance::text, used_balance::text,
-              locked_balance::text, preferred_categories, bill_generation_day, bill_due_day,
-              created_at::text, updated_at::text
-       FROM credit_cards
-       WHERE user_id = $1
-       ORDER BY created_at ASC`,
+      `SELECT
+         cc.id,
+         cc.user_id,
+         cc.name,
+         cc.description,
+         cc.max_balance::text,
+         cc.used_balance::text,
+         cc.locked_balance::text,
+         COALESCE(
+           array_agg(ec.name ORDER BY ec.name) FILTER (WHERE ec.name IS NOT NULL),
+           '{}'
+         ) AS preferred_categories,
+         cc.bill_generation_day,
+         cc.bill_due_day,
+         cc.created_at::text,
+         cc.updated_at::text
+       FROM credit_cards cc
+       LEFT JOIN credit_card_preferred_categories ccpc
+         ON ccpc.credit_card_id = cc.id
+        AND ccpc.user_id = cc.user_id
+       LEFT JOIN expense_categories ec
+         ON ec.id = ccpc.expense_category_id
+        AND ec.user_id = cc.user_id
+       WHERE cc.user_id = $1
+       GROUP BY cc.id
+       ORDER BY cc.created_at ASC`,
       [user.id],
     );
     const creditCardBillsResult = await client.query<CreditCardBillRow>(
