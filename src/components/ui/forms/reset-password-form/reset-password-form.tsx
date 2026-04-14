@@ -16,6 +16,7 @@ import {
   CardTitle,
   TextField,
 } from "@/components/ui";
+import { toast } from "@/components/ui/common/toast";
 import { PASSWORD_RESET_SESSION_KEY } from "@/lib/auth/password-reset-session";
 
 type ResetValues = {
@@ -28,7 +29,6 @@ type ResetValues = {
 
 export function ResetPasswordForm() {
   const router = useRouter();
-  const [success, setSuccess] = React.useState<string | null>(null);
   const [sessionStatus, setSessionStatus] = React.useState<
     "loading" | "ready" | "missing"
   >("loading");
@@ -40,7 +40,6 @@ export function ResetPasswordForm() {
     reset,
     getValues,
     formState: { errors, isSubmitting },
-    setError,
     clearErrors,
   } = useForm<ResetValues>({
     defaultValues: {
@@ -82,7 +81,6 @@ export function ResetPasswordForm() {
 
   async function onSubmit(data: ResetValues) {
     clearErrors("root");
-    setSuccess(null);
     const res = await fetch("/api/auth/reset-password", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -98,9 +96,7 @@ export function ResetPasswordForm() {
       message?: string;
     };
     if (!res.ok) {
-      setError("root", {
-        message: body.error ?? "Could not reset password",
-      });
+      toast.error(body.error ?? "Could not reset password");
       return;
     }
     try {
@@ -108,7 +104,13 @@ export function ResetPasswordForm() {
     } catch {
       /* ignore */
     }
-    setSuccess(body.message ?? "Password updated. You can sign in.");
+    toast.success("Password updated", {
+      description: body.message ?? "You can sign in with your new password.",
+      action: {
+        label: "Go to log in",
+        onClick: () => router.push("/login"),
+      },
+    });
     const current = getValues();
     reset({
       ...current,
@@ -209,22 +211,6 @@ export function ResetPasswordForm() {
                 v === form.newPassword || "Passwords do not match",
             })}
           />
-          {errors.root?.message ? (
-            <p className="text-sm text-destructive" role="alert">
-              {errors.root.message}
-            </p>
-          ) : null}
-          {success ? (
-            <p className="text-sm text-subtext-1" role="status">
-              {success}{" "}
-              <Link
-                href="/login"
-                className="font-medium text-primary underline-offset-4 hover:underline"
-              >
-                Go to log in
-              </Link>
-            </p>
-          ) : null}
         </CardContent>
         <CardFooter className="flex flex-col gap-3 sm:flex-row sm:justify-between">
           <Button

@@ -15,6 +15,7 @@ import {
   CardTitle,
   TextField,
 } from "@/components/ui";
+import { toast } from "@/components/ui/common/toast";
 
 type FormValues = {
   otp: string;
@@ -24,8 +25,6 @@ type FormValues = {
 
 export function ChangePasswordForm() {
   const [otpToken, setOtpToken] = React.useState<string | null>(null);
-  const [requestError, setRequestError] = React.useState<string | null>(null);
-  const [success, setSuccess] = React.useState<string | null>(null);
 
   const {
     register,
@@ -34,15 +33,11 @@ export function ChangePasswordForm() {
     reset,
     getValues,
     formState: { errors, isSubmitting },
-    setError,
-    clearErrors,
   } = useForm<FormValues>({
     defaultValues: { otp: "", newPassword: "", confirmPassword: "" },
   });
 
   async function requestCode() {
-    setRequestError(null);
-    setSuccess(null);
     const res = await fetch("/api/auth/change-password/request-otp", {
       method: "POST",
       credentials: "include",
@@ -52,24 +47,25 @@ export function ChangePasswordForm() {
       otpToken?: string;
     };
     if (!res.ok) {
-      setRequestError(body.error ?? "Could not send verification code");
+      toast.error(body.error ?? "Could not send verification code");
       return;
     }
     if (!body.otpToken) {
-      setRequestError("Could not start verification. Try again.");
+      toast.error("Could not start verification. Try again.");
       return;
     }
+    toast.success("Verification code sent", {
+      description: "In development, the code is printed in the server log.",
+    });
     setOtpToken(body.otpToken);
     reset({ otp: "", newPassword: "", confirmPassword: "" });
   }
 
   async function onSubmit(data: FormValues) {
     if (!otpToken) {
-      setError("root", { message: "Send a verification code first." });
+      toast.error("Send a verification code first.");
       return;
     }
-    clearErrors("root");
-    setSuccess(null);
     const res = await fetch("/api/auth/change-password", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -85,41 +81,34 @@ export function ChangePasswordForm() {
       message?: string;
     };
     if (!res.ok) {
-      setError("root", {
-        message: body.error ?? "Could not change password",
-      });
+      toast.error(body.error ?? "Could not change password");
       return;
     }
-    setSuccess(body.message ?? "Password changed.");
+    toast.success(body.message ?? "Password changed.");
     setOtpToken(null);
     const current = getValues();
     reset({ ...current, otp: "", newPassword: "", confirmPassword: "" });
   }
 
   return (
-    <Card className="border-border/60 bg-muted/80 shadow-lg backdrop-blur-sm">
-      <CardHeader className="space-y-1 text-center">
+    <Card className="border-border/80 bg-surface-0/85 shadow-lg backdrop-blur-sm">
+      <CardHeader className="space-y-2 border-b border-border/50 pb-6 text-left">
         <CardTitle className="text-2xl font-semibold tracking-tight">
           Change password
         </CardTitle>
-        <CardDescription>
+        <CardDescription className="text-pretty leading-relaxed">
           {otpToken
             ? "Enter the verification code and your new password."
             : "Send a verification code to your session, then enter the code here. In development, the code is printed in the server log."}
         </CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit(onSubmit)} noValidate>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 pt-6">
           {!otpToken ? (
             <>
-              {requestError ? (
-                <p className="text-sm text-destructive" role="alert">
-                  {requestError}
-                </p>
-              ) : null}
               <Button
                 type="button"
-                className="w-full sm:w-auto"
+                className="w-full"
                 onClick={() => void requestCode()}
               >
                 Send verification code
@@ -177,7 +166,6 @@ export function ChangePasswordForm() {
                 className="h-auto px-0 text-subtext-1"
                 onClick={() => {
                   setOtpToken(null);
-                  setRequestError(null);
                   reset();
                 }}
               >
@@ -185,33 +173,27 @@ export function ChangePasswordForm() {
               </Button>
             </>
           )}
-          {errors.root?.message ? (
-            <p className="text-sm text-destructive" role="alert">
-              {errors.root.message}
-            </p>
-          ) : null}
-          {success ? (
-            <p className="text-sm text-subtext-1" role="status">
-              {success}
-            </p>
-          ) : null}
         </CardContent>
         {otpToken ? (
-          <CardFooter className="flex flex-col gap-3 sm:flex-row sm:justify-between">
+          <CardFooter className="flex flex-col-reverse gap-3 border-t border-border/50 bg-muted/20 pt-6 sm:flex-row sm:items-center sm:justify-between">
+            <Button variant="ghost" className="w-full sm:w-auto" asChild>
+              <Link href="/dashboard">Back to dashboard</Link>
+            </Button>
             <Button
               type="submit"
-              className="w-full sm:w-auto"
+              className="w-full sm:min-w-[10rem] sm:w-auto"
               disabled={isSubmitting}
             >
               {isSubmitting ? "Updating…" : "Update password"}
             </Button>
-            <Button variant="ghost" className="w-full sm:w-auto" asChild>
-              <Link href="/dashboard">Back to dashboard</Link>
-            </Button>
           </CardFooter>
         ) : (
-          <CardFooter>
-            <Button variant="ghost" className="w-full sm:w-auto" asChild>
+          <CardFooter className="flex flex-col gap-1 border-t border-border/50 bg-muted/20 pt-6">
+            <Button
+              variant="ghost"
+              className="h-auto justify-start px-0 py-2 text-subtext-1 hover:text-foreground"
+              asChild
+            >
               <Link href="/dashboard">Back to dashboard</Link>
             </Button>
           </CardFooter>

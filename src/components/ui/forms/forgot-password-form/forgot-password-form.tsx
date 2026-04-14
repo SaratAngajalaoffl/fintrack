@@ -15,6 +15,7 @@ import {
   CardTitle,
   TextField,
 } from "@/components/ui";
+import { toast } from "@/components/ui/common/toast";
 import { PASSWORD_RESET_SESSION_KEY } from "@/lib/auth/password-reset-session";
 
 type ForgotValues = {
@@ -23,12 +24,10 @@ type ForgotValues = {
 
 export function ForgotPasswordForm() {
   const router = useRouter();
-  const [info, setInfo] = React.useState<string | null>(null);
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-    setError,
     clearErrors,
   } = useForm<ForgotValues>({
     defaultValues: { email: "" },
@@ -36,7 +35,6 @@ export function ForgotPasswordForm() {
 
   async function onSubmit(data: ForgotValues) {
     clearErrors("root");
-    setInfo(null);
     const res = await fetch("/api/auth/forgot-password", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -49,9 +47,7 @@ export function ForgotPasswordForm() {
       expiresAt?: string;
     };
     if (!res.ok) {
-      setError("root", {
-        message: body.error ?? "Something went wrong",
-      });
+      toast.error(body.error ?? "Something went wrong");
       return;
     }
     if (body.otpToken && body.expiresAt) {
@@ -70,7 +66,7 @@ export function ForgotPasswordForm() {
       router.push("/reset-password");
       return;
     }
-    setInfo(
+    toast.info(
       body.message ??
         "If an account exists for this email, you will receive further instructions.",
     );
@@ -102,16 +98,6 @@ export function ForgotPasswordForm() {
               },
             })}
           />
-          {errors.root?.message ? (
-            <p className="text-sm text-destructive" role="alert">
-              {errors.root.message}
-            </p>
-          ) : null}
-          {info ? (
-            <p className="text-sm text-subtext-1" role="status">
-              {info}
-            </p>
-          ) : null}
         </CardContent>
         <CardFooter className="flex flex-col gap-3 sm:flex-row sm:justify-between">
           <Button

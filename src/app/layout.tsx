@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import { Montserrat } from "next/font/google";
+import { InteractiveBackground } from "@/components/ui/common/background";
 import { SiteHeader } from "@/components/ui/common/header";
+import { Toaster } from "@/components/ui/common/toast";
 import { TooltipProvider } from "@/components/ui/common/tooltip";
+import "sonner/dist/styles.css";
 import "./globals.css";
 
 const montserrat = Montserrat({
@@ -29,8 +32,14 @@ export default function RootLayout({
     <html lang="en" className={`${montserrat.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col font-sans">
         <TooltipProvider>
-          <SiteHeader />
-          <div className="flex flex-1 flex-col">{children}</div>
+          <div className="relative flex min-h-full flex-1 flex-col">
+            <InteractiveBackground />
+            <div className="relative z-10 flex min-h-full flex-1 flex-col">
+              <SiteHeader />
+              <div className="flex flex-1 flex-col">{children}</div>
+            </div>
+            <Toaster />
+          </div>
         </TooltipProvider>
       </body>
     </html>

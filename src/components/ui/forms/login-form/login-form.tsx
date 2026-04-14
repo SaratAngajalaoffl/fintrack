@@ -14,6 +14,7 @@ import {
   CardTitle,
   TextField,
 } from "@/components/ui";
+import { toast } from "@/components/ui/common/toast";
 
 type LoginValues = {
   email: string;
@@ -26,7 +27,6 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-    setError,
     clearErrors,
   } = useForm<LoginValues>({
     defaultValues: { email: "", password: "" },
@@ -42,9 +42,7 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
     });
     const body = (await res.json().catch(() => ({}))) as { error?: string };
     if (!res.ok) {
-      setError("root", {
-        message: body.error ?? "Could not sign in",
-      });
+      toast.error(body.error ?? "Could not sign in");
       return;
     }
     router.push(redirectTo);
@@ -83,11 +81,6 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
             error={errors.password?.message}
             {...register("password", { required: "Password is required" })}
           />
-          {errors.root?.message ? (
-            <p className="text-sm text-destructive" role="alert">
-              {errors.root.message}
-            </p>
-          ) : null}
         </CardContent>
         <CardFooter className="flex flex-col gap-4 sm:flex-row sm:justify-between">
           <Button

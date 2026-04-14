@@ -3,8 +3,6 @@ import Link from "next/link";
 
 import { Button } from "@/components/ui";
 
-import { LandingHeroBackground } from "./landing-hero-background";
-
 export type LandingHeroProps = {
   /** When true, primary CTA goes to the protected dashboard instead of sign up. */
   isAuthenticated?: boolean;
@@ -13,8 +11,6 @@ export type LandingHeroProps = {
 export function LandingHero({ isAuthenticated = false }: LandingHeroProps) {
   return (
     <div className="relative flex min-h-[calc(100dvh-3.5rem)] flex-1 flex-col overflow-hidden">
-      <LandingHeroBackground />
-
       <main className="relative z-10 flex flex-1 flex-col items-center justify-center px-(--page-padding-x) py-14 sm:py-20">
         <div className="flex max-w-2xl flex-col items-center text-center">
           <Image

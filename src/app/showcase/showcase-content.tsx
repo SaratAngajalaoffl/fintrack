@@ -50,6 +50,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui";
+import { toast } from "@/components/ui/common/toast";
 import { cn } from "@/lib/utils";
 
 type AccountOption = {
@@ -184,6 +185,51 @@ export function ShowcaseContent() {
                 <Button disabled>Disabled</Button>
                 <Button variant="outline" disabled>
                   Disabled outline
+                </Button>
+              </CardContent>
+            </Card>
+          </Section>
+
+          <Section
+            title="Toast"
+            description="Global notifications via Sonner — `Toaster` is mounted in the root layout; import `toast` from `@/components/ui/common/toast`."
+          >
+            <Card>
+              <CardHeader>
+                <CardTitle>Variants</CardTitle>
+                <CardDescription>
+                  success, error, info — matches app theme tokens.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() =>
+                    toast.success("Saved", {
+                      description: "Your changes were applied.",
+                    })
+                  }
+                >
+                  Success
+                </Button>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => toast.error("Something went wrong")}
+                >
+                  Error
+                </Button>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() =>
+                    toast.info("Tip", {
+                      description: "You can dismiss with the close control.",
+                    })
+                  }
+                >
+                  Info
                 </Button>
               </CardContent>
             </Card>

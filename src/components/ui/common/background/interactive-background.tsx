@@ -4,8 +4,8 @@ import * as React from "react";
 
 import { useMouseReactiveGradient } from "@/components/hooks";
 
-/** Interactive gradient layer — client-only (pointer + rAF). */
-export function LandingHeroBackground() {
+/** Interactive gradient layer — client-only (pointer + rAF). Sits behind page content. */
+export function InteractiveBackground() {
   const gradientRef = React.useRef<HTMLDivElement>(null);
   useMouseReactiveGradient(gradientRef);
 

@@ -30,17 +30,14 @@ const PasswordResetOtpControl = React.forwardRef<HTMLInputElement, InnerProps>(
         inputMode="numeric"
         autoComplete="one-time-code"
         maxLength={6}
-        placeholder="000000"
+        placeholder="6-digit code"
         value={value}
         onBlur={onBlur}
         onChange={(e) => {
           const v = e.target.value.replace(/\D/g, "").slice(0, 6);
           onChange(v);
         }}
-        className={cn(
-          inputClassName,
-          "text-center font-mono text-xl tracking-[0.4em] placeholder:text-subtext-0/40",
-        )}
+        className={cn(inputClassName, "font-mono tabular-nums")}
         {...aria}
       />
     );
@@ -58,9 +55,7 @@ type PasswordResetOtpFieldProps = {
   onChange: (value: string) => void;
 };
 
-/**
- * Single verification code field (6 digits), visually distinct from plain text fields.
- */
+/** Single-line verification code (6 digits), same `Field` + `Input` layout as `TextField`. */
 export const PasswordResetOtpField = React.forwardRef<
   HTMLInputElement,
   PasswordResetOtpFieldProps
@@ -80,13 +75,7 @@ export const PasswordResetOtpField = React.forwardRef<
   const id = idProp ?? uid;
 
   return (
-    <Field
-      label={label}
-      error={error}
-      htmlFor={id}
-      required
-      className="rounded-lg border border-border/80 bg-surface-0/40 p-4"
-    >
+    <Field label={label} error={error} htmlFor={id} required>
       <PasswordResetOtpControl
         ref={ref}
         id={id}

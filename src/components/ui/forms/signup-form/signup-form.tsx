@@ -14,6 +14,7 @@ import {
   CardTitle,
   TextField,
 } from "@/components/ui";
+import { toast } from "@/components/ui/common/toast";
 
 type SignupValues = {
   email: string;
@@ -21,13 +22,11 @@ type SignupValues = {
 };
 
 export function SignupForm() {
-  const [success, setSuccess] = React.useState<string | null>(null);
   const {
     register,
     handleSubmit,
     reset,
     formState: { errors, isSubmitting },
-    setError,
     clearErrors,
   } = useForm<SignupValues>({
     defaultValues: { email: "", password: "" },
@@ -35,7 +34,6 @@ export function SignupForm() {
 
   async function onSubmit(data: SignupValues) {
     clearErrors("root");
-    setSuccess(null);
     const res = await fetch("/api/auth/signup", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -46,16 +44,15 @@ export function SignupForm() {
       message?: string;
     };
     if (!res.ok) {
-      setError("root", {
-        message: body.error ?? "Could not create account",
-      });
+      toast.error(body.error ?? "Could not create account");
       return;
     }
     reset();
-    setSuccess(
-      body.message ??
-        "Account created. An administrator must approve your account before you can sign in.",
-    );
+    toast.success("Account created", {
+      description:
+        body.message ??
+        "An administrator must approve your account before you can sign in.",
+    });
   }
 
   return (
@@ -96,16 +93,6 @@ export function SignupForm() {
               },
             })}
           />
-          {errors.root?.message ? (
-            <p className="text-sm text-destructive" role="alert">
-              {errors.root.message}
-            </p>
-          ) : null}
-          {success ? (
-            <p className="text-sm text-subtext-1" role="status">
-              {success}
-            </p>
-          ) : null}
         </CardContent>
         <CardFooter className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <Button
