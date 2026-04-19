@@ -1,9 +1,9 @@
 <p align="center">
-  <img src="web/public/brand/round_logo.png" width="96" height="96" alt="Fintrack logo" />
+  <img src="assets/brand/round_logo.png" width="96" height="96" alt="Fintrack logo" />
 </p>
 
 <h1 align="center">
-  <img src="web/public/brand/long_logo.png" alt="Fintrack" width="360" />
+  <img src="assets/brand/long_logo.png" alt="Fintrack" width="360" />
 </h1>
 
 <p align="center">
@@ -121,11 +121,11 @@ This starts **Postgres**, the **Go API** (which applies **`api/migrations/`** SQ
 
 ### Other Compose profiles
 
-| File                                     | Purpose                                         |
-| ---------------------------------------- | ----------------------------------------------- |
-| `deploy/docker-compose.dev.yml`  | Development: hot reload, source bind-mount      |
+| File                             | Purpose                                                                                                                                       |
+| -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `deploy/docker-compose.dev.yml`  | Development: hot reload, source bind-mount                                                                                                    |
 | `deploy/docker-compose.test.yml` | **`postgres`** + **`api`** by default; **`--profile web-tests`** (ESLint JUnit + Next build) or **`--profile go-tests`** (Go **`gotestsum`**) |
-| `deploy/docker-compose.prod.yml` | Production-style image (`output: "standalone"`) |
+| `deploy/docker-compose.prod.yml` | Production-style image (`output: "standalone"`)                                                                                               |
 
 Examples:
 
