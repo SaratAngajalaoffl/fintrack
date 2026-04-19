@@ -1,13 +1,12 @@
 # Fintrack documentation
 
-Project documentation lives in this directory.
+This directory lives in the **[Fintrack meta-repository](https://github.com/SaratAngajalaoffl/fintrack)** (`docs/`). It is organized by area:
 
-| Document                                            | Description                                                     |
-| --------------------------------------------------- | --------------------------------------------------------------- |
-| [Contributing](CONTRIBUTING.md)                     | How to contribute code, report issues, and open pull requests   |
-| [Data model](data-model.md)                         | Tables and fields for domains (e.g. bank accounts, buckets)     |
-| [Frontend data fetching](frontend-data-fetching.md) | React Query setup and server-first fetching conventions         |
-| [Routes](routes.md)                                 | Route registry approach for app and API paths                   |
-| [Agent guide](../AGENTS.md)                         | Conventions for tooling and AI-assisted development (repo root) |
+| Section | Contents |
+| ------- | -------- |
+| [api/](api/README.md) | Persistence and data model (tables, migrations alignment) |
+| [web/](web/README.md) | Next.js app: routes registry, React Query / fetching |
+| [Contributing](CONTRIBUTING.md) | Clone setup, PR targets (meta vs **web** vs **api**) |
+| [Agent guide](../AGENTS.md) | Conventions for tooling and AI-assisted development |
 
-The main project overview and run instructions are in the [root README](../README.md).
+Project overview, Docker Compose, and submodule clone instructions: [root README](../README.md).

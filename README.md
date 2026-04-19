@@ -20,14 +20,26 @@
 
 Fintrack is under active development. The goal is a responsive app for balances, categories, transactions, and clarity—without locking you into a proprietary service.
 
-## Stack
+## Repositories
 
-- **Frontend:** [Next.js](https://nextjs.org/) (App Router) in **`web/`**, React, TypeScript, Tailwind CSS
-- **API (growing):** [Go](https://go.dev/) in **`api/`** — see [api/README.md](api/README.md)
-- **Database:** [PostgreSQL](https://www.postgresql.org/) with SQL migrations in **`api/migrations/`**
+This **meta-repository** wires the app together; application code lives in two **Git submodules**:
+
+| Path / repo | Stack | Remote |
+| ----------- | ----- | ------ |
+| **`web/`** | [Next.js](https://nextjs.org/) (App Router), React, TypeScript, Tailwind CSS | [fintrack-web](https://github.com/SaratAngajalaoffl/fintrack-web) |
+| **`api/`** | [Go](https://go.dev/) HTTP API, PostgreSQL migrations | [fintrack-api](https://github.com/SaratAngajalaoffl/fintrack-api) |
+
+- **Clone with submodules:** `git clone --recurse-submodules https://github.com/SaratAngajalaoffl/fintrack.git`
+- **Existing clone:** `git submodule update --init --recursive`
+
+Shared **Docker Compose** files live under **`deploy/`** (build contexts **`../web`** and **`../api`** relative to `deploy/`). Documentation index: **[docs/README.md](docs/README.md)**.
+
+## Stack (summary)
+
+- **Frontend:** Next.js in **`web/`** — see [web/README.md](web/README.md)
+- **API:** Go in **`api/`** — see [api/README.md](api/README.md)
+- **Database:** PostgreSQL; SQL migrations in **`api/migrations/`** (submodule)
 - **Deployment:** Dockerfiles under **`api/deploy/`** and **`web/deploy/`**; Compose stacks in **`deploy/`** for dev, test, and production-style runs
-
-This repository is a **simple monorepo** (no npm workspaces): install Node dependencies inside **`web/`** and run Go commands inside **`api/`**.
 
 ## Requirements
 
@@ -35,12 +47,13 @@ This repository is a **simple monorepo** (no npm workspaces): install Node depen
 | --------------------------- | --------------------------------------------------------- |
 | **Node.js** (LTS)           | Local development and production Node build (`web/`)      |
 | **npm**                     | Install dependencies and run scripts under `web/`         |
-| **Go** (1.22+)              | Build and run the `api/` service                          |
+| **Go** (see `api/go.mod`)   | Build and run the `api/` service                          |
 | **Docker & Docker Compose** | Optional; recommended for Postgres + app with one command |
+| **Git**                     | Submodule support (`git submodule`) for `web/` and `api/` |
 
 ## Quick start (local development)
 
-1. **Clone** this repository.
+1. **Clone** this repository **with submodules** (see [Repositories](#repositories)).
 
 2. **Install dependencies**
 
@@ -57,11 +70,11 @@ This repository is a **simple monorepo** (no npm workspaces): install Node depen
    git config core.hooksPath .githooks
    ```
 
-   This repo keeps hooks under **`.githooks/`** (e.g. **`pre-commit`** runs **`lint-staged`** using **`web/package.json`**). Run the command once per clone.
+   From the **meta-repo root**, **`.githooks/`** (e.g. **`pre-commit`** → **`lint-staged`** using **`web/package.json`**). Run once per clone.
 
 3. **Environment**
 
-   Copy the per-app examples and adjust values:
+   Copy the per-app examples inside each submodule and adjust values:
 
    ```bash
    cp api/.env.example api/.env
@@ -70,7 +83,7 @@ This repository is a **simple monorepo** (no npm workspaces): install Node depen
 
    Set **`JWT_SECRET`** (≥16 characters) only in **`api/.env`** — the Go API signs session cookies. In **`web/.env.local`**, set **`NEXT_PUBLIC_API_ORIGIN`** (and optional **`API_ORIGIN`**) so Next can call the API for **`GET /api/auth/me`** (middleware and server components). See **`api/.env.example`** and **`web/.env.example`** for **`DATABASE_URL`**, **`CORS_ALLOWED_ORIGINS`**, and optional variables.
 
-   **Docker Compose:** when you run Compose from the **repository root**, you can add a **root** `.env` (not committed) with **`POSTGRES_*`** and port overrides — or export those variables. Example:
+   **Docker Compose:** when you run Compose from this **repository root**, you can add a **root** `.env` (not committed) with **`POSTGRES_*`** and port overrides — or export those variables. Example:
 
    ```bash
    POSTGRES_USER=fintrack
@@ -142,11 +155,11 @@ docker compose -f deploy/docker-compose.test.yml --profile go-tests run --rm api
 
 ## Database migrations
 
-SQL files live in **`api/migrations/`**. The **Go API** applies pending files on startup (filenames recorded in **`schema_migrations`**, same rules as before). Run **`go run ./cmd/api`** from **`api/`** so migrations resolve to **`api/migrations/`**; Docker images mount or copy SQL into **`/migrations`**.
+SQL files live in **`api/migrations/`** (inside the **api** submodule). The **Go API** applies pending files on startup (filenames recorded in **`schema_migrations`**). Run **`go run ./cmd/api`** from **`api/`** so migrations resolve correctly; Docker images mount or copy SQL into **`/migrations`**.
 
 If you run Postgres yourself, apply the same files in order with `psql` or your preferred migration workflow. **Seeding** is not run by the API — use your own scripts (see **`data/`**).
 
-## Scripts
+## Scripts (frontend)
 
 Run these from **`web/`** (after `cd web`):
 
@@ -163,7 +176,7 @@ With **`core.hooksPath`** set to **`.githooks`**, **`pre-commit`** runs **Pretti
 
 ## Contributing
 
-Contributions are welcome. Please read **[docs/CONTRIBUTING.md](docs/CONTRIBUTING.md)** for guidelines, and **[docs/README.md](docs/README.md)** for a small documentation index.
+Contributions are welcome. Read **[docs/CONTRIBUTING.md](docs/CONTRIBUTING.md)** for clone setup, which repository to target for PRs, and **[docs/README.md](docs/README.md)** for the documentation index.
 
 ## Acknowledgements
 

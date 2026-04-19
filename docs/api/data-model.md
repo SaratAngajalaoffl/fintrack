@@ -2,6 +2,8 @@
 
 Domain shapes evolve with migrations and APIs. This document tracks **planned and current** structures so agents and contributors stay aligned.
 
+SQL migrations that implement these tables live in the **[fintrack-api](https://github.com/SaratAngajalaoffl/fintrack-api)** repository under **`migrations/`** (applied on API startup).
+
 ## Bank accounts
 
 Users configure **bank accounts** as the top-level container for liquid balances. Each account has a running **balance** (seeded from an **initial balance** at creation and updated as transactions post).

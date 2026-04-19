@@ -23,7 +23,7 @@ This document orients coding agents and contributors to how Fintrack is organize
 - **Routes:** `/dashboard/bank-accounts/my-bank-accounts` (**My Bank Accounts**) and `/dashboard/bank-accounts/statements` (**Bank Statements**). Keep `/dashboard/bank-accounts` as a redirect-only compatibility route.
 - **Code:** Domain types, URL state parsing, and mock rows live under **`web/src/lib/bank-accounts/`**. Composed screen UI lives under **`web/src/components/ui/bank-accounts/`**. Shared primitives for this area: **`ChipComponent`** (`web/src/components/ui/common/chip/`) and **`TableComponent`** (`web/src/components/ui/common/table-component/`) — export from `@/components/ui`.
 - **API:** **`GET`/`POST /api/bank-accounts`**, **`GET`/`PATCH`/`DELETE /api/bank-accounts/:id`** — implemented in **`api/`**; **`getApiRoute()`** + optional **`NEXT_PUBLIC_API_ORIGIN`** (see **`web/src/configs/api-routes.ts`**). Client helpers: **`web/src/services/bank-accounts/bank-accounts-api.ts`**.
-- **Persistence:** Core account settings live in `bank_accounts`; preferred categories are normalized in `bank_account_preferred_categories` (migration `012_bank_account_preferred_category_links.sql`). Planned/implemented fields are documented in **[docs/data-model.md](docs/data-model.md)**. Update that file when migrations or API shapes change.
+- **Persistence:** Core account settings live in `bank_accounts`; preferred categories are normalized in `bank_account_preferred_categories` (migration `012_bank_account_preferred_category_links.sql`). Planned/implemented fields are documented in **[docs/api/data-model.md](docs/api/data-model.md)**. Update that file when migrations or API shapes change.
 
 ### Domain: credit cards
 
@@ -106,7 +106,7 @@ The repo is a **meta-repo**: **`web/`** and **`api/`** are **Git submodules** (s
 
 | Path                    | Purpose                                                                                                                                                                                                                                                                                      |
 | ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `.github/workflows/`    | **GitHub Actions** — e.g. **`ci.yml`** runs **`web`** and **`api`** via **`deploy/docker-compose.test.yml`** profiles + **`test-summary/action`** on JUnit outputs.                                                                                                                                                                                                  |
+| `.github/workflows/`    | **GitHub Actions** (when present) — use **`actions/checkout`** with **`submodules: recursive`** so **`web/`** and **`api/`** exist; typical jobs run **`deploy/docker-compose.test.yml`** profiles and **`test-summary/action`** on **`web/eslint-junit.xml`** / **`api/junit.xml`**.                                                                                                                                                                                                  |
 | `.githooks/`            | **Native Git hooks** (e.g. `pre-commit` → `lint-staged` in **`web/`**). Enable per clone: **`git config core.hooksPath .githooks`**.                                                                                                                                                         |
 | `api/`                  | **Go HTTP API** — `api/go.mod`, **`api/cmd/api/`**, ordered SQL in **`api/migrations/`** (applied on startup). Dockerfiles under **`api/deploy/`** (see [Docker notes](#docker-notes)).                                                      |
 | `web/package.json`      | Next.js app metadata and scripts — use **`cd web`**, then **`npm install`**, **`npm run dev`**, etc.                                                                                                                                                                                          |
@@ -121,48 +121,14 @@ The repo is a **meta-repo**: **`web/`** and **`api/`** are **Git submodules** (s
 | `web/src/lib/`              | **`utils.ts`** — **`cn()`** for Tailwind class merging. **`formatting/`** — shared formatters (`date-formatting.ts`, `number-formatting.ts`, `string-formatting.ts`). **`bank-accounts/`** — types, list URL state, mocks until APIs exist. Auth, DB, and other app libraries live here too. |
 | `web/public/brand/`         | **Brand marks** — round / long / short logos (favicon, header). Not for generic UI icons; see [Icons](#icons).                                                                                                                                                                               |
 | `web/public/icons/`         | **Static icon assets** — `.svg`, `.png`, and similar files served as `/icons/…` (see [Icons](#icons)).                                                                                                                                                                                       |
-| `docs/`                 | Contributor docs (`CONTRIBUTING.md`) and [docs index](docs/README.md).                                                                                                                                             |
+| `docs/`                 | **[docs/README.md](docs/README.md)** — **`docs/api/`** (data model, persistence notes), **`docs/web/`** (routes, data fetching); **`docs/CONTRIBUTING.md`**.                                                                                                                                             |
 | `api/deploy/`           | Go API Dockerfiles: **`Dockerfile.dev`** (Air live reload), **`Dockerfile.prod`** (release image), **`Dockerfile.test`** (one-shot **`gotestsum`** + **`junit.xml`**; mount Docker socket). CI summary: **`test-summary/action`** on **`api/junit.xml`**.                                                                                                                            |
 | `web/deploy/`           | Next.js Dockerfiles: **`Dockerfile.test`** runs **`npm run lint:junit`** (writes **`eslint-junit.xml`**) + **`npm run build`**; test Compose profile **`web-tests`** bind-mounts **`web/`** and uses **`test-summary/action`** on **`web/eslint-junit.xml`** in CI. **`Dockerfile.dev`**, **`Dockerfile.prod`**.                                                                                                                                                                                                |
 | `deploy/`               | Compose stacks (`docker-compose.dev.yml`, `docker-compose.test.yml`, `docker-compose.prod.yml`).                                                                                                                                                           |
 
 Add feature modules under `web/src/` with clear boundaries (e.g. `web/src/lib/formatting/`, `web/src/app/(dashboard)/`, composed UI under `web/src/components/ui/forms/` / `common/` / `landing/` / `layout/`) as the app grows.
 
-### Meta-repo migration (separate `web` / `api` Git repos)
-
-**Goal:** Keep this repository as the **meta-repo** (Compose, CI, docs, `AGENTS.md`, …) while **`web/`** and **`api/`** are **separate Git repositories** wired in as **Git submodules** (same paths on disk: `web/`, `api/`). **Update this subsection** as steps complete so anyone can resume after an interruption.
-
-**Target clone (after migration):** `git clone --recurse-submodules <meta-repo-url>` (or `git submodule update --init --recursive` after a plain clone).
-
-**Child remotes (default branch `main`) — Phase 1 done:** [fintrack-api](https://github.com/SaratAngajalaoffl/fintrack-api), [fintrack-web](https://github.com/SaratAngajalaoffl/fintrack-web). Both started empty on GitHub; `main` receives the first push from Phase 2.
-
-**Phase 2 — Fill the child repos (preserve monorepo history)** — run from the **meta-repo / monorepo** root with GitHub auth (HTTPS or SSH URL). Uses built-in **`git subtree split`** (content ends at repo root in each child).
-
-```bash
-# API: split prefix api/ → branch, push to child main, remove local split branch
-git subtree split -P api -b __fintrack_api_split
-git push git@github.com:SaratAngajalaoffl/fintrack-api.git __fintrack_api_split:main
-git branch -D __fintrack_api_split
-
-# Web: same for web/
-git subtree split -P web -b __fintrack_web_split
-git push git@github.com:SaratAngajalaoffl/fintrack-web.git __fintrack_web_split:main
-git branch -D __fintrack_web_split
-```
-
-Use **`https://github.com/SaratAngajalaoffl/…`** instead of **`git@github.com:…`** if you do not use SSH. Large histories: split can take several minutes and needs enough local disk. **Alternative (no history):** copy `api/` or `web/` into a fresh clone of the empty repo, commit, push to `main`.
-
-| Phase | What to do |
-| ----- | ---------- |
-| **0 — Decide** | Confirm **submodules** (vs **subtree**): submodules = separate PRs per app, pinned SHAs in meta-repo; subtree = less tooling, heavier merges. Default here: **submodules**. |
-| **1 — Create empty remotes** | ✅ GitHub: [fintrack-api](https://github.com/SaratAngajalaoffl/fintrack-api), [fintrack-web](https://github.com/SaratAngajalaoffl/fintrack-web), branch **`main`**. |
-| **2 — Extract history (optional)** | Run the **Phase 2** block above (or **`git filter-repo`** / fresh **`git init`** if you prefer those workflows). |
-| **3 — Wire submodules in meta-repo** | ✅ **`.gitmodules`** + submodule **`api`** / **`web`** (HTTPS remotes above). If paths were still tracked, **`git rm -rf`** them first, then: `git submodule add https://github.com/SaratAngajalaoffl/fintrack-api.git api` and `…/fintrack-web.git web`. Commit **`.gitmodules`** + gitlink entries. |
-| **4 — CI / automation** | In **`.github/workflows/`**, set **`actions/checkout@v4`** with **`submodules: recursive`** (or `true`) so `web/` and `api/` exist in CI. Verify paths **`web/eslint-junit.xml`** and **`api/junit.xml`** still match **`deploy/docker-compose.test.yml`**. |
-| **5 — Docs & hooks** | Update root **README.md** (clone with submodules), **CONTRIBUTING.md** / **docs/** if present, and any scripts that assumed a single repo. **`.githooks/`**: if hooks run inside `web/`, document that developers need submodules initialized first. |
-| **6 — Cutover** | Archive or retire the old “everything in one repo” remote if you split history; align default branches; pin submodule versions on **`main`** via normal meta-repo PRs. |
-
-**Invariant for this codebase:** Compose files under **`deploy/`** already use **`context: ../web`** and **`context: ../api`** relative to **`deploy/`** — that layout **unchanged** as long as **`web/`** and **`api/`** remain those directory names at the repo root.
+**Compose:** files under **`deploy/`** use **`context: ../web`** and **`context: ../api`** relative to **`deploy/`** — keep **`web/`** and **`api/`** as those directory names at the meta-repo root (submodule paths).
 
 ### Hooks
 
@@ -235,7 +201,7 @@ Commands below assume a POSIX shell. **Node** commands run from **`web/`**; **Go
 
 | Task               | Command                                                                |
 | ------------------ | ---------------------------------------------------------------------- |
-| CI (GitHub)        | **`.github/workflows/ci.yml`** on push/PR: **`web`** and **`api`** each run **`deploy/docker-compose.test.yml`** (**`--profile web-tests`** → **`web-test`**, **`--profile go-tests`** → **`api-go-tests`**), then **`test-summary/action`** on **`web/eslint-junit.xml`** / **`api/junit.xml`**, then **`docker compose … down --volumes`** and remove JUnit files. **`JWT_SECRET`** is set for the web job (starts **`api`**). Needs Docker. |
+| CI (GitHub)        | When **`.github/workflows/ci.yml`** (or similar) is present: checkout with **`submodules: recursive`**; **`web`** and **`api`** jobs typically run **`deploy/docker-compose.test.yml`** (**`--profile web-tests`** → **`web-test`**, **`--profile go-tests`** → **`api-go-tests`**), then **`test-summary/action`** on **`web/eslint-junit.xml`** / **`api/junit.xml`**, then **`docker compose … down --volumes`** and remove JUnit files. **`JWT_SECRET`** is set for the web job (starts **`api`**). Needs Docker. |
 | Dev — Next (local) | `cd web && npm run dev`                                                |
 | Dev — Go API       | `cd api && go run ./cmd/api`                                           |
 | Test — Go API      | `cd api && make test` (integration tests need **Docker** for Postgres) |
