@@ -22,7 +22,7 @@ This document orients coding agents and contributors to how Fintrack is organize
 
 - **Routes:** `/dashboard/bank-accounts/my-bank-accounts` (**My Bank Accounts**) and `/dashboard/bank-accounts/statements` (**Bank Statements**). Keep `/dashboard/bank-accounts` as a redirect-only compatibility route.
 - **Code:** Domain types, URL state parsing, and mock rows live under **`web/src/lib/bank-accounts/`**. Composed screen UI lives under **`web/src/components/ui/bank-accounts/`**. Shared primitives for this area: **`ChipComponent`** (`web/src/components/ui/common/chip/`) and **`TableComponent`** (`web/src/components/ui/common/table-component/`) — export from `@/components/ui`.
-- **API:** **`GET`/`POST /api/bank-accounts`**, **`GET`/`PATCH`/`DELETE /api/bank-accounts/:id`** — implemented in **`api/`**; **`getApiRoute()`** + optional **`NEXT_PUBLIC_API_ORIGIN`** (see **`web/src/configs/api-routes.ts`**). Client helpers: **`web/src/services/bank-accounts/bank-accounts-api.ts`**.
+- **API:** **`GET`/`POST /api/bank-accounts`**, **`GET`/`PATCH`/`DELETE /api/bank-accounts/:id`** — implemented in **`api/`**; **`getApiRoute()`** (see **`web/src/configs/api-routes.ts`**). Client helpers: **`web/src/services/bank-accounts/bank-accounts-api.ts`**.
 - **Persistence:** Core account settings live in `bank_accounts`; preferred categories are normalized in `bank_account_preferred_categories` (migration `012_bank_account_preferred_category_links.sql`). Planned/implemented fields are documented in **[docs/api/data-model.md](docs/api/data-model.md)**. Update that file when migrations or API shapes change.
 
 ### Domain: credit cards
@@ -56,7 +56,9 @@ This document orients coding agents and contributors to how Fintrack is organize
 
 ## Go API + Next.js
 
-HTTP APIs for app domains are implemented in the **Go** service (**`api/`**). **`getApiRoute()`** in **`web/src/configs/api-routes.ts`** resolves API URLs using **`NEXT_PUBLIC_API_ORIGIN`** (browser) and **`API_ORIGIN`** (server-side / middleware) when set (see **`web/.env.example`**). Session JWTs are signed and verified only in **`api/`**; Next **`middleware.ts`** and **`getSession()`** call **`GET /api/auth/me`** instead of verifying JWTs locally.
+HTTP APIs for app domains are implemented in the **Go** service (**`api/`**). **`getApiRoute()`** in **`web/src/configs/api-routes.ts`** uses same-origin **`/api/...`** paths in the **browser** (so `fintrack_session` is stored for the Next host) and **`API_ORIGIN`** / **`NEXT_PUBLIC_API_ORIGIN`** on the **server** and in Edge **`middleware`** so fetches reach the Go API (see **`web/.env.example`**). Session JWTs are signed and verified only in **`api/`**; Next **`middleware.ts`** and **`getSession()`** call **`GET /api/auth/me`** instead of verifying JWTs locally.
+
+**Initial install:** when the **`users`** table is empty, **`GET /api/auth/bootstrap-status`** returns **`needsBootstrap: true`**, **`POST /api/auth/bootstrap`** creates the first **approved administrator** (sets session cookie), and **`POST /api/auth/signup`** returns **403** until at least one user exists. **`web`** **`middleware.ts`** redirects every matched path except **`/setup`** to **`/setup`** while **`needsBootstrap`** is true (so landing, showcase, auth pages, and dashboard are unreachable until setup). The **`/setup`** page still server-redirects to **`/`** when bootstrap is not needed. After the first user exists, bootstrap endpoints report **`needsBootstrap: false`** and **`POST /api/auth/bootstrap`** returns **404**. Users carry **`is_admin`** (migration **`015_users_is_admin.sql`**); **`GET`/`PATCH /api/auth/me`** include **`isAdmin`** in the JSON user object.
 
 **Route paths** stay aligned with **`web/src/configs/api-routes.ts`**.
 
@@ -206,6 +208,7 @@ Commands below assume a POSIX shell. **Node** commands run from **`web/`**; **Go
 | Dev — Go API       | `cd api && go run ./cmd/api`                                           |
 | Test — Go API      | `cd api && make test` (integration tests need **Docker** for Postgres) |
 | Coverage — Go API  | `cd api && make test-cover` (writes **`api/coverage.out`**)            |
+| Swagger (Go API)   | `cd api && make swagger` — regenerates **`api/docs/`** from **`cmd/api/main.go`** + **`internal/handler`** comments; UI served at **`/swagger/`** when the API runs |
 | Lint               | `cd web && npm run lint`                                               |
 | Test (placeholder) | `cd web && npm run test` (currently lint; extend with a real runner when needed) |
 | Production build   | `cd web && npm run build` then `cd web && npm run start`                |
