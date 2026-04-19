@@ -1,5 +1,0 @@
-deploy/
-.git
-.env
-.env.*
-*.md

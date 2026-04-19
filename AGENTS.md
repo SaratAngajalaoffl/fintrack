@@ -128,6 +128,42 @@ The repo is a **two-root** layout (no npm workspaces): **`web/`** (Next.js) and 
 
 Add feature modules under `web/src/` with clear boundaries (e.g. `web/src/lib/formatting/`, `web/src/app/(dashboard)/`, composed UI under `web/src/components/ui/forms/` / `common/` / `landing/` / `layout/`) as the app grows.
 
+### Meta-repo migration (separate `web` / `api` Git repos)
+
+**Goal:** Keep this repository as the **meta-repo** (Compose, CI, docs, `AGENTS.md`, …) while **`web/`** and **`api/`** are **separate Git repositories** wired in as **Git submodules** (same paths on disk: `web/`, `api/`). **Update this subsection** as steps complete so anyone can resume after an interruption.
+
+**Target clone (after migration):** `git clone --recurse-submodules <meta-repo-url>` (or `git submodule update --init --recursive` after a plain clone).
+
+**Child remotes (default branch `main`) — Phase 1 done:** [fintrack-api](https://github.com/SaratAngajalaoffl/fintrack-api), [fintrack-web](https://github.com/SaratAngajalaoffl/fintrack-web). Both started empty on GitHub; `main` receives the first push from Phase 2.
+
+**Phase 2 — Fill the child repos (preserve monorepo history)** — run from the **meta-repo / monorepo** root with GitHub auth (HTTPS or SSH URL). Uses built-in **`git subtree split`** (content ends at repo root in each child).
+
+```bash
+# API: split prefix api/ → branch, push to child main, remove local split branch
+git subtree split -P api -b __fintrack_api_split
+git push git@github.com:SaratAngajalaoffl/fintrack-api.git __fintrack_api_split:main
+git branch -D __fintrack_api_split
+
+# Web: same for web/
+git subtree split -P web -b __fintrack_web_split
+git push git@github.com:SaratAngajalaoffl/fintrack-web.git __fintrack_web_split:main
+git branch -D __fintrack_web_split
+```
+
+Use **`https://github.com/SaratAngajalaoffl/…`** instead of **`git@github.com:…`** if you do not use SSH. Large histories: split can take several minutes and needs enough local disk. **Alternative (no history):** copy `api/` or `web/` into a fresh clone of the empty repo, commit, push to `main`.
+
+| Phase | What to do |
+| ----- | ---------- |
+| **0 — Decide** | Confirm **submodules** (vs **subtree**): submodules = separate PRs per app, pinned SHAs in meta-repo; subtree = less tooling, heavier merges. Default here: **submodules**. |
+| **1 — Create empty remotes** | ✅ GitHub: [fintrack-api](https://github.com/SaratAngajalaoffl/fintrack-api), [fintrack-web](https://github.com/SaratAngajalaoffl/fintrack-web), branch **`main`**. |
+| **2 — Extract history (optional)** | Run the **Phase 2** block above (or **`git filter-repo`** / fresh **`git init`** if you prefer those workflows). |
+| **3 — Wire submodules in meta-repo** | Remove tracked `web/` and `api/` as normal directories (backup branch first), then `git submodule add <web-remote> web` and `git submodule add <api-remote> api`. Commit **`.gitmodules`** + submodule pointers. |
+| **4 — CI / automation** | In **`.github/workflows/`**, set **`actions/checkout@v4`** with **`submodules: recursive`** (or `true`) so `web/` and `api/` exist in CI. Verify paths **`web/eslint-junit.xml`** and **`api/junit.xml`** still match **`deploy/docker-compose.test.yml`**. |
+| **5 — Docs & hooks** | Update root **README.md** (clone with submodules), **CONTRIBUTING.md** / **docs/** if present, and any scripts that assumed a single repo. **`.githooks/`**: if hooks run inside `web/`, document that developers need submodules initialized first. |
+| **6 — Cutover** | Archive or retire the old “everything in one repo” remote if you split history; align default branches; pin submodule versions on **`main`** via normal meta-repo PRs. |
+
+**Invariant for this codebase:** Compose files under **`deploy/`** already use **`context: ../web`** and **`context: ../api`** relative to **`deploy/`** — that layout **unchanged** as long as **`web/`** and **`api/`** remain those directory names at the repo root.
+
 ### Hooks
 
 **Location:** `web/src/components/hooks/`.
