@@ -124,7 +124,7 @@ This starts **Postgres**, the **Go API** (which applies **`api/migrations/`** SQ
 | File                                     | Purpose                                         |
 | ---------------------------------------- | ----------------------------------------------- |
 | `deploy/docker-compose.dev.yml`  | Development: hot reload, source bind-mount      |
-| `deploy/docker-compose.test.yml` | Lint + production build after migrations        |
+| `deploy/docker-compose.test.yml` | **`postgres`** + **`api`** by default; **`--profile web-tests`** (ESLint JUnit + Next build) or **`--profile go-tests`** (Go **`gotestsum`**) |
 | `deploy/docker-compose.prod.yml` | Production-style image (`output: "standalone"`) |
 
 Examples:
@@ -133,8 +133,11 @@ Examples:
 # Production-style build and run
 docker compose -f deploy/docker-compose.prod.yml up --build -d
 
-# CI-style checks (lint + build) with Postgres + migrations
-docker compose -f deploy/docker-compose.test.yml up --build
+# CI-style web checks (ESLint JUnit + build) — needs JWT_SECRET for api (export or .env)
+docker compose -f deploy/docker-compose.test.yml --profile web-tests run --rm web-test
+
+# Go tests (testcontainers; host Docker socket)
+docker compose -f deploy/docker-compose.test.yml --profile go-tests run --rm api-go-tests
 ```
 
 ## Database migrations

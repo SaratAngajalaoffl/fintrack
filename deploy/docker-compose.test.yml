@@ -2,7 +2,7 @@ name: fintrack-test
 
 services:
   postgres:
-    image: postgres:16-alpine
+    image: postgres:latest
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-fintrack}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-fintrack}
@@ -15,10 +15,11 @@ services:
       timeout: 5s
       retries: 10
 
+  # HTTP API for web-test (lint + Next build). Go unit/integration tests run separately (api-go-tests).
   api:
     build:
       context: ../api
-      dockerfile: ../api/deploy/Dockerfile
+      dockerfile: ../api/deploy/Dockerfile.prod
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-fintrack}:${POSTGRES_PASSWORD:-fintrack}@postgres:5432/${POSTGRES_DB:-fintrack}
       PORT: "8080"
@@ -27,22 +28,42 @@ services:
       postgres:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "wget -q -O- http://127.0.0.1:8080/health | grep -q ok"]
+      test:
+        ["CMD-SHELL", "wget -q -O- http://127.0.0.1:8080/health | grep -q ok"]
       interval: 5s
       timeout: 5s
       retries: 8
       start_period: 20s
 
-  test:
+  # Run: docker compose -f deploy/docker-compose.test.yml --profile go-tests run --rm api-go-tests
+  api-go-tests:
+    profiles: ["go-tests"]
+    build:
+      context: ../api
+      dockerfile: ../api/deploy/Dockerfile.test
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      # Bind-mount source so junit.xml is written on the host (e.g. CI test-summary/action on api/junit.xml).
+      - ../api:/src
+    environment:
+      DOCKER_HOST: unix:///var/run/docker.sock
+
+  # Run: docker compose -f deploy/docker-compose.test.yml --profile web-tests run --rm web-test
+  web-test:
+    profiles: ["web-tests"]
     build:
       context: ../web
       dockerfile: ../web/deploy/Dockerfile.test
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-fintrack}:${POSTGRES_PASSWORD:-fintrack}@postgres:5432/${POSTGRES_DB:-fintrack}
       API_ORIGIN: http://api:8080
+    volumes:
+      - ../web:/app/web
+      - web_test_node_modules:/app/web/node_modules
     depends_on:
       api:
         condition: service_healthy
 
 volumes:
   postgres_data_test:
+  web_test_node_modules:

@@ -2,7 +2,7 @@ name: fintrack-dev
 
 services:
   postgres:
-    image: postgres:16-alpine
+    image: postgres:latest
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-fintrack}
@@ -21,7 +21,7 @@ services:
   api:
     build:
       context: ../api
-      dockerfile: ../api/deploy/Dockerfile
+      dockerfile: ../api/deploy/Dockerfile.dev
     restart: unless-stopped
     ports:
       - "${API_PORT:-8000}:8000"
@@ -31,7 +31,7 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-fintrack}:${POSTGRES_PASSWORD:-fintrack}@postgres:5432/${POSTGRES_DB:-fintrack}
       PORT: "8000"
     volumes:
-      - ../api/migrations:/migrations:ro
+      - ../api:/src
     depends_on:
       postgres:
         condition: service_healthy

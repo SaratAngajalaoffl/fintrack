@@ -1,4 +1,4 @@
-# CI: `npm run lint` and `npm run build` (docker-compose.test.yml).
+# CI: ESLint → JUnit (`eslint-junit.xml`) + `next build` (docker-compose.test.yml, profile web-tests).
 FROM node:22-alpine
 
 RUN apk add --no-cache libc6-compat
@@ -15,4 +15,4 @@ ENV NODE_ENV=test
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV CI=1
 
-CMD ["sh", "-c", "npm run lint && npm run build"]
+CMD ["sh", "-c", "if [ ! -d node_modules/.bin ]; then npm ci; fi && npm run lint:junit && npm run build"]

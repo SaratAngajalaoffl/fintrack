@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main, master]
+    branches: main
   pull_request:
 
 permissions:
@@ -16,111 +16,76 @@ jobs:
   web:
     name: Web (lint & test)
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-    defaults:
-      run:
-        working-directory: web
+    timeout-minutes: 25
+    env:
+      # Required for api service when running deploy/docker-compose.test.yml (web-test profile).
+      JWT_SECRET: fintrack-ci-jwt-secret-not-for-production-use
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-          cache: npm
-          cache-dependency-path: web/package-lock.json
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: ESLint
-        run: npm run lint
-
-      - name: Test script (lint placeholder)
-        run: npm run test
-
-      - name: Summarize web checks
-        if: success()
+      - name: Run web tests (docker-compose.test)
+        id: web_test
         run: |
+          docker compose -f deploy/docker-compose.test.yml --profile web-tests build web-test
+          docker compose -f deploy/docker-compose.test.yml --profile web-tests run --rm web-test
+
+      - name: Web test summary
+        if: always()
+        continue-on-error: true
+        uses: test-summary/action@31493c76ec9e7aa675f1585d3ed6f1da69269a86 # v2
+        with:
+          paths: "web/eslint-junit.xml"
+          show: "all"
+
+      - name: Web test summary fallback
+        if: always() && steps.web_test.outcome != 'success'
+        run: |
+          if [ -f web/eslint-junit.xml ]; then exit 0; fi
           {
             echo "## Web (lint & test)"
             echo ""
-            echo "| Step | Result |"
-            echo "|------|--------|"
-            echo "| \`npm ci\` | ok |"
-            echo "| ESLint (\`npm run lint\`) | ok |"
-            echo "| \`npm test\` (lint placeholder) | ok |"
+            echo "_No \`web/eslint-junit.xml\` was produced (for example image failure or ESLint crash). See the **Run web tests (docker-compose.test)** log._"
           } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Clean up (Compose & JUnit)
+        if: always()
+        run: |
+          docker compose -f deploy/docker-compose.test.yml --profile web-tests down --volumes --remove-orphans || true
+          rm -f web/eslint-junit.xml
 
   api:
     name: API (lint & test)
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    defaults:
-      run:
-        working-directory: api
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-go@v5
-        with:
-          go-version-file: api/go.mod
-          cache-dependency-path: api/go.sum
-
-      - name: Go test
+      - name: Run Go tests (docker-compose.test)
         id: go_test
         run: |
-          go install gotest.tools/gotestsum@v1.12.3
-          "$(go env GOPATH)/bin/gotestsum" \
-            --format standard-verbose \
-            --junitfile junit.xml \
-            -- -count=1 ./...
+          docker compose -f deploy/docker-compose.test.yml --profile go-tests build api-go-tests
+          docker compose -f deploy/docker-compose.test.yml --profile go-tests run --rm api-go-tests
 
-      - name: Summarize Go tests
+      - name: Go test summary
+        if: always()
+        continue-on-error: true
+        uses: test-summary/action@31493c76ec9e7aa675f1585d3ed6f1da69269a86 # v2
+        with:
+          paths: "api/junit.xml"
+          show: "all"
+
+      - name: Go test summary fallback
+        if: always() && steps.go_test.outcome != 'success'
+        run: |
+          if [ -f api/junit.xml ]; then exit 0; fi
+          {
+            echo "## Go API tests"
+            echo ""
+            echo "_No \`api/junit.xml\` was produced (for example image or compile failure). See the **Run Go tests (docker-compose.test)** log._"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Clean up (Compose & JUnit)
         if: always()
         run: |
-          echo "## Go API tests" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          if [ ! -f junit.xml ]; then
-            echo "_No JUnit report (tests may have failed before writing junit.xml)._" >> "$GITHUB_STEP_SUMMARY"
-            if [ "${{ steps.go_test.outcome }}" != "success" ]; then
-              echo "Go test step failed — see the **Go test** log." >> "$GITHUB_STEP_SUMMARY"
-            fi
-            exit 0
-          fi
-          python3 <<'PY' >> "$GITHUB_STEP_SUMMARY"
-          import xml.etree.ElementTree as ET
-
-          tree = ET.parse("junit.xml")
-          root = tree.getroot()
-
-          def local_tag(tag):
-              return tag.rpartition("}")[-1] if tag else ""
-
-          suites = []
-          if local_tag(root.tag) == "testsuites":
-              suites = [c for c in root if local_tag(c.tag) == "testsuite"]
-          elif local_tag(root.tag) == "testsuite":
-              suites = [root]
-          else:
-              suites = [el for el in root.iter() if local_tag(el.tag) == "testsuite"]
-
-          tests = failures = skipped = errors = 0
-          for ts in suites:
-              tests += int(ts.attrib.get("tests", 0))
-              failures += int(ts.attrib.get("failures", 0))
-              skipped += int(ts.attrib.get("skipped", 0))
-              errors += int(ts.attrib.get("errors", 0))
-
-          passed = max(0, tests - failures - errors - skipped)
-
-          print("| Metric | Count |")
-          print("|--------|-------|")
-          print(f"| Passed | {passed} |")
-          print(f"| Failed | {failures + errors} |")
-          print(f"| Skipped | {skipped} |")
-          print(f"| **Total** | **{tests}** |")
-          PY
-          if [ "${{ steps.go_test.outcome }}" != "success" ]; then
-            echo "" >> "$GITHUB_STEP_SUMMARY"
-            echo "Go test step failed — see the **Go test** log for failing packages." >> "$GITHUB_STEP_SUMMARY"
-          fi
+          docker compose -f deploy/docker-compose.test.yml --profile go-tests down --volumes --remove-orphans || true
+          rm -f api/junit.xml
