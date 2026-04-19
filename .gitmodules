@@ -1,0 +1,8 @@
+[submodule "api"]
+	path = api
+	url = https://github.com/SaratAngajalaoffl/fintrack-api.git
+	branch = main
+[submodule "web"]
+	path = web
+	url = https://github.com/SaratAngajalaoffl/fintrack-web.git
+	branch = main
