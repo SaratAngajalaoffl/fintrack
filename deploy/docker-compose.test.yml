@@ -3,6 +3,7 @@ name: fintrack-test
 services:
   postgres:
     image: postgres:latest
+    user: "1000:1000"
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-fintrack}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-fintrack}
@@ -20,6 +21,7 @@ services:
     build:
       context: ../api
       dockerfile: ../api/deploy/Dockerfile.prod
+    user: "1000:1000"
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-fintrack}:${POSTGRES_PASSWORD:-fintrack}@postgres:5432/${POSTGRES_DB:-fintrack}
       PORT: "8080"
@@ -41,12 +43,15 @@ services:
     build:
       context: ../api
       dockerfile: ../api/deploy/Dockerfile.test
+    user: "1000:1000"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       # Bind-mount source so junit.xml is written on the host (e.g. CI test-summary/action on api/junit.xml).
       - ../api:/src
     environment:
       DOCKER_HOST: unix:///var/run/docker.sock
+      GOCACHE: /tmp/go-build
+      GOMODCACHE: /tmp/go-mod
 
   # Run: docker compose -f deploy/docker-compose.test.yml --profile web-tests run --rm web-test
   web-test:
@@ -54,6 +59,7 @@ services:
     build:
       context: ../web
       dockerfile: ../web/deploy/Dockerfile.test
+    user: "1000:1000"
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-fintrack}:${POSTGRES_PASSWORD:-fintrack}@postgres:5432/${POSTGRES_DB:-fintrack}
       API_ORIGIN: http://api:8080

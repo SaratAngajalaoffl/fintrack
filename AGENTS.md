@@ -130,7 +130,7 @@ The repo is a **meta-repo**: **`web/`** and **`api/`** are **Git submodules** (s
 
 Add feature modules under `web/src/` with clear boundaries (e.g. `web/src/lib/formatting/`, `web/src/app/(dashboard)/`, composed UI under `web/src/components/ui/forms/` / `common/` / `landing/` / `layout/`) as the app grows.
 
-**Compose:** files under **`deploy/`** use **`context: ../web`** and **`context: ../api`** relative to **`deploy/`** — keep **`web/`** and **`api/`** as those directory names at the meta-repo root (submodule paths).
+**Compose:** files under **`deploy/`** use **`context: ../web`** and **`context: ../api`** relative to **`deploy/`** — keep **`web/`** and **`api/`** as those directory names at the meta-repo root (submodule paths). Each service sets **`user: "1000:1000"`** so container processes match a typical host developer UID/GID (adjust if your user differs).
 
 ### Hooks
 
@@ -252,6 +252,7 @@ Remove generated artifacts when you need a clean slate: delete **`web/.next`** (
 
 ## Docker notes
 
+- **Compose user:** **`deploy/docker-compose.*.yml`** services run as **`1000:1000`** (`user: "1000:1000"`). If **`postgres`** fails to start (data dir permissions), remove the named volume and recreate, or align **`user`** with how the Postgres image owns **`/var/lib/postgresql`**.
 - Compose order: **`postgres`** (healthy) → **`api`** (runs SQL migrations then **`GET /health`**) → **`web`** / **`test`**. See **`deploy/*.yml`** and **`api/deploy/Dockerfile.*`**.
 - **API images:** **`Dockerfile.prod`** — multi-stage release binary + **`/migrations`**. **`Dockerfile.dev`** — **Air** (`api/.air.toml`); dev Compose bind-mounts **`api/`** → **`/src`**. **`Dockerfile.test`** — **`gotestsum`** → **`junit.xml`**; **`test-summary/action`** reads **`api/junit.xml`** in CI. Integration tests need the host **`docker.sock`** — **`docker compose -f deploy/docker-compose.test.yml --profile go-tests run --rm api-go-tests`**.
 - **Web test image:** **`web/deploy/Dockerfile.test`** — **`lint:junit`** (**`eslint-junit.xml`**) + **`next build`**; Compose profile **`web-tests`** bind-mounts **`web/`** (named volume for **`node_modules`**). CI: **`test-summary/action`** on **`web/eslint-junit.xml`**. Run **`docker compose -f deploy/docker-compose.test.yml --profile web-tests run --rm web-test`** (starts **`postgres`** + **`api`**; set **`JWT_SECRET`** for **`api`**). Default **`docker compose … up`** on the test file starts **`postgres`** + **`api`** only unless you add **`--profile web-tests`**.

@@ -3,6 +3,7 @@ name: fintrack-dev
 services:
   postgres:
     image: postgres:latest
+    user: "1000:1000"
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-fintrack}
@@ -22,12 +23,16 @@ services:
     build:
       context: ../api
       dockerfile: ../api/deploy/Dockerfile.dev
+    user: "1000:1000"
     restart: unless-stopped
     ports:
       - "${API_PORT:-8000}:8000"
     env_file:
       - ../api/.env
     environment:
+      # Runtime only (not in Dockerfile): uid 1000 has no $HOME; build as root must not own /tmp/go-*.
+      GOCACHE: /tmp/go-build
+      GOMODCACHE: /tmp/go-mod
       DATABASE_URL: postgresql://${POSTGRES_USER:-fintrack}:${POSTGRES_PASSWORD:-fintrack}@postgres:5432/${POSTGRES_DB:-fintrack}
       PORT: "8000"
     volumes:
@@ -47,6 +52,7 @@ services:
     build:
       context: ../web
       dockerfile: ../web/deploy/Dockerfile.dev
+    user: "1000:1000"
     restart: unless-stopped
     ports:
       - "${WEB_PORT:-3000}:3000"
@@ -56,13 +62,9 @@ services:
       NODE_ENV: development
     volumes:
       - ../web:/app/web
-      - web_node_modules:/app/web/node_modules
-      - web_next:/app/web/.next
     depends_on:
       api:
         condition: service_healthy
 
 volumes:
   postgres_data_dev:
-  web_node_modules:
-  web_next:

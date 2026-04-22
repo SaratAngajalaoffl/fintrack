@@ -3,6 +3,7 @@ name: fintrack
 services:
   postgres:
     image: postgres:latest
+    user: "1000:1000"
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-fintrack}
@@ -20,6 +21,7 @@ services:
     build:
       context: ../api
       dockerfile: ../api/deploy/Dockerfile.prod
+    user: "1000:1000"
     restart: unless-stopped
     ports:
       - "${API_PORT:-8080}:8080"
@@ -43,6 +45,7 @@ services:
     build:
       context: ../web
       dockerfile: ../web/deploy/Dockerfile.prod
+    user: "1000:1000"
     restart: unless-stopped
     ports:
       - "${WEB_PORT:-3000}:3000"
