@@ -34,7 +34,7 @@ services:
       GOCACHE: /tmp/go-build
       GOMODCACHE: /tmp/go-mod
       DATABASE_URL: postgresql://${POSTGRES_USER:-fintrack}:${POSTGRES_PASSWORD:-fintrack}@postgres:5432/${POSTGRES_DB:-fintrack}
-      PORT: "8000"
+      PORT: ${API_PORT:-8000}
     volumes:
       - ../api:/src
     depends_on:
@@ -60,6 +60,7 @@ services:
       - ../web/.env
     environment:
       NODE_ENV: development
+      API_ORIGIN: http://api:8000
     volumes:
       - ../web:/app/web
     depends_on:

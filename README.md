@@ -81,7 +81,7 @@ Shared **Docker Compose** files live under **`deploy/`** (build contexts **`../w
    cp web/.env.example web/.env.local
    ```
 
-   Set **`JWT_SECRET`** (≥16 characters) only in **`api/.env`** — the Go API signs session cookies. In **`web/.env.local`**, set **`NEXT_PUBLIC_API_ORIGIN`** (and optional **`API_ORIGIN`**) so Next can call the API for **`GET /api/auth/me`** (middleware and server components). See **`api/.env.example`** and **`web/.env.example`** for **`DATABASE_URL`**, **`CORS_ALLOWED_ORIGINS`**, and optional variables.
+   Set **`JWT_SECRET`** (≥16 characters) only in **`api/.env`** — the Go API signs session cookies. In **`web/.env.local`**, set **`API_ORIGIN`** so Next rewrites can forward same-origin **`/api/*`** requests to the Go API for **`GET /api/auth/me`** (middleware and server components). See **`api/.env.example`** and **`web/.env.example`** for **`DATABASE_URL`**, **`CORS_ALLOWED_ORIGINS`**, and optional variables.
 
    **Docker Compose:** when you run Compose from this **repository root**, you can add a **root** `.env` (not committed) with **`POSTGRES_*`** and port overrides — or export those variables. Example:
 
@@ -112,7 +112,7 @@ cd api
 go run ./cmd/api
 ```
 
-**`getApiRoute()`** (see **`web/src/configs/api-routes.ts`**) builds API URLs using **`NEXT_PUBLIC_API_ORIGIN`** for browser requests and **`API_ORIGIN`** for server-side fetches when set (for Docker, typically **`http://api:8080`**). For direct browser calls to the API, configure **`CORS_ALLOWED_ORIGINS`** on **`api/`**.
+**`getApiRoute()`** (see **`web/src/configs/api-routes.ts`**) always builds same-origin **`/api/*`** URLs. Next rewrites forward them using **`API_ORIGIN`** (for Docker, typically **`http://api:8080`**).
 
 `GET http://localhost:8080/health` returns `{"status":"ok"}`.
 
@@ -120,7 +120,7 @@ go run ./cmd/api
 
 This starts **Postgres**, the **Go API** (which applies **`api/migrations/`** SQL on startup, then serves **`GET /health`** on port **8000** by default in this file), and the Next.js app from **`web/`**, using the **development** compose file.
 
-1. Copy **`api/.env.example`** → **`api/.env`** and **`web/.env.example`** → **`web/.env`** (set **`JWT_SECRET`** in **`api/.env`** only; align **`NEXT_PUBLIC_API_ORIGIN`** / **`API_ORIGIN`** with how Next reaches the API). Optionally create a **root** `.env` with **`POSTGRES_*`** / **`WEB_PORT`** / **`API_PORT`** for Compose interpolation (defaults work for local tries).
+1. Copy **`api/.env.example`** → **`api/.env`** and **`web/.env.example`** → **`web/.env`** (set **`JWT_SECRET`** in **`api/.env`** only; set **`API_ORIGIN`** for how Next reaches the API). Optionally create a **root** `.env` with **`POSTGRES_*`** / **`WEB_PORT`** / **`API_PORT`** for Compose interpolation (defaults work for local tries).
 
 2. From the **repository root**, run:
 
