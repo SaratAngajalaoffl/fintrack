@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(docker compose*)",
+      "Bash(cd web && npm*)",
+      "Bash(cd web && npx*)",
+      "Bash(cd api && go*)",
+      "Bash(cd api && make*)",
+      "Bash(npx playwright*)"
+    ]
+  }
+}
