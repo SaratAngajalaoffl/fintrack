@@ -1,0 +1,5 @@
+## Agent workflow (Cursor / automation)
+
+- **Do not create git commits** unless the user explicitly asks you to commit. Implement changes and leave them **uncommitted** so the user can review the diff and commit themselves.
+- **Keep AGENTS.md current:** whenever routes, APIs, schemas, architecture, conventions, or developer workflows change, update the relevant file under **`docs/agents/`** (and **`AGENTS.md`** if the index needs updating) in the same task so guidance stays accurate.
+- **Tests:** When you add or change behavior in **`api/`** (handlers, auth, repository, middleware, migrations), add or update **Go tests** in the same task: fast **unit tests** for pure logic (`internal/auth`, `httpx`, `middleware`, helpers) and **integration tests** against Postgres (Docker) for HTTP + SQL paths (`internal/integration`, `internal/migrate`, shared **`internal/testutil`**). Run **`cd api && make test`** before finishing. Do not merge behavior-only changes without tests unless the user explicitly excuses tests for a spike.
