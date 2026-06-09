@@ -63,9 +63,11 @@ services:
       API_ORIGIN: http://api:8000
     volumes:
       - ../web:/app/web
+      - web_node_modules:/app/web/node_modules
     depends_on:
       api:
         condition: service_healthy
 
 volumes:
   postgres_data_dev:
+  web_node_modules:
